@@ -1,0 +1,124 @@
+name:                bitfinex-client
+version:             0.1.0.0
+github:              "tkachuk-labs/bitfinex-client"
+license:             BSD3
+author:              "Ilja Tkachuk"
+maintainer:          "tkachuk.labs@gmail.com"
+copyright:           "2021 Tkachuk Labs [https://tkachuklabs.gitlab.io]"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Data
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/tkachuk-labs/bitfinex-client#readme>
+
+dependencies:
+# foundation
+- base >= 4.7 && < 5
+# bytes
+- aeson
+# other
+- transformers
+- time
+
+library:
+  source-dirs: src
+  default-extensions:
+  - NoImplicitPrelude
+  - MultiParamTypeClasses
+  - LambdaCase
+  - OverloadedStrings
+  - OverloadedLists
+  - ScopedTypeVariables
+  - GeneralizedNewtypeDeriving
+  - DerivingStrategies
+  - DataKinds
+  - KindSignatures
+  - ExistentialQuantification
+  - FlexibleInstances
+  - FlexibleContexts
+  ghc-options:
+  # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
+  # Enable all warnings with -Weverything, then disable the ones we don’t care about
+  - -Weverything
+  - -Werror
+  - -Wno-prepositive-qualified-module
+  - -Wno-missing-safe-haskell-mode
+  - -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures. See https://ghc.haskell.org/trac/ghc/ticket/14794#ticket
+  - -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
+  - -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function. No big deal and requires fixing underlying libraries to solve.
+  - -Wno-all-missed-specialisations # See missed-specialisations
+  - -Wno-unsafe # Don’t use Safe Haskell warnings
+  - -Wno-safe # Don’t use Safe Haskell warnings
+  - -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
+  - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
+  dependencies:
+  # foundation
+  - universum
+  # web
+  - http-types
+  - http-client
+  - http-client-tls
+  # bytes
+  - text
+  - lens-aeson
+  - memory
+  - bytestring
+  - base16-bytestring
+  # numbers
+  - siggy-chardust
+  # other
+  - witch
+  - unordered-containers
+  - envparse
+  - cryptonite
+  - unliftio
+  - containers
+  - vector
+
+tests:
+  bitfinex-client-test:
+    main:                Spec.hs
+    source-dirs:         test
+    default-extensions:
+    - NoImplicitPrelude
+    - MultiParamTypeClasses
+    - LambdaCase
+    - OverloadedStrings
+    - OverloadedLists
+    - ScopedTypeVariables
+    - GeneralizedNewtypeDeriving
+    - DerivingStrategies
+    - DataKinds
+    - KindSignatures
+    - ExistentialQuantification
+    - FlexibleInstances
+    - FlexibleContexts
+    ghc-options:
+    # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
+    # Enable all warnings with -Weverything, then disable the ones we don’t care about
+    - -Weverything
+    - -Werror
+    - -Wno-prepositive-qualified-module
+    - -Wno-missing-safe-haskell-mode
+    - -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures. See https://ghc.haskell.org/trac/ghc/ticket/14794#ticket
+    - -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
+    - -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function. No big deal and requires fixing underlying libraries to solve.
+    - -Wno-all-missed-specialisations # See missed-specialisations
+    - -Wno-unsafe # Don’t use Safe Haskell warnings
+    - -Wno-safe # Don’t use Safe Haskell warnings
+    - -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
+    - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bitfinex-client
+    - hspec

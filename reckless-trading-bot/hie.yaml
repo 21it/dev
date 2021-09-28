@@ -1,0 +1,8 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: reckless-trading-bot:lib
+    - path: "./app"
+      component: reckless-trading-bot:exe:reckless-trading-bot-exe
+    - path: "./test"
+      component: reckless-trading-bot:test:reckless-trading-bot-test

@@ -1,0 +1,9 @@
+resolver: nightly-2021-09-18
+system-ghc: true
+allow-different-user: true
+packages:
+  - bitfinex-client
+  - reckless-trading-bot
+extra-deps:
+  - github: tkachuk-labs/persistent-migration
+    commit: 0e40b397fa1042e117ec0809d5715b7aa1e636f6

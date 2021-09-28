@@ -1,0 +1,127 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           reckless-trading-bot
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/tkachuk-labs/reckless-trading-bot#readme>
+homepage:       https://github.com/tkachuk-labs/reckless-trading-bot#readme
+bug-reports:    https://github.com/tkachuk-labs/reckless-trading-bot/issues
+author:         Ilja Tkachuk
+maintainer:     tkachuk.labs@gmail.com
+copyright:      2021 Tkachuk Labs [https://tkachuklabs.gitlab.io]
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/tkachuk-labs/reckless-trading-bot
+
+library
+  exposed-modules:
+      RecklessTradingBot.Class.Env
+      RecklessTradingBot.Data.AppM
+      RecklessTradingBot.Data.Env
+      RecklessTradingBot.Data.Model
+      RecklessTradingBot.Data.Money
+      RecklessTradingBot.Data.Time
+      RecklessTradingBot.Data.Type
+      RecklessTradingBot.Import
+      RecklessTradingBot.Import.External
+      RecklessTradingBot.Thread.Main
+  other-modules:
+      Paths_reckless_trading_bot
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      MultiParamTypeClasses
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
+      GeneralizedNewtypeDeriving
+      DerivingStrategies
+      DerivingVia
+      StandaloneDeriving
+      DataKinds
+      KindSignatures
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction
+  build-depends:
+      aeson
+    , async
+    , base >=4.15 && <5
+    , bitfinex-client
+    , bytestring
+    , containers
+    , envparse
+    , esqueleto
+    , extra
+    , katip
+    , persistent
+    , persistent-postgresql
+    , resource-pool
+    , stm
+    , text
+    , time
+    , transformers
+    , unbounded-delays
+    , universum
+    , unliftio
+    , witch
+  default-language: Haskell2010
+
+executable reckless-trading-bot-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_reckless_trading_bot
+  hs-source-dirs:
+      app
+  default-extensions:
+      NoImplicitPrelude
+      MultiParamTypeClasses
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
+      GeneralizedNewtypeDeriving
+      DerivingStrategies
+      DerivingVia
+      StandaloneDeriving
+      DataKinds
+      KindSignatures
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.15 && <5
+    , reckless-trading-bot
+  default-language: Haskell2010
+
+test-suite reckless-trading-bot-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_reckless_trading_bot
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      MultiParamTypeClasses
+      LambdaCase
+      OverloadedStrings
+      ScopedTypeVariables
+      GeneralizedNewtypeDeriving
+      DerivingStrategies
+      DerivingVia
+      StandaloneDeriving
+      DataKinds
+      KindSignatures
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.15 && <5
+    , hspec
+    , reckless-trading-bot
+  default-language: Haskell2010

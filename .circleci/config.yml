@@ -1,0 +1,73 @@
+version: 2.1
+
+configure: &configure
+  docker:
+  - image: nixos/nix:2.3
+  resource_class: xlarge
+
+release: &release
+  run:
+    name: Create release
+    command: ./nix/release.sh
+    no_output_timeout: 60m
+
+filters: &filters
+  filters:
+    branches: {}
+
+commands:
+  restore_nix_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - v0-nix
+  save_nix_cache:
+    steps:
+      - save_cache:
+          key: v0-nix
+          paths:
+            - /nix
+
+jobs:
+  release:
+    <<: *configure
+    steps:
+    - checkout
+    - setup_remote_docker
+    - restore_nix_cache
+    - *release
+    - save_nix_cache
+  release-publish:
+    <<: *configure
+    steps:
+    - checkout
+    - setup_remote_docker
+    - restore_nix_cache
+    - *release
+    - save_nix_cache
+    - run:
+        name: Load docker image
+        command: docker load -i result
+    - run:
+        name: Login docker
+        command: echo -e "$DOCKER_PASS" | docker login -u $DOCKER_USER --password-stdin
+    - run:
+        name: Push docker image
+        command: docker push "$(docker images tkachuk-labs/bitfinex-client --format "{{.Repository}}:{{.Tag}}")"
+
+workflows:
+  version: 2
+  nightly:
+    triggers:
+      - schedule:
+          <<: *filters
+          cron: "0 5 * * *"  # 05:00 UTC
+    jobs:
+      - release:
+          <<: *filters
+          context: global
+  push:
+    jobs:
+      - release-publish:
+          <<: *filters
+          context: global

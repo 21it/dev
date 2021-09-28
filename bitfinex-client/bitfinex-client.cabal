@@ -1,0 +1,126 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           bitfinex-client
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/tkachuk-labs/bitfinex-client#readme>
+homepage:       https://github.com/tkachuk-labs/bitfinex-client#readme
+bug-reports:    https://github.com/tkachuk-labs/bitfinex-client/issues
+author:         Ilja Tkachuk
+maintainer:     tkachuk.labs@gmail.com
+copyright:      2021 Tkachuk Labs [https://tkachuklabs.gitlab.io]
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/tkachuk-labs/bitfinex-client
+
+library
+  exposed-modules:
+      BitfinexClient
+      BitfinexClient.Class.FromRpc
+      BitfinexClient.Class.ToBaseUrl
+      BitfinexClient.Class.ToPathPieces
+      BitfinexClient.Class.ToRequestMethod
+      BitfinexClient.Class.ToRequestParam
+      BitfinexClient.Data.CancelOrderMulti
+      BitfinexClient.Data.Env
+      BitfinexClient.Data.FeeSummary
+      BitfinexClient.Data.GetOrders
+      BitfinexClient.Data.Kind
+      BitfinexClient.Data.MarketAveragePrice
+      BitfinexClient.Data.SubmitOrder
+      BitfinexClient.Data.Type
+      BitfinexClient.Data.Web
+      BitfinexClient.Import
+      BitfinexClient.Import.External
+      BitfinexClient.Import.Internal
+      BitfinexClient.Parser
+      BitfinexClient.Rpc.Generic
+      BitfinexClient.Util
+  other-modules:
+      Paths_bitfinex_client
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      MultiParamTypeClasses
+      LambdaCase
+      OverloadedStrings
+      OverloadedLists
+      ScopedTypeVariables
+      GeneralizedNewtypeDeriving
+      DerivingStrategies
+      DataKinds
+      KindSignatures
+      ExistentialQuantification
+      FlexibleInstances
+      FlexibleContexts
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , base16-bytestring
+    , bytestring
+    , containers
+    , cryptonite
+    , envparse
+    , http-client
+    , http-client-tls
+    , http-types
+    , lens-aeson
+    , memory
+    , siggy-chardust
+    , text
+    , time
+    , transformers
+    , universum
+    , unliftio
+    , unordered-containers
+    , vector
+    , witch
+  default-language: Haskell2010
+
+test-suite bitfinex-client-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      BitfinexClient.Data.CancelOrderMultiSpec
+      BitfinexClient.Data.SubmitOrderSpec
+      BitfinexClient.Data.TypeSpec
+      BitfinexClient.TestEnv
+      BitfinexClientSpec
+      Paths_bitfinex_client
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      MultiParamTypeClasses
+      LambdaCase
+      OverloadedStrings
+      OverloadedLists
+      ScopedTypeVariables
+      GeneralizedNewtypeDeriving
+      DerivingStrategies
+      DataKinds
+      KindSignatures
+      ExistentialQuantification
+      FlexibleInstances
+      FlexibleContexts
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bitfinex-client
+    , hspec
+    , time
+    , transformers
+  default-language: Haskell2010
