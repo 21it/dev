@@ -8,8 +8,6 @@ module BitfinexClient.Data.Kind
   )
 where
 
-import BitfinexClient.Import.External
-
 data Method
   = MarketAveragePrice
   | FeeSummary
@@ -17,7 +15,6 @@ data Method
   | RetrieveOrders
   | OrdersHistory
   | CancelOrderMulti
-  deriving stock (Show)
 
 data CurrencyRelation
   = Base

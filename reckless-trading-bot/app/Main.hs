@@ -29,7 +29,7 @@ main = do
   bracket mkLogEnv closeScribes $ \le ->
     runKatipContextT le (mempty :: LogContexts) mempty $ do
       !env <- newEnv rc
-      res <- lift $ runApp env $ MainThread.loop
-      $(logTM) ErrorS
-        $ logStr
-        $ "Terminate program with result " <> (show res :: Text)
+      res <- lift $ runApp env MainThread.loop
+      $(logTM) ErrorS $
+        logStr $
+          "Terminate program with result " <> (show res :: Text)
