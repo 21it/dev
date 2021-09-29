@@ -1,0 +1,12 @@
+cradle:
+  stack:
+    - path: "./bitfinex-client/src"
+      component: bitfinex-client:lib
+    - path: "./bitfinex-client/test"
+      component: bitfinex-client:test:bitfinex-client-test
+    - path: "./reckless-trading-bot/src"
+      component: reckless-trading-bot:lib
+    - path: "./reckless-trading-bot/app"
+      component: reckless-trading-bot:exe:reckless-trading-bot-exe
+    - path: "./reckless-trading-bot/test"
+      component: reckless-trading-bot:test:reckless-trading-bot-test

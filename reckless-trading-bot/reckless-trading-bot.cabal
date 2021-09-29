@@ -104,6 +104,7 @@ test-suite reckless-trading-bot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      RecklessTradingBotSpec
       Paths_reckless_trading_bot
   hs-source-dirs:
       test
