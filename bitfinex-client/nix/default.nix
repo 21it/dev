@@ -1,8 +1,8 @@
-let nixpkgs = import ./nixpkgs.nix;
+let nixpkgs = import ../../nix/nixpkgs.nix;
 in
 {
   pkgs ? import nixpkgs {
-    overlays = import ./overlay.nix {
+    overlays = import ../../nix/overlay.nix {
 
     };
   },
@@ -10,7 +10,7 @@ in
 with pkgs;
 
 let callPackage = lib.callPackageWith haskellPackages;
-    pkg = callPackage ./pkg.nix {inherit stdenv;};
+    pkg = callPackage ./pkg.nix {inherit lib;};
     systemDeps = [ ];
     testDeps = [ ];
 in
@@ -28,5 +28,9 @@ in
     enableLibraryProfiling = false;
     isLibrary = true;
     doHaddock = false;
+    #
+    # TODO : test at least public methods
+    #
+    doCheck = false;
     prePatch = "hpack --force";
   })

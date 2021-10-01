@@ -1,21 +1,18 @@
-let nixpkgs = import ./nixpkgs.nix;
+let nixpkgs = import ../../nix/nixpkgs.nix;
 in
 {
   pkgs ? import nixpkgs {
-    overlays = import ./overlay.nix {
-      inherit hexOrganization hexApiKey robotSshKey;
+    overlays = import ../../nix/overlay.nix {
+
     };
-  },
-  hexOrganization ? null, # organization account name on hex.pm
-  hexApiKey ? null,       # plain text account API key on hex.pm
-  robotSshKey ? null      # base64-encoded private id_rsa (for private git)
+  }
 }:
-let pkg = import ./default.nix {inherit hexOrganization hexApiKey robotSshKey;};
+let pkg = import ./default.nix {};
 in
 with pkgs;
 
 dockerTools.buildImage {
-  name = "tkachuk-labs/reckless-trading-bot";
+  name = "21it/reckless-trading-bot";
   contents = [ pkg ];
 
   config = {

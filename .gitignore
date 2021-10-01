@@ -4,4 +4,4 @@ postgres
 postgres_data
 dist*
 postgres.log
-result
+result*

@@ -1,21 +1,18 @@
-let nixpkgs = import ./nixpkgs.nix;
+let nixpkgs = import ../../nix/nixpkgs.nix;
 in
 {
   pkgs ? import nixpkgs {
-    overlays = import ./overlay.nix {
-      inherit hexOrganization hexApiKey robotSshKey;
+    overlays = import ../../nix/overlay.nix {
+
     };
-  },
-  hexOrganization ? null, # organization account name on hex.pm
-  hexApiKey ? null,       # plain text account API key on hex.pm
-  robotSshKey ? null      # base64-encoded private id_rsa (for private git)
+  }
 }:
 with pkgs;
 
 let callPackage = lib.callPackageWith haskellPackages;
-    pkg = callPackage ./pkg.nix {inherit stdenv;};
-    systemDeps = [ protobuf makeWrapper cacert ];
-    testDeps = [ postgresql ];
+    pkg = callPackage ./pkg.nix {inherit lib;};
+    systemDeps = [ makeWrapper cacert ];
+    testDeps = [ postgresql_13 ];
 in
   haskell.lib.overrideCabal pkg (drv: {
     setupHaskellDepends =
@@ -31,6 +28,7 @@ in
     enableLibraryProfiling = false;
     isLibrary = false;
     doHaddock = false;
+    doCheck = false;
     prePatch = "hpack --force";
     preCheck = ''
       source ./nix/export-test-envs.sh;

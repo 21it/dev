@@ -12,13 +12,17 @@
         haskell-ide = import (
           fetchTarball "https://github.com/tkachuk-labs/ultimate-haskell-ide/tarball/1812de1b890900f0298dbf768cfed73ab74f41e4"
           ) { inherit vimBackground vimColorScheme; };
-        haskellPackages = super.haskell.packages.extend(
+        haskellPackages = super.haskell.packages.ghc901.extend(
           self': super': {
-            persistent-migration = dontCheck (
+            bitfinex-client =
+              callPackage ../bitfinex-client/nix/default.nix {
+
+              };
+            persistent-migration =
               callPackage ./overlay/persistent-migration.nix {
                 stdenv = self.stdenv;
                 fetchgit = self.fetchgit;
-              });
+              };
           }
         );
       }
