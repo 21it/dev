@@ -1,7 +1,8 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module RecklessTradingBot.Storage.Price
+module RecklessTradingBot.Model.Price
   ( create,
+    getLatest,
   )
 where
 
@@ -33,3 +34,20 @@ create pair buy sell = do
           priceSell = sell,
           priceAt = ct
         }
+
+getLatest ::
+  Storage m =>
+  Bfx.CurrencyPair ->
+  m (Maybe (Entity Price))
+getLatest pair =
+  runSql $
+    listToMaybe
+      <$> P.selectList
+        [ PriceBase
+            P.==. CurrencyCode (Bfx.currencyPairBase pair),
+          PriceQuote
+            P.==. CurrencyCode (Bfx.currencyPairQuote pair)
+        ]
+        [ P.Desc PriceId,
+          P.LimitTo 1
+        ]

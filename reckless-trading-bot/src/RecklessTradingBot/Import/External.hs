@@ -34,10 +34,13 @@ import Data.Ratio as X ((%))
 import Data.Text as X (strip)
 import Data.Time.Clock as X
   ( DiffTime,
+    NominalDiffTime,
     UTCTime (..),
     addUTCTime,
     diffTimeToPicoseconds,
+    diffUTCTime,
     getCurrentTime,
+    nominalDiffTimeToSeconds,
     secondsToDiffTime,
   )
 import Database.Esqueleto.Legacy as X
@@ -84,5 +87,5 @@ import Katip as X
     runKatipContextT,
   )
 import Universum as X hiding (atomically, bracket, on, set, (^.))
-import UnliftIO as X (MonadUnliftIO, bracket)
-import Witch as X (tryFrom)
+import UnliftIO as X (MonadUnliftIO, bracket, withRunInIO)
+import Witch as X (TryFromException (..), from, tryFrom)

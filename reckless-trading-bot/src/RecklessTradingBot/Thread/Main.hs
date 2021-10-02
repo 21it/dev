@@ -4,11 +4,14 @@
 module RecklessTradingBot.Thread.Main (apply) where
 
 import RecklessTradingBot.Import
-import qualified RecklessTradingBot.Thread.Order as ThreadOrder (loop)
+import qualified RecklessTradingBot.Thread.Price as ThreadPrice (apply)
 
 apply :: (Env m, KatipContext m) => m ()
 apply = do
-  res <- ThreadOrder.loop
+  --
+  -- TODO : run migrations
+  --
+  res <- ThreadPrice.apply
   $(logTM) ErrorS
     . logStr
     $ "Terminate program with result " <> (show res :: Text)

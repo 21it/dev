@@ -21,6 +21,7 @@ import Env
     str,
     var,
   )
+import RecklessTradingBot.Data.Model
 import RecklessTradingBot.Data.Time
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
@@ -32,6 +33,7 @@ data Env = Env
     envProfit :: Bfx.ProfitRate,
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
+    envPriceChan :: TChan Price,
     -- storage
     envSqlPool :: Pool SqlBackend,
     -- logging
@@ -126,7 +128,8 @@ withEnv this = do
           . runNoLoggingT
           $ createPostgresqlPool (rawConfigLibpqConnStr rc) 10
   bracket mkLogEnv (void . liftIO . closeScribes) $ \le ->
-    bracket mkSqlPool (liftIO . destroyAllResources) $ \pool ->
+    bracket mkSqlPool (liftIO . destroyAllResources) $ \pool -> do
+      priceChan <- liftIO $ atomically newBroadcastTChan
       this
         Env
           { -- app
@@ -135,6 +138,7 @@ withEnv this = do
             envProfit = rawConfigProfit rc,
             envPriceTtl = rawConfigPriceTtl rc,
             envOrderTtl = rawConfigOrderTtl rc,
+            envPriceChan = priceChan,
             -- storage
             envSqlPool = pool,
             -- logging
