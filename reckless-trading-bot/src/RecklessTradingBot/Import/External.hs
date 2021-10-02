@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK show-extensions #-}
+
 module RecklessTradingBot.Import.External (module X) where
 
 import Control.Concurrent.Async as X
@@ -81,6 +83,6 @@ import Katip as X
     registerScribe,
     runKatipContextT,
   )
-import Universum as X hiding (atomically, on, set, (^.))
-import UnliftIO as X (MonadUnliftIO (..), UnliftIO (..), withRunInIO)
+import Universum as X hiding (atomically, bracket, on, set, (^.))
+import UnliftIO as X (MonadUnliftIO, bracket)
 import Witch as X (tryFrom)

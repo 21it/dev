@@ -1,14 +1,13 @@
-{-# LANGUAGE BangPatterns #-}
+{-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Env
   ( Env (..),
-    RawConfig (..),
-    rawConfig,
-    newEnv,
+    withEnv,
   )
 where
 
 import qualified BitfinexClient as Bfx
+import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as C8
 import Env
@@ -27,33 +26,37 @@ import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 
 data Env = Env
-  { -- logging
-    envKatipNS :: Namespace,
-    envKatipCTX :: LogContexts,
-    envKatipLE :: LogEnv,
-    -- app
+  { -- app
     envBfx :: Bfx.Env,
     envPairs :: Set Bfx.CurrencyPair,
     envProfit :: Bfx.ProfitRate,
     envPriceTtl :: Seconds,
-    envOrderTtl :: Seconds
+    envOrderTtl :: Seconds,
+    -- storage
+    envSqlPool :: Pool SqlBackend,
+    -- logging
+    envKatipNS :: Namespace,
+    envKatipCTX :: LogContexts,
+    envKatipLE :: LogEnv
   }
 
 data RawConfig = RawConfig
-  { -- general
+  { -- app
     rawConfigBfx :: Bfx.Env,
     rawConfigPairs :: Set Bfx.CurrencyPair,
     rawConfigProfit :: Bfx.ProfitRate,
     rawConfigPriceTtl :: Seconds,
     rawConfigOrderTtl :: Seconds,
-    -- katip
+    -- storage
+    rawConfigLibpqConnStr :: ConnectionString,
+    -- logging
     rawConfigLogEnv :: Text,
     rawConfigLogFormat :: LogFormat,
     rawConfigLogVerbosity :: Verbosity
   }
 
-rawConfig :: IO RawConfig
-rawConfig = do
+newRawConfig :: MonadUnliftIO m => m RawConfig
+newRawConfig = liftIO $ do
   env <- Bfx.newEnv
   parse (header "RecklessTradingBot config") $
     RawConfig env
@@ -75,6 +78,10 @@ rawConfig = do
         op
       <*> var
         (str <=< nonempty)
+        "RECKLESS_TRADING_LIBPQ_CONN_STR"
+        op
+      <*> var
+        (str <=< nonempty)
         "RECKLESS_TRADING_BOT_LOG_ENV"
         op
       <*> var
@@ -91,21 +98,47 @@ rawConfig = do
     err :: Show a => Either a b -> Either Env.Error b
     err = first $ UnreadError . show
 
-newEnv :: RawConfig -> KatipContextT IO Env
-newEnv !rc = do
-  le <- getLogEnv
-  ctx <- getKatipContext
-  ns <- getKatipNamespace
-  return $
-    Env
-      { -- logging
-        envKatipLE = le,
-        envKatipCTX = ctx,
-        envKatipNS = ns,
-        -- app
-        envBfx = rawConfigBfx rc,
-        envPairs = rawConfigPairs rc,
-        envProfit = rawConfigProfit rc,
-        envPriceTtl = rawConfigPriceTtl rc,
-        envOrderTtl = rawConfigOrderTtl rc
-      }
+withEnv :: MonadUnliftIO m => (Env -> m ()) -> m ()
+withEnv this = do
+  rc <- newRawConfig
+  handleScribe <-
+    liftIO $
+      mkHandleScribeWithFormatter
+        ( case rawConfigLogFormat rc of
+            Bracket -> bracketFormat
+            Json -> jsonFormat
+        )
+        ColorIfTerminal
+        stdout
+        (permitItem InfoS)
+        (rawConfigLogVerbosity rc)
+  let mkLogEnv =
+        liftIO $
+          registerScribe
+            "stdout"
+            handleScribe
+            defaultScribeSettings
+            =<< initLogEnv
+              "RecklessTradingBot"
+              (Environment $ rawConfigLogEnv rc)
+  let mkSqlPool =
+        liftIO
+          . runNoLoggingT
+          $ createPostgresqlPool (rawConfigLibpqConnStr rc) 10
+  bracket mkLogEnv (void . liftIO . closeScribes) $ \le ->
+    bracket mkSqlPool (liftIO . destroyAllResources) $ \pool ->
+      this
+        Env
+          { -- app
+            envBfx = rawConfigBfx rc,
+            envPairs = rawConfigPairs rc,
+            envProfit = rawConfigProfit rc,
+            envPriceTtl = rawConfigPriceTtl rc,
+            envOrderTtl = rawConfigOrderTtl rc,
+            -- storage
+            envSqlPool = pool,
+            -- logging
+            envKatipLE = le,
+            envKatipCTX = mempty,
+            envKatipNS = mempty
+          }

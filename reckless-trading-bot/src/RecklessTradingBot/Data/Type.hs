@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Type
   ( LogFormat (..),

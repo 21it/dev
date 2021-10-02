@@ -1,15 +1,14 @@
-module RecklessTradingBot.Thread.Main (loop) where
+{-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_HADDOCK show-extensions #-}
 
-import qualified BitfinexClient as Bfx
+module RecklessTradingBot.Thread.Main (apply) where
+
 import RecklessTradingBot.Import
+import qualified RecklessTradingBot.Thread.Order as ThreadOrder (loop)
 
-loop :: Env m => m ()
-loop = do
-  res <- runExceptT . withExceptT ErrorBfx $ do
-    sym <- except $ Bfx.newCurrencyPair "ADA" "BTC"
-    amt <- except $ Bfx.newMoneyAmount 2
-    Bfx.marketAveragePrice Bfx.Buy amt sym
-  ct <- liftIO getCurrentTime
-  putStrLn $ (show $ Bfx.toTextParam <$> res :: Text) <> " " <> show ct
-  sleepPriceTtl
-  loop
+apply :: (Env m, KatipContext m) => m ()
+apply = do
+  res <- ThreadOrder.loop
+  $(logTM) ErrorS
+    . logStr
+    $ "Terminate program with result " <> (show res :: Text)

@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK show-extensions #-}
+
 module RecklessTradingBot.Data.Time
   ( Seconds,
     newSeconds,

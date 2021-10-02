@@ -1,13 +1,8 @@
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-missing-deriving-strategies #-}
+{-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.AppM
   ( runApp,
-    Env (..),
   )
 where
 
@@ -43,5 +38,8 @@ instance (MonadIO m) => KatipContext (AppM m) where
     AppM (local (\s -> s {EnvData.envKatipNS = f (EnvData.envKatipNS s)}) m)
 
 instance (MonadIO m) => Env (AppM m) where
-  sleepPriceTtl = asks EnvData.envPriceTtl >>= sleep
   withBfx = (asks EnvData.envBfx >>=)
+  getPairs = asks EnvData.envPairs
+  getProfit = asks EnvData.envProfit
+  getOrderTtl = asks EnvData.envOrderTtl
+  sleepPriceTtl = asks EnvData.envPriceTtl >>= sleep

@@ -11,6 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Model where
 
@@ -42,6 +43,15 @@ share
       deriving Eq Show
 
     Order
+      --
+      -- Price which triggered the Order
+      --
+      priceRef PriceId
+      --
+      -- Store CurrencyPair just in case
+      -- if Order will not correspond to
+      -- single price in the future
+      --
       base (CurrencyCode 'Bfx.Base)
       quote (CurrencyCode 'Bfx.Quote)
       --
