@@ -1,7 +1,8 @@
 { mkDerivation, aeson, async, base, bitfinex-client, bytestring
 , containers, envparse, esqueleto, extra, hpack, hspec, katip, lib
-, persistent, persistent-postgresql, resource-pool, stm, text, time
-, transformers, unbounded-delays, universum, unliftio, witch
+, monad-logger, persistent, persistent-postgresql, resource-pool
+, stm, text, time, transformers, unbounded-delays, universum
+, unliftio, witch
 }:
 mkDerivation {
   pname = "reckless-trading-bot";
@@ -11,7 +12,7 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson async base bitfinex-client bytestring containers envparse
-    esqueleto extra katip persistent persistent-postgresql
+    esqueleto extra katip monad-logger persistent persistent-postgresql
     resource-pool stm text time transformers unbounded-delays universum
     unliftio witch
   ];

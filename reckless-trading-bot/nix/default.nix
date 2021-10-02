@@ -12,7 +12,7 @@ with pkgs;
 let callPackage = lib.callPackageWith haskellPackages;
     pkg = callPackage ./pkg.nix {inherit lib;};
     systemDeps = [ makeWrapper cacert ];
-    testDeps = [ postgresql_13 ];
+    testDeps = [ postgresql ];
 in
   haskell.lib.overrideCabal pkg (drv: {
     setupHaskellDepends =
@@ -32,6 +32,7 @@ in
     prePatch = "hpack --force";
     preCheck = ''
       source ./nix/export-test-envs.sh;
+      sh ./nix/shutdown-test-deps.sh
       sh ./nix/spawn-test-deps.sh;
     '';
     postCheck = ''

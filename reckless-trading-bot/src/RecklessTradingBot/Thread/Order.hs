@@ -7,11 +7,19 @@ import RecklessTradingBot.Import
 
 loop :: Env m => m ()
 loop = do
-  res <- runExceptT . withExceptT ErrorBfx $ do
-    sym <- except $ Bfx.newCurrencyPair "ADA" "BTC"
-    amt <- except $ Bfx.newMoneyAmount 2
-    Bfx.marketAveragePrice Bfx.Buy amt sym
-  ct <- liftIO getCurrentTime
-  putStrLn $ (show $ Bfx.toTextParam <$> res :: Text) <> " " <> show ct
+  mapM_ createPrice =<< getPairs
   sleepPriceTtl
   loop
+
+createPrice ::
+  Env m =>
+  Bfx.CurrencyPair ->
+  m ()
+createPrice sym = do
+  --
+  -- TODO : !!!
+  --
+  res <- runExceptT . withExceptT ErrorBfx $ do
+    amt <- except $ Bfx.newMoneyAmount 2
+    Bfx.marketAveragePrice Bfx.Buy amt sym
+  print res

@@ -78,7 +78,7 @@ newRawConfig = liftIO $ do
         op
       <*> var
         (str <=< nonempty)
-        "RECKLESS_TRADING_LIBPQ_CONN_STR"
+        "RECKLESS_TRADING_BOT_LIBPQ_CONN_STR"
         op
       <*> var
         (str <=< nonempty)

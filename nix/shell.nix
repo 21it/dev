@@ -17,6 +17,7 @@ stdenv.mkDerivation {
   name = "bitfinex-client-shell";
   buildInputs = [
     haskell-ide
+    postgresql
   ];
   TERM="xterm-256color";
   LC_ALL="C.UTF-8";
@@ -46,6 +47,7 @@ stdenv.mkDerivation {
     (cd /app/reckless-trading-bot/nix/ && cabal2nix ./.. > ./pkg.nix)
 
     source /app/reckless-trading-bot/nix/export-test-envs.sh
+    /app/reckless-trading-bot/nix/spawn-test-deps.sh
 
   '';
 }

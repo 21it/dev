@@ -36,6 +36,7 @@ library
       RecklessTradingBot.Import
       RecklessTradingBot.Import.External
       RecklessTradingBot.Storage
+      RecklessTradingBot.Storage.Price
       RecklessTradingBot.Thread.Main
       RecklessTradingBot.Thread.Order
   other-modules:
@@ -56,6 +57,7 @@ library
       KindSignatures
       FunctionalDependencies
       FlexibleContexts
+      StrictData
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction
   build-depends:
       aeson
@@ -102,6 +104,7 @@ executable reckless-trading-bot-exe
       KindSignatures
       FunctionalDependencies
       FlexibleContexts
+      StrictData
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.15 && <5
@@ -130,6 +133,7 @@ test-suite reckless-trading-bot-test
       KindSignatures
       FunctionalDependencies
       FlexibleContexts
+      StrictData
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.15 && <5
