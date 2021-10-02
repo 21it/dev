@@ -12,4 +12,4 @@ import qualified RecklessTradingBot.Thread.Main as MainThread
 main :: IO ()
 main =
   withEnv $
-    \env -> runApp env MainThread.apply
+    flip runApp MainThread.apply
