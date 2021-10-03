@@ -15,7 +15,7 @@ import RecklessTradingBot.Import.External
 newtype Seconds
   = Seconds Natural
   deriving newtype
-    (Eq, Ord, Show)
+    (Eq, Ord, Show, Num)
 
 newSeconds :: Integer -> Either Error Seconds
 newSeconds =

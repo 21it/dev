@@ -37,6 +37,7 @@ library
       RecklessTradingBot.Import.External
       RecklessTradingBot.Model.Price
       RecklessTradingBot.Storage
+      RecklessTradingBot.Storage.Migration
       RecklessTradingBot.Thread.Main
       RecklessTradingBot.Thread.Price
   other-modules:
@@ -72,6 +73,7 @@ library
     , katip
     , monad-logger
     , persistent
+    , persistent-migration
     , persistent-postgresql
     , resource-pool
     , stm

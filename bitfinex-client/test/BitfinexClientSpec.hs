@@ -10,10 +10,25 @@ import qualified BitfinexClient.Data.GetOrders as GetOrders
 import qualified BitfinexClient.Data.SubmitOrder as SubmitOrder
 import BitfinexClient.Import
 import BitfinexClient.TestEnv
+import qualified Data.Map as Map
 import Test.Hspec
 
 spec :: Spec
 spec = before newEnv $ do
+  it "symbolsDetails succeeds" . const $ do
+    x <- withAdaBtc . const $ \sym -> do
+      x <- Bitfinex.symbolsDetails
+      liftIO $
+        Map.lookup sym x
+          `shouldBe` Just
+            CurrencyPairConf
+              { currencyPairPrecision = 5,
+                currencyPairInitMargin = 30,
+                currencyPairMinMargin = 15,
+                currencyPairMaxOrderAmt = 250000,
+                currencyPairMinOrderAmt = 2
+              }
+    x `shouldSatisfy` isRight
   it "marketAveragePrice succeeds" . const $ do
     x <- withAdaBtc $ \amt sym -> do
       buy <- Bitfinex.marketAveragePrice Buy amt sym

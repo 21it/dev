@@ -5,16 +5,16 @@
 
 packages:
 - completed:
-    size: 28320
-    url: https://github.com/tkachuk-labs/persistent-migration/archive/0e40b397fa1042e117ec0809d5715b7aa1e636f6.tar.gz
+    size: 28355
+    url: https://github.com/21it/persistent-migration/archive/8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c.tar.gz
     name: persistent-migration
     version: 0.1.0
-    sha256: ea3fee08aea83938a09a9bc06cccd7a1cc0bcc585ebb2370e3609b021bf223d5
+    sha256: 27c7ec80766db7818d61652b0c485698063689f070dc68a7da7efb015cfc2e22
     pantry-tree:
       size: 3798
-      sha256: a6ad362ac7fb4ee35a4239e7ef5ede1c0df887e1c2f1f22e5fdb1ca393a9425c
+      sha256: a581eccca3ef56f0b8eddc320ba791ef02e86a9d49c036c94af01b85b8968a95
   original:
-    url: https://github.com/tkachuk-labs/persistent-migration/archive/0e40b397fa1042e117ec0809d5715b7aa1e636f6.tar.gz
+    url: https://github.com/21it/persistent-migration/archive/8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c.tar.gz
 snapshots:
 - completed:
     size: 581696

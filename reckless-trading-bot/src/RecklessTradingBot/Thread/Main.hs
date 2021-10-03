@@ -4,13 +4,12 @@
 module RecklessTradingBot.Thread.Main (apply) where
 
 import RecklessTradingBot.Import
-import qualified RecklessTradingBot.Thread.Price as ThreadPrice (apply)
+import qualified RecklessTradingBot.Storage.Migration as Migration
+import qualified RecklessTradingBot.Thread.Price as ThreadPrice
 
-apply :: (Env m, KatipContext m) => m ()
+apply :: Env m => m ()
 apply = do
-  --
-  -- TODO : run migrations
-  --
+  Migration.migrateAll
   res <- ThreadPrice.apply
   $(logTM) ErrorS
     . logStr

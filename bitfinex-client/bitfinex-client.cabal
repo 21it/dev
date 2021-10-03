@@ -120,6 +120,7 @@ test-suite bitfinex-client-test
       aeson
     , base >=4.7 && <5
     , bitfinex-client
+    , containers
     , hspec
     , time
     , transformers

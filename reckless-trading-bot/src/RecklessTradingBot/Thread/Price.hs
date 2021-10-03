@@ -11,18 +11,22 @@ apply = do
   xs <- mapM (spawnLink . loop) . toList =<< getPairs
   liftIO . void $ waitAny xs
 
-loop :: Env m => Bfx.CurrencyPair -> m ()
-loop sym = do
-  sleepTillNextPrice sym
-  createPrice sym
-  loop sym
+loop :: Env m => TradingConf -> m ()
+loop cfg = do
+  sleepTillNextPrice $ tradingConfPair cfg
+  createPrice cfg
+  loop cfg
 
-createPrice :: Env m => Bfx.CurrencyPair -> m ()
-createPrice sym = do
-  res <- runExceptT . withExceptT ErrorBfx $ do
-    amt <- except $ Bfx.newMoneyAmount 2
-    let getPrice x = Bfx.marketAveragePrice x amt sym
-    (,) <$> getPrice Bfx.Buy <*> getPrice Bfx.Sell
+createPrice :: Env m => TradingConf -> m ()
+createPrice cfg = do
+  amt <-
+    coerce
+      <$> readMVar (tradingConfMinOrderAmt cfg)
+  let getPrice x =
+        Bfx.marketAveragePrice x amt sym
+  res <-
+    runExceptT . withExceptT ErrorBfx $
+      (,) <$> getPrice Bfx.Buy <*> getPrice Bfx.Sell
   print res
   case res of
     --
@@ -36,6 +40,8 @@ createPrice sym = do
           sym
           (ExchangeRate buy)
           (ExchangeRate sell)
+  where
+    sym = tradingConfPair cfg
 
 spawnLink :: MonadUnliftIO m => m a -> m (Async a)
 spawnLink x =

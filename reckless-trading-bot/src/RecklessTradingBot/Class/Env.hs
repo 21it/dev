@@ -7,13 +7,14 @@ where
 
 import qualified BitfinexClient as Bfx
 import RecklessTradingBot.Class.Storage
+import qualified RecklessTradingBot.Data.Env as EnvData
 import RecklessTradingBot.Data.Model
 import RecklessTradingBot.Data.Time
 import RecklessTradingBot.Import.External
 
-class Storage m => Env m where
+class (Storage m, KatipContext m) => Env m where
   withBfx :: (Bfx.Env -> m a) -> m a
-  getPairs :: m (Set Bfx.CurrencyPair)
+  getPairs :: m [EnvData.TradingConf]
   getProfit :: m Bfx.ProfitRate
   getOrderTtl :: m Seconds
   putCurrPrice :: Price -> m ()

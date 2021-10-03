@@ -27,18 +27,21 @@ module BitfinexClient.Data.Type
     newProfitRate,
     MoneyAmount (..),
     newMoneyAmount,
+    newMoneyAmount',
     CurrencyCode (..),
     CurrencyPair,
     currencyPairBase,
     currencyPairQuote,
     newCurrencyPair,
     newCurrencyPair',
+    CurrencyPairConf (..),
 
     -- * Misc
     -- $misc
     PosRat,
     unPosRat,
     newPosRat,
+    newPosRat',
     subPosRat,
     bfxRoundPosRat,
     Error (..),
@@ -51,6 +54,7 @@ import BitfinexClient.Import.External
 import BitfinexClient.Util (fromRatio, mapRatio)
 import Data.Aeson (withObject, (.:))
 import qualified Data.Text as T
+import qualified Data.Text.Read as T
 import GHC.Natural (naturalFromInteger)
 import qualified Network.HTTP.Client as Web
 
@@ -178,10 +182,21 @@ newProfitRate = (ProfitRate <$>) . newPosRat
 -- TODO : add Buy/Sell phantom kind param
 --
 newtype MoneyAmount = MoneyAmount {unMoneyAmount :: PosRat}
-  deriving newtype (Eq, Ord, Show, Num, Fractional, ToRequestParam)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      Num,
+      Fractional,
+      ToRequestParam,
+      FromJSON
+    )
 
 newMoneyAmount :: Rational -> Either Error MoneyAmount
 newMoneyAmount = (MoneyAmount <$>) . newPosRat
+
+newMoneyAmount' :: Text -> Either Error MoneyAmount
+newMoneyAmount' = (MoneyAmount <$>) . newPosRat'
 
 instance ToRequestParam (ExchangeAction, MoneyAmount) where
   toTextParam (act, amt) =
@@ -233,19 +248,44 @@ newCurrencyPair base quote =
         CurrencyPair base quote
 
 newCurrencyPair' :: Text -> Either Error CurrencyPair
-newCurrencyPair' raw =
-  if (length raw == 7) && (prefix == "t")
-    then newCurrencyPair (CurrencyCode base0) (CurrencyCode quote0)
-    else Left . ErrorSmartCon $ "Invalid CurrencyPair " <> raw
+newCurrencyPair' raw
+  | (length raw == 7) && (prefix == "t") = do
+    let (base0, quote0) = T.splitAt 3 xs
+    newCurrencyPair
+      (CurrencyCode $ T.toUpper base0)
+      (CurrencyCode $ T.toUpper quote0)
+  | length raw == 6 = do
+    let (base0, quote0) = T.splitAt 3 raw
+    newCurrencyPair
+      (CurrencyCode $ T.toUpper base0)
+      (CurrencyCode $ T.toUpper quote0)
+  | otherwise =
+    Left . ErrorSmartCon $ "Invalid CurrencyPair " <> raw
   where
     (prefix, xs) = T.splitAt 1 raw
-    (base0, quote0) = T.splitAt 3 xs
+
+data CurrencyPairConf = CurrencyPairConf
+  { currencyPairPrecision :: Natural,
+    currencyPairInitMargin :: PosRat,
+    currencyPairMinMargin :: PosRat,
+    currencyPairMaxOrderAmt :: MoneyAmount,
+    currencyPairMinOrderAmt :: MoneyAmount
+  }
+  deriving stock (Eq, Ord, Show)
 
 -- $misc
 -- General utility data used elsewhere.
 
 newtype PosRat = PosRat {unPosRat :: Ratio Natural}
-  deriving newtype (Eq, Ord, Show, Num, Fractional, ToRequestParam)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      Num,
+      Fractional,
+      ToRequestParam,
+      FromJSON
+    )
 
 newPosRat :: Rational -> Either Error PosRat
 newPosRat x
@@ -253,6 +293,17 @@ newPosRat x
   | otherwise =
     Left . ErrorSmartCon $
       "PosRat should be positive, but got " <> show x
+
+newPosRat' :: Text -> Either Error PosRat
+newPosRat' x0 =
+  case T.rational $ T.strip x0 of
+    Right (x, "") -> newPosRat x
+    Right {} -> failure
+    Left {} -> failure
+  where
+    failure =
+      Left . ErrorSmartCon $
+        "PosRat is invalid, got " <> show x0
 
 subPosRat :: PosRat -> PosRat -> Either Error PosRat
 subPosRat x0 x1

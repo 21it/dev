@@ -25,6 +25,7 @@ dependencies:
 # bytes
 - aeson
 # other
+- containers
 - transformers
 - time
 
@@ -80,7 +81,6 @@ library:
   - envparse
   - cryptonite
   - unliftio
-  - containers
   - vector
 
 tests:

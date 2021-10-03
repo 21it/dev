@@ -13,6 +13,8 @@ import BitfinexClient.Data.Web
 import BitfinexClient.Import.External
 import BitfinexClient.Parser
 import Data.Aeson.Lens
+import qualified Data.Map as Map
+import qualified Data.Vector as V
 
 class FromRpc (method :: Method) res where
   fromRpc :: RawResponse -> Either Text res
@@ -68,3 +70,66 @@ instance FromRpc 'FeeSummary FeeSummary.Response where
         )
           <=< maybeToRight (field <> " is missing")
           $ raw ^? nth 4 . nth ix0 . nth ix1 . _Number
+
+instance FromRpc 'SymbolsDetails (Map CurrencyPair CurrencyPairConf) where
+  fromRpc (RawResponse raw) = do
+    xs <-
+      maybeToRight
+        "Json is not an Array"
+        $ raw ^? _Array
+    res <-
+      foldrM parser mempty $
+        V.filter
+          (\x -> (length <$> x ^? key "pair" . _String) == Just 6)
+          xs
+    if null res
+      then Left "SymbolsDetails are empty"
+      else pure res
+    where
+      parser x acc = do
+        (sym, cfg) <- parseEntry x
+        pure $ Map.insert sym cfg acc
+      parseEntry x = do
+        sym0 <-
+          maybeToRight "Symbol is missing" $
+            x ^? key "pair" . _String
+        sym <-
+          first (const $ "Symbol is invalid " <> show sym0) $
+            newCurrencyPair' sym0
+        prec <-
+          maybeToRight "Precision is missing" $
+            x ^? key "price_precision" . _Integral
+        initMargin0 <-
+          maybeToRight "Init Margin is missing" $
+            x ^? key "initial_margin" . _String
+        initMargin <-
+          first (const $ "Init Margin is invalid " <> show initMargin0) $
+            newPosRat' initMargin0
+        minMargin0 <-
+          maybeToRight "Min Margin is missing" $
+            x ^? key "minimum_margin" . _String
+        minMargin <-
+          first (const $ "Min Margin is invalid " <> show minMargin0) $
+            newPosRat' minMargin0
+        maxOrderAmt0 <-
+          maybeToRight "Max Order Size is missing" $
+            x ^? key "maximum_order_size" . _String
+        maxOrderAmt <-
+          first (const $ "Max Order Size is invalid " <> show maxOrderAmt0) $
+            newMoneyAmount' maxOrderAmt0
+        minOrderAmt0 <-
+          maybeToRight "Min Order Size is missing" $
+            x ^? key "minimum_order_size" . _String
+        minOrderAmt <-
+          first (const $ "Min Order Size is invalid " <> show minOrderAmt0) $
+            newMoneyAmount' minOrderAmt0
+        pure
+          ( sym,
+            CurrencyPairConf
+              { currencyPairPrecision = prec,
+                currencyPairInitMargin = initMargin,
+                currencyPairMinMargin = minMargin,
+                currencyPairMaxOrderAmt = maxOrderAmt,
+                currencyPairMinOrderAmt = minOrderAmt
+              }
+          )

@@ -8,7 +8,7 @@ mkDerivation {
   pname = "persistent-migration";
   version = "0.1.0";
   src = fetchgit {
-    url = "https://github.com/21it/persistent-migration";
+    url = "git@github.com:21it/persistent-migration.git";
     sha256 = "1v993ckrhgm7v3f1km174r2r93scpxhc5v1ckfhmqay391jf5qzv";
     rev = "8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c";
     fetchSubmodules = true;

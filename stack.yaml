@@ -5,5 +5,5 @@ packages:
   - bitfinex-client
   - reckless-trading-bot
 extra-deps:
-  - github: tkachuk-labs/persistent-migration
-    commit: 0e40b397fa1042e117ec0809d5715b7aa1e636f6
+  - github: 21it/persistent-migration
+    commit: 8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c

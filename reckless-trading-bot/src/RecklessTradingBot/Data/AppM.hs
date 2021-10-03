@@ -61,7 +61,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     case mx of
       Nothing -> pure ()
       Just x -> do
-        ct <- liftIO $ getCurrentTime
+        ct <- liftIO getCurrentTime
         case newSeconds'
           . diffUTCTime ct
           . priceAt
@@ -70,4 +70,5 @@ instance (MonadUnliftIO m) => Env (AppM m) where
           -- TODO : add unexpected error logging
           --
           Left {} -> sleep ttl0
-          Right ttl1 -> sleep ttl1
+          Right ttl1 | ttl1 < ttl0 -> sleep $ ttl0 - ttl1
+          Right {} -> pure ()

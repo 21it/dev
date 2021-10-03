@@ -59,7 +59,7 @@ instance PersistField (ExchangeRate a) where
 
 newtype MoneyAmount (a :: Bfx.CurrencyRelation)
   = MoneyAmount Bfx.MoneyAmount
-  deriving newtype (Eq, Ord, Show, Num)
+  deriving newtype (Eq, Ord, Show, Num, FromJSON)
 
 deriving via
   Rational

@@ -2,6 +2,7 @@
 
 module BitfinexClient.TestEnv
   ( withAdaBtc,
+    eraseFirst,
   )
 where
 
@@ -15,3 +16,6 @@ withAdaBtc this = runExceptT $ do
   amt <- except . newMoneyAmount $ 200200201 % 100000000
   sym <- except $ newCurrencyPair "ADA" "BTC"
   this amt sym
+
+eraseFirst :: Bifunctor f => f a b -> f () b
+eraseFirst = first $ const ()

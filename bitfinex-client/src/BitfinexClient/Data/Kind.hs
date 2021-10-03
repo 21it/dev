@@ -9,7 +9,8 @@ module BitfinexClient.Data.Kind
 where
 
 data Method
-  = MarketAveragePrice
+  = SymbolsDetails
+  | MarketAveragePrice
   | FeeSummary
   | SubmitOrder
   | RetrieveOrders

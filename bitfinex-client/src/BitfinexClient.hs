@@ -1,7 +1,8 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient
-  ( marketAveragePrice,
+  ( symbolsDetails,
+    marketAveragePrice,
     feeSummary,
     retrieveOrders,
     ordersHistory,
@@ -30,6 +31,12 @@ import qualified BitfinexClient.Import.Internal as X
 import qualified BitfinexClient.Rpc.Generic as Generic
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+
+symbolsDetails ::
+  MonadIO m =>
+  ExceptT Error m (Map CurrencyPair CurrencyPairConf)
+symbolsDetails =
+  Generic.pub (Generic.Rpc :: Generic.Rpc 'SymbolsDetails) [] ()
 
 marketAveragePrice ::
   MonadIO m =>

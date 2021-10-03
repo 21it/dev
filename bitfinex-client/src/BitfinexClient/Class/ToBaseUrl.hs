@@ -12,23 +12,26 @@ import BitfinexClient.Data.Web
 class ToBaseUrl (method :: Method) where
   toBaseUrl :: BaseUrl
 
+instance ToBaseUrl 'SymbolsDetails where
+  toBaseUrl = base
+
 instance ToBaseUrl 'MarketAveragePrice where
-  toBaseUrl = prv
+  toBaseUrl = base
 
 instance ToBaseUrl 'FeeSummary where
-  toBaseUrl = prv
+  toBaseUrl = base
 
 instance ToBaseUrl 'SubmitOrder where
-  toBaseUrl = prv
+  toBaseUrl = base
 
 instance ToBaseUrl 'RetrieveOrders where
-  toBaseUrl = prv
+  toBaseUrl = base
 
 instance ToBaseUrl 'OrdersHistory where
-  toBaseUrl = prv
+  toBaseUrl = base
 
 instance ToBaseUrl 'CancelOrderMulti where
-  toBaseUrl = prv
+  toBaseUrl = base
 
-prv :: BaseUrl
-prv = "https://api.bitfinex.com"
+base :: BaseUrl
+base = "https://api.bitfinex.com"
