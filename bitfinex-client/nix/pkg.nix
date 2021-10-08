@@ -15,7 +15,9 @@ mkDerivation {
     unordered-containers vector witch
   ];
   libraryToolDepends = [ hpack ];
-  testHaskellDepends = [ aeson base hspec time transformers ];
+  testHaskellDepends = [
+    aeson base containers hspec time transformers
+  ];
   prePatch = "hpack";
   homepage = "https://github.com/tkachuk-labs/bitfinex-client#readme";
   license = lib.licenses.bsd3;

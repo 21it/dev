@@ -53,8 +53,15 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     ch <- asks EnvData.envPriceChan
     liftIO . atomically $ writeTChan ch x
   rcvNextPrice = do
-    ch <- asks EnvData.envPriceChan
-    liftIO . atomically $ dupTChan ch >>= readTChan
+    ch0 <- asks EnvData.envPriceChan
+    liftIO $ do
+      --
+      -- 'dupTChan' and 'readTChan' should not
+      -- be used under the same 'atomically'
+      -- because it will cause deadlock
+      --
+      ch1 <- atomically $ dupTChan ch0
+      atomically $ readTChan ch1
   sleepTillNextPrice sym = do
     ttl0 <- asks EnvData.envPriceTtl
     mx <- Price.getLatest sym

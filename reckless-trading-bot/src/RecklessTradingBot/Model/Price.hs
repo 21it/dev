@@ -2,6 +2,7 @@
 
 module RecklessTradingBot.Model.Price
   ( create,
+    getSeq,
     getLatest,
   )
 where
@@ -34,6 +35,22 @@ create pair buy sell = do
           priceSell = sell,
           priceAt = ct
         }
+
+getSeq ::
+  Storage m =>
+  Bfx.CurrencyPair ->
+  m [Entity Price]
+getSeq pair =
+  runSql $
+    P.selectList
+      [ PriceBase
+          P.==. CurrencyCode (Bfx.currencyPairBase pair),
+        PriceQuote
+          P.==. CurrencyCode (Bfx.currencyPairQuote pair)
+      ]
+      [ P.Desc PriceId,
+        P.LimitTo 3
+      ]
 
 getLatest ::
   Storage m =>

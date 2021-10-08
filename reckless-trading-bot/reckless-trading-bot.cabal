@@ -39,7 +39,9 @@ library
       RecklessTradingBot.Storage
       RecklessTradingBot.Storage.Migration
       RecklessTradingBot.Thread.Main
+      RecklessTradingBot.Thread.Order
       RecklessTradingBot.Thread.Price
+      RecklessTradingBot.Util
   other-modules:
       Paths_reckless_trading_bot
   hs-source-dirs:

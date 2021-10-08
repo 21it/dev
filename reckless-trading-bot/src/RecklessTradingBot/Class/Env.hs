@@ -17,6 +17,6 @@ class (Storage m, KatipContext m) => Env m where
   getPairs :: m [EnvData.TradingConf]
   getProfit :: m Bfx.ProfitRate
   getOrderTtl :: m Seconds
-  putCurrPrice :: Price -> m ()
-  rcvNextPrice :: m Price
+  putCurrPrice :: Entity Price -> m ()
+  rcvNextPrice :: m (Entity Price)
   sleepTillNextPrice :: Bfx.CurrencyPair -> m ()

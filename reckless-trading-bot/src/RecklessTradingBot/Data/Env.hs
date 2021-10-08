@@ -43,7 +43,7 @@ data Env = Env
     envProfit :: Bfx.ProfitRate,
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
-    envPriceChan :: TChan Price,
+    envPriceChan :: TChan (Entity Price),
     -- storage
     envSqlPool :: Pool SqlBackend,
     -- logging

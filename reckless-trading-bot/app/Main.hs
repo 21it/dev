@@ -12,7 +12,4 @@ import qualified RecklessTradingBot.Thread.Main as MainThread
 main :: IO ()
 main =
   withEnv $
-    --
-    -- TODO : add before/auto/after migrations
-    --
     flip runApp MainThread.apply

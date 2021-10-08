@@ -2,15 +2,7 @@
 
 module RecklessTradingBot.Import.External (module X) where
 
-import Control.Concurrent.Async as X
-  ( Async (..),
-    async,
-    cancel,
-    link,
-    poll,
-    race,
-    waitAny,
-  )
+import Control.Concurrent.Async as X (waitAnyCancel)
 import Control.Concurrent.STM as X (atomically)
 import Control.Concurrent.STM.TChan as X
   ( TChan,
