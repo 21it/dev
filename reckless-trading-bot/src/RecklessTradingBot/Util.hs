@@ -1,6 +1,10 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module RecklessTradingBot.Util (spawnLink) where
+module RecklessTradingBot.Util
+  ( spawnLink,
+  )
+where
 
 import Control.Concurrent.Async
   ( Async (..),

@@ -35,7 +35,9 @@ library
       RecklessTradingBot.Data.Type
       RecklessTradingBot.Import
       RecklessTradingBot.Import.External
+      RecklessTradingBot.Model.Order
       RecklessTradingBot.Model.Price
+      RecklessTradingBot.Orphan
       RecklessTradingBot.Storage
       RecklessTradingBot.Storage.Migration
       RecklessTradingBot.Thread.Main
@@ -91,8 +93,28 @@ library
 executable reckless-trading-bot-exe
   main-is: Main.hs
   other-modules:
+      RecklessTradingBot.Class.Env
+      RecklessTradingBot.Class.Storage
+      RecklessTradingBot.Data.AppM
+      RecklessTradingBot.Data.Env
+      RecklessTradingBot.Data.Model
+      RecklessTradingBot.Data.Money
+      RecklessTradingBot.Data.Time
+      RecklessTradingBot.Data.Type
+      RecklessTradingBot.Import
+      RecklessTradingBot.Import.External
+      RecklessTradingBot.Model.Order
+      RecklessTradingBot.Model.Price
+      RecklessTradingBot.Orphan
+      RecklessTradingBot.Storage
+      RecklessTradingBot.Storage.Migration
+      RecklessTradingBot.Thread.Main
+      RecklessTradingBot.Thread.Order
+      RecklessTradingBot.Thread.Price
+      RecklessTradingBot.Util
       Paths_reckless_trading_bot
   hs-source-dirs:
+      src
       app
   default-extensions:
       NoImplicitPrelude
@@ -119,9 +141,29 @@ test-suite reckless-trading-bot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      RecklessTradingBot.Class.Env
+      RecklessTradingBot.Class.Storage
+      RecklessTradingBot.Data.AppM
+      RecklessTradingBot.Data.Env
+      RecklessTradingBot.Data.Model
+      RecklessTradingBot.Data.Money
+      RecklessTradingBot.Data.Time
+      RecklessTradingBot.Data.Type
+      RecklessTradingBot.Import
+      RecklessTradingBot.Import.External
+      RecklessTradingBot.Model.Order
+      RecklessTradingBot.Model.Price
+      RecklessTradingBot.Orphan
+      RecklessTradingBot.Storage
+      RecklessTradingBot.Storage.Migration
+      RecklessTradingBot.Thread.Main
+      RecklessTradingBot.Thread.Order
+      RecklessTradingBot.Thread.Price
+      RecklessTradingBot.Util
       RecklessTradingBotSpec
       Paths_reckless_trading_bot
   hs-source-dirs:
+      src
       test
   default-extensions:
       NoImplicitPrelude

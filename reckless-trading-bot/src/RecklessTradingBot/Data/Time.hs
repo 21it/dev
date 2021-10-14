@@ -2,7 +2,8 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Time
-  ( Seconds (..),
+  ( Seconds,
+    unSeconds,
     newSeconds,
     newSeconds',
     sleep,
@@ -12,31 +13,29 @@ where
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 
-newtype Seconds
-  = Seconds Natural
+newtype Seconds = Seconds
+  { unSeconds :: NominalDiffTime
+  }
   deriving newtype
     (Eq, Ord, Show, Num)
 
-newSeconds :: Integer -> Either Error Seconds
-newSeconds =
-  bimap
-    ( \(TryFromException x _) ->
-        ErrorSmartCon $
-          "Seconds can not be negative but got " <> show x
-    )
-    Seconds
-    . tryFrom
+newSeconds :: NominalDiffTime -> Either Error Seconds
+newSeconds x =
+  if x >= 0
+    then Right $ Seconds x
+    else
+      Left . ErrorSmartCon $
+        "Seconds can not be negative but got " <> show x
 
-newSeconds' :: NominalDiffTime -> Either Error Seconds
+newSeconds' :: Pico -> Either Error Seconds
 newSeconds' =
-  newSeconds
-    . round
-    . nominalDiffTimeToSeconds
+  newSeconds . secondsToNominalDiffTime
 
 sleep :: MonadIO m => Seconds -> m ()
 sleep =
   liftIO
     . delay
+    . round
     . (* 1000000)
-    . from @Natural
+    . nominalDiffTimeToSeconds
     . coerce

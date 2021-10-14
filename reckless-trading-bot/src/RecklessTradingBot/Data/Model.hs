@@ -20,6 +20,7 @@ import Database.Persist.TH
 import RecklessTradingBot.Data.Money
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
+import RecklessTradingBot.Orphan ()
 
 --
 -- You can define all of your database entities in the entities file.
@@ -66,7 +67,7 @@ share
       loss (MoneyAmount 'Bfx.Quote)
       fee (FeeRate 'Bfx.Base)
       status OrderStatus
-      insertedAt UTCTime
+      at UTCTime
       deriving Eq Show
 
     CounterOrder
@@ -77,7 +78,11 @@ share
       loss (MoneyAmount 'Bfx.Base)
       fee (FeeRate 'Bfx.Quote)
       status OrderStatus
-      insertedAt UTCTime
+      at UTCTime
       deriving Eq Show
 
   |]
+
+instance TryFrom OrderId Bfx.OrderClientId where
+  tryFrom =
+    Bfx.OrderClientId `composeTryRhs` tryFrom

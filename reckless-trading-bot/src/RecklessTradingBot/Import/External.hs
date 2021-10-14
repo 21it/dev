@@ -21,6 +21,7 @@ import Control.Monad.Trans.Except as X
 import Data.Aeson as X (FromJSON (..), ToJSON (..))
 import Data.Coerce as X (coerce)
 import Data.Either.Extra as X (fromEither)
+import Data.Fixed as X (Pico)
 import Data.List as X (partition)
 import Data.Pool as X (Pool, destroyAllResources)
 import Data.Ratio as X ((%))
@@ -35,6 +36,7 @@ import Data.Time.Clock as X
     getCurrentTime,
     nominalDiffTimeToSeconds,
     secondsToDiffTime,
+    secondsToNominalDiffTime,
   )
 import Database.Esqueleto.Legacy as X
   ( Entity (..),
@@ -81,4 +83,10 @@ import Katip as X
   )
 import Universum as X hiding (atomically, bracket, on, set, (^.))
 import UnliftIO as X (MonadUnliftIO, bracket, withRunInIO)
-import Witch as X (TryFromException (..), from, tryFrom)
+import Witch as X
+  ( From (..),
+    TryFrom (..),
+    composeTry,
+    composeTryLhs,
+    composeTryRhs,
+  )

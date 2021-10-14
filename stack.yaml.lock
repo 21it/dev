@@ -15,6 +15,17 @@ packages:
       sha256: a581eccca3ef56f0b8eddc320ba791ef02e86a9d49c036c94af01b85b8968a95
   original:
     url: https://github.com/21it/persistent-migration/archive/8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c.tar.gz
+- completed:
+    size: 23474
+    url: https://github.com/21it/witch/archive/74bcf76cc968415e76d6804383a3ec22383459a5.tar.gz
+    name: witch
+    version: 0.3.4.0
+    sha256: 0e4f7c12d19367c06d655ca5c527f04d1368d34c4bb1bbb0dd4eca5e911f37e6
+    pantry-tree:
+      size: 1882
+      sha256: 941203ba85089c9f30259c013851daf21709c911cc75a7030f7387c5d9d98819
+  original:
+    url: https://github.com/21it/witch/archive/74bcf76cc968415e76d6804383a3ec22383459a5.tar.gz
 snapshots:
 - completed:
     size: 581696

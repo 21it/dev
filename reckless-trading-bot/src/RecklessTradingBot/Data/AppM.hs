@@ -45,10 +45,16 @@ instance (MonadUnliftIO m) => Storage (AppM m) where
     runSqlPool query pool
 
 instance (MonadUnliftIO m) => Env (AppM m) where
-  withBfx = (asks EnvData.envBfx >>=)
+  withBfxT method args = do
+    bfx <- asks EnvData.envBfx
+    withExceptT ErrorBfx . args $ method bfx
   getPairs = asks EnvData.envPairs
   getProfit = asks EnvData.envProfit
-  getOrderTtl = asks EnvData.envOrderTtl
+  orderExpired x = do
+    ttl <- asks EnvData.envOrderTtl
+    ct <- liftIO getCurrentTime
+    pure $
+      ct > addUTCTime (unSeconds ttl) (orderAt x)
   putCurrPrice x = do
     ch <- asks EnvData.envPriceChan
     liftIO . atomically $ writeTChan ch x
@@ -69,7 +75,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
       Nothing -> pure ()
       Just x -> do
         ct <- liftIO getCurrentTime
-        case newSeconds'
+        case newSeconds
           . diffUTCTime ct
           . priceAt
           $ entityVal x of

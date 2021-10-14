@@ -34,7 +34,7 @@ createPrice cfg = do
     -- TODO : log error and do something
     --
     Left {} ->
-      sleep $ Seconds 60
+      sleep 60
     Right (buy, sell) -> do
       price <-
         Price.create

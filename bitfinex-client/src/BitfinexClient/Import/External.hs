@@ -25,4 +25,10 @@ import Data.Typeable as X (typeOf)
 import Network.HTTP.Client as X (HttpException (..))
 import Universum as X hiding (ByteString, catch)
 import UnliftIO as X (catch)
-import Witch as X (From, from)
+import Witch as X
+  ( From (..),
+    TryFrom (..),
+    composeTry,
+    composeTryLhs,
+    composeTryRhs,
+  )

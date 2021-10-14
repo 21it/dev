@@ -84,11 +84,17 @@ newRawConfig = liftIO $ do
         "RECKLESS_TRADING_BOT_PROFIT"
         op
       <*> var
-        (err . newSeconds <=< auto <=< nonempty)
+        ( err . newSeconds'
+            <=< auto
+            <=< nonempty
+        )
         "RECKLESS_TRADING_BOT_PRICE_TTL"
         op
       <*> var
-        (err . newSeconds <=< auto <=< nonempty)
+        ( err . newSeconds'
+            <=< auto
+            <=< nonempty
+        )
         "RECKLESS_TRADING_BOT_ORDER_TTL"
         op
       <*> var

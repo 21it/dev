@@ -216,10 +216,14 @@ cancelOrderByClientId ::
   Env ->
   OrderClientId ->
   UTCTime ->
-  ExceptT Error m (Map OrderId (Order 'Remote))
+  ExceptT Error m (Maybe (Order 'Remote))
 cancelOrderByClientId env cid utc =
-  cancelOrderMulti env . CancelOrderMulti.ByOrderClientId $
-    Set.singleton (cid, utc)
+  listToMaybe . elems
+    <$> cancelOrderMulti
+      env
+      ( CancelOrderMulti.ByOrderClientId $
+          Set.singleton (cid, utc)
+      )
 
 cancelOrderByGroupId ::
   MonadIO m =>

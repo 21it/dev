@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Type
@@ -66,13 +67,33 @@ newtype OrderId
   = OrderId Natural
   deriving newtype (Eq, Ord, Show, ToJSON, FromJSON)
 
+instance From Natural OrderId
+
+instance From OrderId Natural
+
+instance TryFrom Int64 OrderId where
+  tryFrom =
+    from @Natural `composeTryRhs` tryFrom
+
+instance TryFrom OrderId Int64 where
+  tryFrom =
+    tryFrom @Natural `composeTryLhs` from
+
 newtype OrderClientId
   = OrderClientId Natural
   deriving newtype (Eq, Ord, Show, ToJSON, FromJSON)
 
+instance From Natural OrderClientId
+
+instance From OrderClientId Natural
+
 newtype OrderGroupId
   = OrderGroupId Natural
   deriving newtype (Eq, Ord, Show, ToJSON, FromJSON)
+
+instance From Natural OrderGroupId
+
+instance From OrderGroupId Natural
 
 data Order (a :: Location) = Order
   { orderId :: OrderId,
