@@ -29,37 +29,40 @@ dependencies:
 - transformers
 - time
 
+default-extensions:
+- NoImplicitPrelude
+- MultiParamTypeClasses
+- LambdaCase
+- OverloadedStrings
+- OverloadedLists
+- ScopedTypeVariables
+- GeneralizedNewtypeDeriving
+- DerivingStrategies
+- DataKinds
+- KindSignatures
+- ExistentialQuantification
+- FlexibleInstances
+- FlexibleContexts
+
+ghc-options:
+# For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
+# Enable all warnings with -Weverything, then disable the ones we don’t care about
+- -Weverything
+- -Werror
+- -Wno-prepositive-qualified-module
+- -Wno-missing-safe-haskell-mode
+- -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures. See https://ghc.haskell.org/trac/ghc/ticket/14794#ticket
+- -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
+- -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function. No big deal and requires fixing underlying libraries to solve.
+- -Wno-all-missed-specialisations # See missed-specialisations
+- -Wno-unsafe # Don’t use Safe Haskell warnings
+- -Wno-safe # Don’t use Safe Haskell warnings
+- -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
+- -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
+
 library:
-  source-dirs: src
-  default-extensions:
-  - NoImplicitPrelude
-  - MultiParamTypeClasses
-  - LambdaCase
-  - OverloadedStrings
-  - OverloadedLists
-  - ScopedTypeVariables
-  - GeneralizedNewtypeDeriving
-  - DerivingStrategies
-  - DataKinds
-  - KindSignatures
-  - ExistentialQuantification
-  - FlexibleInstances
-  - FlexibleContexts
-  ghc-options:
-  # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
-  # Enable all warnings with -Weverything, then disable the ones we don’t care about
-  - -Weverything
-  - -Werror
-  - -Wno-prepositive-qualified-module
-  - -Wno-missing-safe-haskell-mode
-  - -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures. See https://ghc.haskell.org/trac/ghc/ticket/14794#ticket
-  - -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
-  - -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function. No big deal and requires fixing underlying libraries to solve.
-  - -Wno-all-missed-specialisations # See missed-specialisations
-  - -Wno-unsafe # Don’t use Safe Haskell warnings
-  - -Wno-safe # Don’t use Safe Haskell warnings
-  - -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
-  - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
+  source-dirs:
+  - src
   dependencies:
   # foundation
   - universum
@@ -85,37 +88,10 @@ library:
 
 tests:
   bitfinex-client-test:
-    main:                Spec.hs
-    source-dirs:         test
-    default-extensions:
-    - NoImplicitPrelude
-    - MultiParamTypeClasses
-    - LambdaCase
-    - OverloadedStrings
-    - OverloadedLists
-    - ScopedTypeVariables
-    - GeneralizedNewtypeDeriving
-    - DerivingStrategies
-    - DataKinds
-    - KindSignatures
-    - ExistentialQuantification
-    - FlexibleInstances
-    - FlexibleContexts
+    main: Spec.hs
+    source-dirs:
+    - test
     ghc-options:
-    # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
-    # Enable all warnings with -Weverything, then disable the ones we don’t care about
-    - -Weverything
-    - -Werror
-    - -Wno-prepositive-qualified-module
-    - -Wno-missing-safe-haskell-mode
-    - -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures. See https://ghc.haskell.org/trac/ghc/ticket/14794#ticket
-    - -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
-    - -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function. No big deal and requires fixing underlying libraries to solve.
-    - -Wno-all-missed-specialisations # See missed-specialisations
-    - -Wno-unsafe # Don’t use Safe Haskell warnings
-    - -Wno-safe # Don’t use Safe Haskell warnings
-    - -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
-    - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N

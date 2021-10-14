@@ -1,0 +1,3 @@
+--restart=bitfinex-client/package.yaml
+--restart=reckless-trading-bot/package.yaml
+--restart=reckless-trading-bot/nix/export-test-envs.sh

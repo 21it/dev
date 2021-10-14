@@ -22,9 +22,6 @@ description:         Please see the README on GitHub at <https://github.com/tkac
 dependencies:
 - base >= 4.15 && < 5
 
-source-dirs:
-- src
-
 default-extensions:
 - NoImplicitPrelude
 - MultiParamTypeClasses
@@ -58,6 +55,8 @@ ghc-options:
 - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
 
 library:
+  source-dirs:
+  - src
   dependencies:
   # foundation
   - universum
