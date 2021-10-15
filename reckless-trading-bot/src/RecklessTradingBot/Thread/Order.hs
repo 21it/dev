@@ -11,9 +11,10 @@ import qualified RecklessTradingBot.Model.Price as Price
 -- | This thread **must** be the only one
 -- which is doing insert/update access to Order
 -- model. Bot business logic is quite simple,
--- and I assume there is the only one instance running.
--- This way I can avoid lock-by-row transactional complexity
--- of postgres procedures, and do simple insert/update instead.
+-- and I assume there is the only one instance
+-- running. This way I can avoid lock-by-row
+-- transactional complexity of postgres
+-- procedures, and do simple insert/update instead.
 apply :: Env m => m ()
 apply = do
   $(logTM) InfoS "Spawned"
@@ -63,18 +64,25 @@ resolveOngoingT x =
           withBfxT Bfx.getOrder ($ from ref)
         lift . Order.updateStatus id0 $
           Bfx.orderStatus bfx
-    order -> do
+    order@( Order
+              { orderStatus = OrderNew
+              }
+            ) -> do
+        $(logTM) ErrorS . logStr $
+          "Cancelling unexpected "
+            <> (show order :: Text)
+        cid <-
+          except
+            . first (ErrorTryFrom . SomeException)
+            $ tryFrom id0
+        withBfxT
+          Bfx.cancelOrderByClientId
+          (\f -> void . f cid $ orderAt order)
+        lift $
+          Order.updateStatus id0 OrderCancelled
+    order ->
       $(logTM) ErrorS . logStr $
-        "Cancelling unexpected "
+        "Ignoring unexpected "
           <> (show order :: Text)
-      cid <-
-        except
-          . first (ErrorTryFrom . SomeException)
-          $ tryFrom id0
-      withBfxT
-        Bfx.cancelOrderByClientId
-        (\f -> void . f cid $ orderAt order)
-      lift $
-        Order.updateStatus id0 OrderCancelled
   where
     id0 = entityKey x

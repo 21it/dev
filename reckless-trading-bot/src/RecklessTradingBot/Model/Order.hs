@@ -52,9 +52,11 @@ getOngoing sym =
   runSql $
     P.selectList
       [ OrderBase
-          P.==. CurrencyCode (Bfx.currencyPairBase sym),
+          P.==. CurrencyCode
+            (Bfx.currencyPairBase sym),
         OrderQuote
-          P.==. CurrencyCode (Bfx.currencyPairQuote sym),
+          P.==. CurrencyCode
+            (Bfx.currencyPairQuote sym),
         OrderStatus
           P.<-. [OrderNew, OrderActive]
       ]
