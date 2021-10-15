@@ -89,4 +89,6 @@ import Witch as X
     composeTry,
     composeTryLhs,
     composeTryRhs,
+    into,
+    via,
   )

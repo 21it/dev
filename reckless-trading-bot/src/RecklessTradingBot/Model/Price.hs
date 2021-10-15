@@ -44,9 +44,11 @@ getSeq pair =
   runSql $
     P.selectList
       [ PriceBase
-          P.==. CurrencyCode (Bfx.currencyPairBase pair),
+          P.==. CurrencyCode
+            (Bfx.currencyPairBase pair),
         PriceQuote
-          P.==. CurrencyCode (Bfx.currencyPairQuote pair)
+          P.==. CurrencyCode
+            (Bfx.currencyPairQuote pair)
       ]
       [ P.Desc PriceId,
         P.LimitTo 3
@@ -61,9 +63,11 @@ getLatest pair =
     listToMaybe
       <$> P.selectList
         [ PriceBase
-            P.==. CurrencyCode (Bfx.currencyPairBase pair),
+            P.==. CurrencyCode
+              (Bfx.currencyPairBase pair),
           PriceQuote
-            P.==. CurrencyCode (Bfx.currencyPairQuote pair)
+            P.==. CurrencyCode
+              (Bfx.currencyPairQuote pair)
         ]
         [ P.Desc PriceId,
           P.LimitTo 1

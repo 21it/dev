@@ -28,21 +28,6 @@ stdenv.mkDerivation {
   BITFINEX_PRV_KEY=bitfinexPrvKey;
   shellHook = ''
 
-    export HOOGLEDB=/root/.hoogle
-    if [ "$(ls -A $HOOGLEDB)" ]; then
-      echo "hoogle database already exists..."
-    else
-      echo "building hoogle database..."
-      stack --stack-yaml=/app/stack.yaml exec hoogle generate
-    fi
-
-    if [ "$(ls -A ~/.cabal)" ]; then
-      echo "cabal database already exists..."
-    else
-      echo "building cabal database..."
-      cabal v2-update
-    fi
-
     (cd /app/bitfinex-client/nix/ && cabal2nix ./.. > ./pkg.nix)
     (cd /app/reckless-trading-bot/nix/ && cabal2nix ./.. > ./pkg.nix)
 

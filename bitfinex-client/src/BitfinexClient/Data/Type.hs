@@ -186,6 +186,10 @@ newtype FeeRate (a :: MarketRelation)
   = FeeRate PosRat
   deriving newtype (Eq, Ord, Show, Num)
 
+instance From (FeeRate a) PosRat
+
+instance From PosRat (FeeRate a)
+
 newFeeRate :: Rational -> Either Error (FeeRate a)
 newFeeRate = (FeeRate <$>) . newPosRat
 
@@ -212,6 +216,10 @@ newtype MoneyAmount = MoneyAmount {unMoneyAmount :: PosRat}
       ToRequestParam,
       FromJSON
     )
+
+instance From PosRat MoneyAmount
+
+instance From MoneyAmount PosRat
 
 newMoneyAmount :: Rational -> Either Error MoneyAmount
 newMoneyAmount = (MoneyAmount <$>) . newPosRat

@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Env
@@ -8,6 +9,7 @@ module RecklessTradingBot.Data.Env
 where
 
 import qualified BitfinexClient as Bfx
+import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as C8
@@ -31,6 +33,7 @@ import RecklessTradingBot.Import.External
 
 data TradingConf = TradingConf
   { tradingConfPair :: Bfx.CurrencyPair,
+    tradingConfFee :: Bfx.FeeRate 'Bfx.Maker,
     tradingConfMinOrderAmt ::
       MVar (MoneyAmount 'Bfx.Base)
   }
@@ -157,16 +160,20 @@ withEnv this = do
             10
   bracket mkLogEnv rmLogEnv $ \le ->
     bracket mkSqlPool rmSqlPool $ \pool -> do
+      let bfx = rawConfigBfx rc
       priceChan <-
         liftIO $
           atomically newBroadcastTChan
+      --
+      -- TODO : separate thread to update Bfx.symbolsDetails
+      --
       cfg <-
-        newTradingConfSet $
+        newTradingConfSet bfx $
           rawConfigPairs rc
       this
         Env
           { -- app
-            envBfx = rawConfigBfx rc,
+            envBfx = bfx,
             envPairs = cfg,
             envProfit = rawConfigProfit rc,
             envPriceTtl = rawConfigPriceTtl rc,
@@ -185,29 +192,43 @@ withEnv this = do
 
 newTradingConfSet ::
   MonadIO m =>
+  Bfx.Env ->
   Set Bfx.CurrencyPair ->
   m [TradingConf]
-newTradingConfSet xs = do
-  ex <- runExceptT Bfx.symbolsDetails
+newTradingConfSet bfx syms = do
+  ex <-
+    runExceptT $
+      (,)
+        <$> Bfx.symbolsDetails
+        <*> Bfx.feeSummary bfx
   case ex of
     Left e -> error $ show e
-    Right x -> mapM (newTradingConf x) $ toList xs
+    Right (symDetails, feeDetails) ->
+      mapM (newTradingConf symDetails feeDetails) $
+        toList syms
 
 newTradingConf ::
   MonadIO m =>
   Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
+  FeeSummary.Response ->
   Bfx.CurrencyPair ->
   m TradingConf
-newTradingConf cfgs sym =
-  case Map.lookup sym cfgs of
+newTradingConf symDetails feeDetails sym =
+  case Map.lookup sym symDetails of
     Nothing -> error $ "Missing " <> show sym
     Just cfg -> do
-      amt <-
-        liftIO . newMVar
-          . MoneyAmount
-          $ Bfx.currencyPairMinOrderAmt cfg
+      let amtDef = Bfx.currencyPairMinOrderAmt cfg
+      let amtInclFee = into @(Bfx.PosRat) amtDef / (1 - from fee)
+      when (amtInclFee <= 0)
+        . error
+        $ "Wrong min Order " <> show amtInclFee
+      amtVar <-
+        liftIO . newMVar $ from amtInclFee
       pure $
         TradingConf
           { tradingConfPair = sym,
-            tradingConfMinOrderAmt = amt
+            tradingConfFee = fee,
+            tradingConfMinOrderAmt = amtVar
           }
+  where
+    fee = FeeSummary.makerCrypto2CryptoFee feeDetails

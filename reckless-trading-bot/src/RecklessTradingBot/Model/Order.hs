@@ -3,7 +3,7 @@
 module RecklessTradingBot.Model.Order
   ( getOngoing,
     create,
-    updateStatus,
+    updateBfx,
   )
 where
 
@@ -14,35 +14,51 @@ import RecklessTradingBot.Import
 
 create ::
   Storage m =>
-  Bfx.CurrencyPair ->
-  ExchangeRate 'Bfx.Buy ->
-  ExchangeRate 'Bfx.Sell ->
-  m (Entity Price)
-create pair buy sell = do
-  x <- liftIO $ newPrice <$> getCurrentTime
-  id0 <- runSql $ P.insert x
-  pure $ Entity id0 x
+  Entity Price ->
+  m (Entity Order)
+create (Entity priceId price) = do
+  row <- liftIO $ newOrder <$> getCurrentTime
+  rowId <- runSql $ P.insert row
+  pure $ Entity rowId row
   where
-    newPrice ct =
-      Price
-        { priceBase =
-            CurrencyCode $
-              Bfx.currencyPairBase pair,
-          priceQuote =
-            CurrencyCode $
-              Bfx.currencyPairQuote pair,
-          priceBuy = buy,
-          priceSell = sell,
-          priceAt = ct
+    newOrder ct =
+      Order
+        { orderPriceRef = priceId,
+          orderBase = priceBase price,
+          orderQuote = priceQuote price,
+          orderIntRef = Nothing,
+          orderExtRef = Nothing,
+          orderPrice = priceBuy price,
+          --
+          -- TODO : !!!
+          --
+          orderGain = 0,
+          orderLoss = 0,
+          orderFee = 0,
+          orderStatus = OrderNew,
+          orderAt = ct
         }
 
-updateStatus ::
-  (From a OrderStatus, Storage m) =>
+updateBfx ::
+  (Storage m) =>
   OrderId ->
-  a ->
-  m ()
-updateStatus id0 ss =
-  runSql $ P.update id0 [OrderStatus P.=. from ss]
+  Bfx.Order 'Bfx.Remote ->
+  m OrderStatus
+updateBfx rowId bfxOrder = runSql $ do
+  P.update
+    rowId
+    --
+    -- TODO : !!!
+    --
+    [ OrderExtRef P.=. Just extRef,
+      OrderPrice P.=. rate,
+      OrderStatus P.=. ss
+    ]
+  pure ss
+  where
+    extRef = from $ Bfx.orderId bfxOrder
+    rate = from $ Bfx.orderRate bfxOrder
+    ss = from $ Bfx.orderStatus bfxOrder
 
 getOngoing ::
   Storage m =>

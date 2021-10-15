@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Money
@@ -14,6 +15,10 @@ import RecklessTradingBot.Import.External
 newtype CurrencyCode (a :: Bfx.CurrencyRelation)
   = CurrencyCode (Bfx.CurrencyCode a)
   deriving newtype (Eq, Ord, Show, IsString)
+
+instance From (Bfx.CurrencyCode a) (CurrencyCode a)
+
+instance From (CurrencyCode a) (Bfx.CurrencyCode a)
 
 deriving via
   Text
@@ -35,6 +40,10 @@ instance PersistField (CurrencyCode a) where
 newtype ExchangeRate (a :: Bfx.ExchangeAction)
   = ExchangeRate Bfx.ExchangeRate
   deriving newtype (Eq, Ord, Show, Num)
+
+instance From Bfx.ExchangeRate (ExchangeRate a)
+
+instance From (ExchangeRate a) Bfx.ExchangeRate
 
 deriving via
   Rational
@@ -60,6 +69,16 @@ instance PersistField (ExchangeRate a) where
 newtype MoneyAmount (a :: Bfx.CurrencyRelation)
   = MoneyAmount Bfx.MoneyAmount
   deriving newtype (Eq, Ord, Show, Num, FromJSON)
+
+instance From Bfx.MoneyAmount (MoneyAmount a)
+
+instance From Bfx.PosRat (MoneyAmount a) where
+  from = via @Bfx.MoneyAmount
+
+instance From (MoneyAmount a) Bfx.MoneyAmount
+
+instance From (MoneyAmount a) Bfx.PosRat where
+  from = via @Bfx.MoneyAmount
 
 deriving via
   Rational

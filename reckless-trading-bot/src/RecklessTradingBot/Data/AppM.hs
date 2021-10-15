@@ -6,6 +6,7 @@ module RecklessTradingBot.Data.AppM
   )
 where
 
+import qualified BitfinexClient as Bfx
 import qualified RecklessTradingBot.Data.Env as EnvData
 import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Model.Price as Price
@@ -58,7 +59,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
   putCurrPrice x = do
     ch <- asks EnvData.envPriceChan
     liftIO . atomically $ writeTChan ch x
-  rcvNextPrice = do
+  rcvNextPrice sym = do
     ch0 <- asks EnvData.envPriceChan
     liftIO $ do
       --
@@ -67,7 +68,19 @@ instance (MonadUnliftIO m) => Env (AppM m) where
       -- because it will cause deadlock
       --
       ch1 <- atomically $ dupTChan ch0
-      atomically $ readTChan ch1
+      waitForPrice ch1
+    where
+      waitForPrice chan = do
+        ent <- atomically $ readTChan chan
+        let price = entityVal ent
+        if ( priceBase price
+               == from (Bfx.currencyPairBase sym)
+           )
+          && ( priceQuote price
+                 == from (Bfx.currencyPairQuote sym)
+             )
+          then pure ent
+          else waitForPrice chan
   sleepTillNextPrice sym = do
     ttl0 <- asks EnvData.envPriceTtl
     mx <- Price.getLatest sym

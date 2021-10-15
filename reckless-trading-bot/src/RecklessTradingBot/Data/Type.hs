@@ -6,6 +6,8 @@ module RecklessTradingBot.Data.Type
     Error (..),
     OrderExternalId (..),
     OrderStatus (..),
+    finalStatus,
+    tryFromT,
   )
 where
 
@@ -74,3 +76,23 @@ instance From Bfx.OrderStatus OrderStatus where
     Bfx.RsnPause -> OrderActive
 
 derivePersistField "OrderStatus"
+
+finalStatus :: OrderStatus -> Bool
+finalStatus =
+  flip
+    elem
+    ([OrderExecuted, OrderCancelled] :: [OrderStatus])
+
+tryFromT ::
+  ( Monad m,
+    TryFrom a b,
+    Show a,
+    Typeable a,
+    Typeable b
+  ) =>
+  a ->
+  ExceptT Error m b
+tryFromT =
+  except
+    . first (ErrorTryFrom . SomeException)
+    . tryFrom
