@@ -39,8 +39,8 @@ createPrice cfg = do
       price <-
         Price.create
           sym
-          (ExchangeRate buy)
-          (ExchangeRate sell)
+          (QuotePerBase buy)
+          (QuotePerBase sell)
       putCurrPrice price
   where
     sym = tradingConfPair cfg

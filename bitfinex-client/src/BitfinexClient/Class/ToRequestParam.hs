@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Class.ToRequestParam
@@ -8,7 +9,6 @@ module BitfinexClient.Class.ToRequestParam
 where
 
 import BitfinexClient.Import.External
-import BitfinexClient.Util (fromRatio)
 import qualified Data.ByteString as BS
 import qualified Data.Text as T
 
@@ -18,7 +18,15 @@ class ToRequestParam a where
   toQueryParam = Just . encodeUtf8 . toTextParam
 
 data SomeQueryParam
-  = forall a. ToRequestParam a => SomeQueryParam BS.ByteString a
+  = forall a.
+    (ToRequestParam a) =>
+    SomeQueryParam BS.ByteString a
+
+unQueryParam ::
+  SomeQueryParam ->
+  (BS.ByteString, Maybe BS.ByteString)
+unQueryParam (SomeQueryParam name x) =
+  (name, toQueryParam x)
 
 data E8
 
@@ -27,10 +35,9 @@ instance HasResolution E8 where
 
 instance ToRequestParam Rational where
   toTextParam x =
-    T.pack $ showFixed True (fromRational x :: Fixed E8)
+    T.pack $
+      showFixed True (fromRational x :: Fixed E8)
 
 instance ToRequestParam (Ratio Natural) where
-  toTextParam x = toTextParam (fromRatio x :: Rational)
-
-unQueryParam :: SomeQueryParam -> (BS.ByteString, Maybe BS.ByteString)
-unQueryParam (SomeQueryParam name x) = (name, toQueryParam x)
+  toTextParam =
+    toTextParam . from @(Ratio Natural) @Rational

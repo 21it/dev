@@ -8,4 +8,8 @@ extra-deps:
   - github: 21it/persistent-migration
     commit: 8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c
   - github: 21it/witch
-    commit: 74bcf76cc968415e76d6804383a3ec22383459a5
+    commit: efe4cdca31f90067edf7a09d0770a649d17a1c0b
+  - github: 21it/units
+    commit: 8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990
+    subdirs:
+    - units

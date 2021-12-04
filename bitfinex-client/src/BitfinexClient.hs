@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient
@@ -28,6 +29,7 @@ import qualified BitfinexClient.Data.MarketAveragePrice as MarketAveragePrice
 import qualified BitfinexClient.Data.SubmitOrder as SubmitOrder
 import BitfinexClient.Import
 import qualified BitfinexClient.Import.Internal as X
+import qualified BitfinexClient.Math as Math
 import qualified BitfinexClient.Rpc.Generic as Generic
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -41,9 +43,9 @@ symbolsDetails =
 marketAveragePrice ::
   MonadIO m =>
   ExchangeAction ->
-  MoneyAmount ->
+  MoneyBase ->
   CurrencyPair ->
-  ExceptT Error m ExchangeRate
+  ExceptT Error m QuotePerBase
 marketAveragePrice act amt sym =
   Generic.pub
     (Generic.Rpc :: Generic.Rpc 'MarketAveragePrice)
@@ -135,9 +137,9 @@ submitOrder ::
   MonadIO m =>
   Env ->
   ExchangeAction ->
-  MoneyAmount ->
+  MoneyBase ->
   CurrencyPair ->
-  ExchangeRate ->
+  QuotePerBase ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
 submitOrder env act amt sym rate opts = do
@@ -159,9 +161,9 @@ submitOrderMaker ::
   MonadIO m =>
   Env ->
   ExchangeAction ->
-  MoneyAmount ->
+  MoneyBase ->
   CurrencyPair ->
-  ExchangeRate ->
+  QuotePerBase ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
 submitOrderMaker env act amt sym rate0 opts0 =
@@ -173,19 +175,22 @@ submitOrderMaker env act amt sym rate0 opts0 =
             Set.insert PostOnly $
               SubmitOrder.flags opts0
         }
-    tweak0 =
-      case act of
-        Buy -> 999 % 1000
-        Sell -> 1001 % 1000
-    this :: Int -> ExchangeRate -> ExceptT Error m (Order 'Remote)
+    this ::
+      Int ->
+      QuotePerBase ->
+      ExceptT Error m (Order 'Remote)
     this attempt rate = do
       order <- submitOrder env act amt sym rate opts
       if orderStatus order /= PostOnlyCanceled
         then pure order
         else do
           when (attempt >= 10) $ throwE $ ErrorOrderState order
-          tweak <- except $ newExchangeRate tweak0
-          this (attempt + 1) . bfxRoundPosRat $ tweak * rate
+          newRate <-
+            tryFromT
+              . bfxRoundRatio
+              . into @(Ratio Natural)
+              $ Math.tweakMakerRate act rate
+          this (attempt + 1) newRate
 
 cancelOrderMulti ::
   MonadIO m =>
@@ -235,10 +240,11 @@ cancelOrderByGroupId env gid = do
     Set.singleton gid
 
 submitCounterOrder ::
-  MonadIO m =>
+  forall a b m.
+  (MonadIO m) =>
   Env ->
   OrderId ->
-  FeeRate a ->
+  FeeRate a b ->
   ProfitRate ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
@@ -246,10 +252,10 @@ submitCounterOrder =
   submitCounterOrder' submitOrder
 
 submitCounterOrderMaker ::
-  MonadIO m =>
+  (MonadIO m) =>
   Env ->
   OrderId ->
-  FeeRate 'Maker ->
+  FeeRate 'Maker 'Quote ->
   ProfitRate ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
@@ -257,38 +263,29 @@ submitCounterOrderMaker =
   submitCounterOrder' submitOrderMaker
 
 submitCounterOrder' ::
-  MonadIO m =>
+  (MonadIO m) =>
   ( Env ->
     ExchangeAction ->
-    MoneyAmount ->
+    MoneyBase ->
     CurrencyPair ->
-    ExchangeRate ->
+    QuotePerBase ->
     SubmitOrder.Options ->
     ExceptT Error m (Order 'Remote)
   ) ->
   Env ->
   OrderId ->
-  FeeRate a ->
+  FeeRate a b ->
   ProfitRate ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
-submitCounterOrder' submit env id0 feeRate profRate opts = do
+submitCounterOrder' submit env id0 fee prof opts = do
   order <- getOrder env id0
-  let amtOrder = orderAmount order
-  let amtQuoteLoss = amtOrder * coerce (orderRate order)
-  --
-  -- TODO : improve math there, seems not 100% accurate
-  --
-  let amtQuoteGain = amtQuoteLoss * (1 + coerce feeRate + coerce profRate)
-  amtBase <-
-    except $
-      bfxRoundPosRat . (amtOrder *) . coerce
-        <$> (1 `subPosRat` coerce feeRate)
-  let sellCalcPrice = coerce $ amtQuoteGain / amtBase
+  let (exitAmt, exitRate) =
+        Math.newCounterOrder
+          (orderAmount order)
+          (orderRate order)
+          fee
+          prof
   if orderAction order == Buy && orderStatus order == Executed
-    then do
-      let sym = orderSymbol order
-      sellAvgPrice <- marketAveragePrice Sell amtBase sym
-      let sellPrice = bfxRoundPosRat $ max sellCalcPrice sellAvgPrice
-      submit env Sell amtBase sym sellPrice opts
+    then submit env Sell exitAmt (orderSymbol order) exitRate opts
     else throwE $ ErrorOrderState order

@@ -23,6 +23,9 @@ import Data.Coerce as X (coerce)
 import Data.Either.Extra as X (fromEither)
 import Data.Fixed as X (Pico)
 import Data.List as X (partition)
+import Data.Metrology.Poly as X
+  ( (|<=|),
+  )
 import Data.Pool as X (Pool, destroyAllResources)
 import Data.Ratio as X ((%))
 import Data.Text as X (strip)

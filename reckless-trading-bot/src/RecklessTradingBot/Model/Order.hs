@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Model.Order
@@ -32,9 +34,9 @@ create (Entity priceId price) = do
           --
           -- TODO : !!!
           --
-          orderGain = 0,
-          orderLoss = 0,
-          orderFee = 0,
+          orderGain = from @(Ratio Natural) 0,
+          orderLoss = from @(Ratio Natural) 0,
+          orderFee = FeeRate [Bfx.feeRateMakerBase| 0 |],
           orderStatus = OrderNew,
           orderAt = ct
         }
@@ -43,8 +45,9 @@ updateBfx ::
   (Storage m) =>
   OrderId ->
   Bfx.Order 'Bfx.Remote ->
+  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   m OrderStatus
-updateBfx rowId bfxOrder = runSql $ do
+updateBfx rowId bfxOrder _ = runSql $ do
   P.update
     rowId
     --

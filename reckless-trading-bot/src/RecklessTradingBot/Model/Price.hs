@@ -13,10 +13,11 @@ import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
 
 create ::
-  Storage m =>
+  ( Storage m
+  ) =>
   Bfx.CurrencyPair ->
-  ExchangeRate 'Bfx.Buy ->
-  ExchangeRate 'Bfx.Sell ->
+  QuotePerBase 'Bfx.Buy ->
+  QuotePerBase 'Bfx.Sell ->
   m (Entity Price)
 create pair buy sell = do
   x <- liftIO $ newPrice <$> getCurrentTime
@@ -37,7 +38,8 @@ create pair buy sell = do
         }
 
 getSeq ::
-  Storage m =>
+  ( Storage m
+  ) =>
   Bfx.CurrencyPair ->
   m [Entity Price]
 getSeq pair =
@@ -55,7 +57,8 @@ getSeq pair =
       ]
 
 getLatest ::
-  Storage m =>
+  ( Storage m
+  ) =>
   Bfx.CurrencyPair ->
   m (Maybe (Entity Price))
 getLatest pair =

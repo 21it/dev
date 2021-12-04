@@ -36,7 +36,7 @@ parseOrder x = do
       toRational <$> x ^? nth 7 . _Number
   amt <-
     first (const $ "OrderAmount is invalid " <> show amt0) $
-      newMoneyAmount $ abs amt0
+      tryFrom $ abs amt0
   act <-
     first (const $ "OrderAmount is invalid " <> show amt0) $
       newExchangeAction amt0
@@ -44,14 +44,15 @@ parseOrder x = do
     maybeToRight "OrderStatus is missing" $
       x ^? nth 13 . _String
   ss1 <-
-    newOrderStatus ss0
+    first (("OrderStatus is not recognized " <>) . show) $
+      newOrderStatus ss0
   price <-
     maybeToRight
       "ExchangeRate is missing"
       $ x ^? nth 16 . _Number
   rate <-
     first (const $ "ExchangeRate is invalid " <> show price)
-      . newExchangeRate
+      . tryFrom
       $ toRational price
   pure
     Order

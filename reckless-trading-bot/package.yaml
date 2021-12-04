@@ -87,6 +87,7 @@ library:
   - containers
   - envparse
   - extra
+  - units
 
 executables:
   reckless-trading-bot-exe:

@@ -11,11 +11,14 @@ where
 import BitfinexClient.Import
 import qualified Data.Aeson as A
 
+--
+-- TODO : quote and base type parameters
+--
 data Request = Request
   { action :: ExchangeAction,
-    amount :: MoneyAmount,
+    amount :: MoneyBase,
     symbol :: CurrencyPair,
-    rate :: ExchangeRate,
+    rate :: QuotePerBase,
     options :: Options
   }
   deriving stock (Eq, Ord, Show)

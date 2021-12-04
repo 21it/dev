@@ -9,7 +9,7 @@ import BitfinexClient.Import
 
 data Request = Request
   { action :: ExchangeAction,
-    amount :: MoneyAmount,
+    amount :: MoneyBase,
     symbol :: CurrencyPair
   }
   deriving stock (Eq, Ord, Show)

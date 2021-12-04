@@ -27,47 +27,48 @@ apply = do
 loop :: Env m => TradingConf -> m ()
 loop cfg = do
   priceEnt@(Entity _ price) <- rcvNextPrice sym
-  resolved <- mapM resolveOngoing =<< Order.getOngoing sym
+  resolved <- mapM (resolveOngoing fee) =<< Order.getOngoing sym
   when (getAll $ mconcat resolved) $ do
     seq0 <- Price.getSeq sym
     when (goodPriceSeq seq0) $ do
       amt <- readMVar $ tradingConfMinOrderAmt cfg
       orderRowId <- entityKey <$> Order.create priceEnt
-      placeOrder orderRowId amt sym price
+      placeOrder orderRowId amt sym price fee
   loop cfg
   where
     sym = tradingConfPair cfg
+    fee = tradingConfFee cfg
 
 resolveOngoing ::
   Env m =>
+  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   Entity Order ->
   m All
-resolveOngoing order = do
-  res <- runExceptT $ resolveOngoingT order
+resolveOngoing fee order = do
+  res <- runExceptT $ resolveOngoingT fee order
   case res of
     Left err -> do
       $(logTM) ErrorS . logStr $
-        "Resolve ongoing failed "
-          <> (show err :: Text)
+        "Resolve ongoing failed " <> (show err :: Text)
       pure $ All False
     Right ss ->
       pure . All $ finalStatus ss
 
 resolveOngoingT ::
   Env m =>
+  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   Entity Order ->
   ExceptT Error m OrderStatus
-resolveOngoingT ent@(Entity rowId row) =
+resolveOngoingT fee ent@(Entity rowId row) =
   case orderExtRef row of
     Just ref | ss == OrderActive -> do
       $(logTM) DebugS . logStr $
         "Updating " <> (show ent :: Text)
       bfxOrder <- withBfxT Bfx.getOrder ($ from ref)
-      lift $ Order.updateBfx rowId bfxOrder
+      lift $ Order.updateBfx rowId bfxOrder fee
     _ | ss == OrderNew -> do
       $(logTM) ErrorS . logStr $
-        "Cancelling unexpected "
-          <> (show ent :: Text)
+        "Cancelling unexpected " <> (show ent :: Text)
       cid <- tryFromT rowId
       res <-
         withBfxT
@@ -75,16 +76,14 @@ resolveOngoingT ent@(Entity rowId row) =
           (\f -> f cid $ orderAt row)
       case res of
         Just bfxOrder ->
-          lift $ Order.updateBfx rowId bfxOrder
+          lift $ Order.updateBfx rowId bfxOrder fee
         Nothing -> do
           $(logTM) ErrorS . logStr $
-            "Nonexistent "
-              <> (show ent :: Text)
+            "Nonexistent " <> (show ent :: Text)
           pure OrderCancelled
     _ -> do
       $(logTM) ErrorS . logStr $
-        "Ignoring unexpected "
-          <> (show ent :: Text)
+        "Ignoring unexpected " <> (show ent :: Text)
       pure ss
   where
     ss = from $ orderStatus row
@@ -92,14 +91,15 @@ resolveOngoingT ent@(Entity rowId row) =
 placeOrder ::
   Env m =>
   OrderId ->
-  MoneyAmount 'Bfx.Base ->
+  MoneyBase ->
   Bfx.CurrencyPair ->
   Price ->
+  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   m ()
-placeOrder rowId amt sym price = do
+placeOrder rowId amt sym price fee = do
   res <-
     runExceptT $ do
-      (bfxOrder, ss) <- placeOrderT rowId amt sym price
+      (bfxOrder, ss) <- placeOrderT rowId amt sym price fee
       when (ss /= OrderActive) $
         $(logTM) ErrorS . logStr $
           "Unexpected status "
@@ -108,22 +108,22 @@ placeOrder rowId amt sym price = do
             <> show bfxOrder
   whenLeft res $ \err ->
     $(logTM) ErrorS . logStr $
-      "Order failed "
-        <> (show err :: Text)
+      "Order failed " <> (show err :: Text)
 
 placeOrderT ::
   Env m =>
   OrderId ->
-  MoneyAmount 'Bfx.Base ->
+  MoneyBase ->
   Bfx.CurrencyPair ->
   Price ->
+  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   ExceptT
     Error
     m
     ( Bfx.Order 'Bfx.Remote,
       OrderStatus
     )
-placeOrderT rowId amt sym price = do
+placeOrderT rowId amt sym price fee = do
   cid <- tryFromT rowId
   bfxOrder <-
     withBfxT
@@ -140,7 +140,7 @@ placeOrderT rowId amt sym price = do
       )
   ss <-
     lift $
-      Order.updateBfx rowId bfxOrder
+      Order.updateBfx rowId bfxOrder fee
   pure (bfxOrder, ss)
 
 --

@@ -1,21 +1,45 @@
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.TestEnv
-  ( withAdaBtc,
-    eraseFirst,
+  ( eraseFirst,
+    testAmt,
+    itRight,
+    itLeft,
   )
 where
 
 import BitfinexClient.Import
-
-withAdaBtc ::
-  Monad m =>
-  (MoneyAmount -> CurrencyPair -> ExceptT Error m a) ->
-  m (Either Error a)
-withAdaBtc this = runExceptT $ do
-  amt <- except . newMoneyAmount $ 200200201 % 100000000
-  sym <- except $ newCurrencyPair "ADA" "BTC"
-  this amt sym
+import qualified Test.Hspec as HS
 
 eraseFirst :: Bifunctor f => f a b -> f () b
-eraseFirst = first $ const ()
+eraseFirst =
+  first $ const ()
+
+testAmt :: MoneyBase
+testAmt =
+  from @(Ratio Natural) $
+    200200201 % 100000000
+
+itRight ::
+  ( Show a
+  ) =>
+  String ->
+  (Env -> ExceptT Error IO a) ->
+  HS.SpecWith (HS.Arg (Env -> IO ()))
+itRight label test =
+  HS.it label $ \env -> do
+    x <- runExceptT $ test env
+    x `HS.shouldSatisfy` isRight
+
+itLeft ::
+  ( Show a
+  ) =>
+  String ->
+  (Env -> ExceptT Error IO a) ->
+  HS.SpecWith (HS.Arg (Env -> IO ()))
+itLeft label test =
+  HS.it label $ \env -> do
+    x <- runExceptT $ test env
+    x `HS.shouldSatisfy` isLeft

@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Class.FromRpc
@@ -8,10 +9,12 @@ where
 
 import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import BitfinexClient.Data.Kind
+import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Data.Web
 import BitfinexClient.Import.External
 import BitfinexClient.Parser
+import BitfinexClient.Util
 import Data.Aeson.Lens
 import qualified Data.Map as Map
 import qualified Data.Vector as V
@@ -41,25 +44,25 @@ instance FromRpc 'SubmitOrder (Order 'Remote) where
         $ raw ^? nth 4 . nth 0
     parseOrder order
 
-instance FromRpc 'MarketAveragePrice ExchangeRate where
+instance FromRpc 'MarketAveragePrice QuotePerBase where
   fromRpc (RawResponse raw) = do
     x <-
       maybeToRight
-        "ExchangeRate is missing"
+        "QuotePerBase is missing"
         (toRational <$> raw ^? nth 0 . _Number)
-    first (const $ "ExchangeRate is invalid " <> show x) $
-      newExchangeRate x
+    first (const $ "QuotePerBase is invalid " <> show x) $
+      tryFrom x
 
 instance FromRpc 'FeeSummary FeeSummary.Response where
   fromRpc (RawResponse raw) = do
-    x0 <- parse 0 0 newFeeRate "makerCrypto2CryptoFee"
-    x1 <- parse 0 1 newFeeRate "makerCrypto2StableFee"
-    x2 <- parse 0 2 newFeeRate "makerCrypto2FiatFee"
+    x0 <- parse 0 0 tryFromE "makerCrypto2CryptoFee"
+    x1 <- parse 0 1 tryFromE "makerCrypto2StableFee"
+    x2 <- parse 0 2 tryFromE "makerCrypto2FiatFee"
     x3 <- parse 0 5 (pure . RebateRate) "makerDerivativeRebate"
-    x4 <- parse 1 0 newFeeRate "takerCrypto2CryptoFee"
-    x5 <- parse 1 1 newFeeRate "takerCrypto2StableFee"
-    x6 <- parse 1 2 newFeeRate "takerCrypto2FiatFee"
-    x7 <- parse 1 5 newFeeRate "takerDerivativeFee"
+    x4 <- parse 1 0 tryFromE "takerCrypto2CryptoFee"
+    x5 <- parse 1 1 tryFromE "takerCrypto2StableFee"
+    x6 <- parse 1 2 tryFromE "takerCrypto2FiatFee"
+    x7 <- parse 1 5 tryFromE "takerDerivativeFee"
     pure $
       FeeSummary.Response x0 x1 x2 x3 x4 x5 x6 x7
     where
@@ -104,25 +107,25 @@ instance FromRpc 'SymbolsDetails (Map CurrencyPair CurrencyPairConf) where
             x ^? key "initial_margin" . _String
         initMargin <-
           first (const $ "Init Margin is invalid " <> show initMargin0) $
-            newPosRat' initMargin0
+            tryReadViaRatio @(Ratio Natural) initMargin0
         minMargin0 <-
           maybeToRight "Min Margin is missing" $
             x ^? key "minimum_margin" . _String
         minMargin <-
           first (const $ "Min Margin is invalid " <> show minMargin0) $
-            newPosRat' minMargin0
+            tryReadViaRatio @(Ratio Natural) minMargin0
         maxOrderAmt0 <-
           maybeToRight "Max Order Size is missing" $
             x ^? key "maximum_order_size" . _String
         maxOrderAmt <-
           first (const $ "Max Order Size is invalid " <> show maxOrderAmt0) $
-            newMoneyAmount' maxOrderAmt0
+            readViaRatio @(Ratio Natural) maxOrderAmt0
         minOrderAmt0 <-
           maybeToRight "Min Order Size is missing" $
             x ^? key "minimum_order_size" . _String
         minOrderAmt <-
           first (const $ "Min Order Size is invalid " <> show minOrderAmt0) $
-            newMoneyAmount' minOrderAmt0
+            readViaRatio @(Ratio Natural) minOrderAmt0
         pure
           ( sym,
             CurrencyPairConf

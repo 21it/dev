@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.TypeSpec
@@ -23,7 +24,7 @@ spec = do
     it "newCurrencyPair fails" $
       newCurrencyPair "BTC" "BTC" `shouldSatisfy` isLeft
   describe "Misc" $ do
-    it "newPosRat succeeds" $
-      newPosRat 1 `shouldSatisfy` isRight
-    it "newPosRat fails" $
-      newPosRat 0 `shouldSatisfy` isLeft
+    it "PosRat succeeds" $
+      tryFrom @Rational @PosRat 1 `shouldSatisfy` isRight
+    it "PosRat fails" $
+      tryFrom @Rational @PosRat 0 `shouldSatisfy` isLeft

@@ -10,6 +10,18 @@ import Data.Aeson as X (FromJSON (..), ToJSON (..))
 import Data.ByteString.Lazy as X (ByteString)
 import Data.Coerce as X (coerce)
 import Data.Fixed as X (Fixed, HasResolution (..), showFixed)
+import Data.Metrology.Poly as X
+  ( quOf,
+    (*|),
+    (/|),
+    (:/),
+    (|*),
+    (|*|),
+    (|+|),
+    (|-|),
+    (|/),
+    (|/|),
+  )
 import Data.Ratio as X ((%))
 import Data.Ratio.Rounding as X (dpRound, sdRound)
 import Data.Time.Clock as X
@@ -28,7 +40,13 @@ import UnliftIO as X (catch)
 import Witch as X
   ( From (..),
     TryFrom (..),
+    TryFromException (..),
     composeTry,
     composeTryLhs,
     composeTryRhs,
+    into,
+    tryVia,
+    via,
+    withSource,
+    withTarget,
   )

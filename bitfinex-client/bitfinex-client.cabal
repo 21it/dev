@@ -37,12 +37,15 @@ library
       BitfinexClient.Data.GetOrders
       BitfinexClient.Data.Kind
       BitfinexClient.Data.MarketAveragePrice
+      BitfinexClient.Data.Metro
+      BitfinexClient.Data.QQ
       BitfinexClient.Data.SubmitOrder
       BitfinexClient.Data.Type
       BitfinexClient.Data.Web
       BitfinexClient.Import
       BitfinexClient.Import.External
       BitfinexClient.Import.Internal
+      BitfinexClient.Math
       BitfinexClient.Parser
       BitfinexClient.Rpc.Generic
       BitfinexClient.Util
@@ -64,6 +67,9 @@ library
       ExistentialQuantification
       FlexibleInstances
       FlexibleContexts
+      TypeOperators
+      DeriveGeneric
+      DeriveLift
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction
   build-depends:
       aeson
@@ -79,9 +85,11 @@ library
     , lens-aeson
     , memory
     , siggy-chardust
+    , template-haskell
     , text
     , time
     , transformers
+    , units
     , universum
     , unliftio
     , unordered-containers
@@ -115,6 +123,9 @@ test-suite bitfinex-client-test
       ExistentialQuantification
       FlexibleInstances
       FlexibleContexts
+      TypeOperators
+      DeriveGeneric
+      DeriveLift
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -124,4 +135,5 @@ test-suite bitfinex-client-test
     , hspec
     , time
     , transformers
+    , units
   default-language: Haskell2010

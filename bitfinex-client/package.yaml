@@ -13,7 +13,6 @@ extra-source-files:
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
 # category:            Data
-
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
@@ -28,6 +27,7 @@ dependencies:
 - containers
 - transformers
 - time
+- units
 
 default-extensions:
 - NoImplicitPrelude
@@ -43,6 +43,9 @@ default-extensions:
 - ExistentialQuantification
 - FlexibleInstances
 - FlexibleContexts
+- TypeOperators
+- DeriveGeneric
+- DeriveLift
 
 ghc-options:
 # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
@@ -85,6 +88,7 @@ library:
   - cryptonite
   - unliftio
   - vector
+  - template-haskell
 
 tests:
   bitfinex-client-test:

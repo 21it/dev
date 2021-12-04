@@ -85,6 +85,7 @@ library
     , time
     , transformers
     , unbounded-delays
+    , units
     , universum
     , unliftio
     , witch

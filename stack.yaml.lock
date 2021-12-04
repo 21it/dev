@@ -16,16 +16,29 @@ packages:
   original:
     url: https://github.com/21it/persistent-migration/archive/8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c.tar.gz
 - completed:
-    size: 23474
-    url: https://github.com/21it/witch/archive/74bcf76cc968415e76d6804383a3ec22383459a5.tar.gz
+    size: 23662
+    url: https://github.com/21it/witch/archive/efe4cdca31f90067edf7a09d0770a649d17a1c0b.tar.gz
     name: witch
     version: 0.3.4.0
-    sha256: 0e4f7c12d19367c06d655ca5c527f04d1368d34c4bb1bbb0dd4eca5e911f37e6
+    sha256: 49384ea55d3025cbdf1c3f3c2dabb89e6bc7ac6f04c2f34343e0e06898f7c243
     pantry-tree:
       size: 1882
-      sha256: 941203ba85089c9f30259c013851daf21709c911cc75a7030f7387c5d9d98819
+      sha256: 9ddbcb53bb7e1bd12b245bd8bb555762c7d9f1fdc6a01e7eef8feda675ddec97
   original:
-    url: https://github.com/21it/witch/archive/74bcf76cc968415e76d6804383a3ec22383459a5.tar.gz
+    url: https://github.com/21it/witch/archive/efe4cdca31f90067edf7a09d0770a649d17a1c0b.tar.gz
+- completed:
+    size: 70837
+    subdir: units
+    url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
+    name: units
+    version: 2.4.1.4
+    sha256: b9364e442a12d069b93645ba5255651800f58b6bd49263cf87acf4140f871159
+    pantry-tree:
+      size: 1472
+      sha256: cef93d22028c0459c603568825c460c7b4d05a125a2cc5c92d64833c814bf238
+  original:
+    subdir: units
+    url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
 snapshots:
 - completed:
     size: 581696

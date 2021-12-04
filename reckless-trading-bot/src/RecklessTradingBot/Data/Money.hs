@@ -3,8 +3,9 @@
 
 module RecklessTradingBot.Data.Money
   ( CurrencyCode (..),
-    ExchangeRate (..),
-    MoneyAmount (..),
+    QuotePerBase (..),
+    MoneyBase (..),
+    MoneyQuote (..),
     FeeRate (..),
   )
 where
@@ -37,91 +38,136 @@ instance PersistField (CurrencyCode a) where
         "CurrencyCode PersistValue is invalid "
           <> show x
 
-newtype ExchangeRate (a :: Bfx.ExchangeAction)
-  = ExchangeRate Bfx.ExchangeRate
-  deriving newtype (Eq, Ord, Show, Num)
+newtype QuotePerBase (a :: Bfx.ExchangeAction)
+  = QuotePerBase Bfx.QuotePerBase
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show
+    )
 
-instance From Bfx.ExchangeRate (ExchangeRate a)
+instance From Bfx.QuotePerBase (QuotePerBase a)
 
-instance From (ExchangeRate a) Bfx.ExchangeRate
+instance From (QuotePerBase a) Bfx.QuotePerBase
 
-deriving via
-  Rational
-  instance
-    PersistFieldSql (ExchangeRate a)
-
-instance PersistField (ExchangeRate a) where
-  toPersistValue =
-    PersistRational
-      . Bfx.fromRatio
-      . Bfx.unPosRat
-      . coerce
-  fromPersistValue = \case
-    PersistRational x0 ->
-      case Bfx.newExchangeRate x0 of
-        Left e -> Left $ show e
-        Right x1 -> Right $ ExchangeRate x1
-    x ->
-      Left $
-        "ExchangeRate PersistValue is invalid "
-          <> show x
-
-newtype MoneyAmount (a :: Bfx.CurrencyRelation)
-  = MoneyAmount Bfx.MoneyAmount
-  deriving newtype (Eq, Ord, Show, Num, FromJSON)
-
-instance From Bfx.MoneyAmount (MoneyAmount a)
-
-instance From Bfx.PosRat (MoneyAmount a) where
-  from = via @Bfx.MoneyAmount
-
-instance From (MoneyAmount a) Bfx.MoneyAmount
-
-instance From (MoneyAmount a) Bfx.PosRat where
-  from = via @Bfx.MoneyAmount
+instance From (QuotePerBase a) Rational where
+  from = via @Bfx.QuotePerBase
 
 deriving via
   Rational
   instance
-    PersistFieldSql (MoneyAmount a)
+    (Typeable a) =>
+    PersistFieldSql (QuotePerBase a)
 
-instance PersistField (MoneyAmount a) where
+instance (Typeable a) => PersistField (QuotePerBase a) where
   toPersistValue =
     PersistRational
-      . Bfx.fromRatio
-      . Bfx.unPosRat
-      . coerce
+      . from
   fromPersistValue = \case
-    PersistRational x0 ->
-      case Bfx.newMoneyAmount x0 of
-        Left e -> Left $ show e
-        Right x1 -> Right $ MoneyAmount x1
+    PersistRational x ->
+      first show $
+        from @Bfx.QuotePerBase `composeTryRhs` tryFrom $ x
     x ->
       Left $
-        "MoneyAmount PersistValue is invalid "
-          <> show x
+        "QuotePerBase PersistValue is invalid " <> show x
 
-newtype FeeRate (a :: Bfx.CurrencyRelation)
-  = FeeRate Bfx.PosRat
-  deriving newtype (Eq, Ord, Show, Num)
+newtype MoneyBase
+  = MoneyBase Bfx.MoneyBase
+  deriving newtype (Eq, Ord, Show)
+
+instance From (Ratio Natural) MoneyBase where
+  from = via @Bfx.MoneyBase
+
+instance From Bfx.MoneyBase MoneyBase
+
+instance From MoneyBase Bfx.MoneyBase
+
+instance From MoneyBase Rational where
+  from = via @Bfx.MoneyBase
 
 deriving via
   Rational
   instance
-    PersistFieldSql (FeeRate a)
+    PersistFieldSql MoneyBase
 
-instance PersistField (FeeRate a) where
+instance PersistField MoneyBase where
   toPersistValue =
-    PersistRational
-      . Bfx.fromRatio
-      . Bfx.unPosRat
-      . coerce
+    PersistRational . from
   fromPersistValue = \case
-    PersistRational x0 ->
-      case Bfx.newPosRat x0 of
-        Left e -> Left $ show e
-        Right x1 -> Right $ FeeRate x1
+    PersistRational x ->
+      first show $
+        from @Bfx.MoneyBase `composeTryRhs` tryFrom $ x
     x ->
       Left $
-        "FeeRate PersistValue is invalid "
+        "MoneyBase PersistValue is invalid "
           <> show x
+
+newtype MoneyQuote
+  = MoneyQuote Bfx.MoneyQuote
+  deriving newtype (Eq, Ord, Show)
+
+instance From (Ratio Natural) MoneyQuote where
+  from = via @Bfx.MoneyQuote
+
+instance From Bfx.MoneyQuote MoneyQuote
+
+instance From MoneyQuote Bfx.MoneyQuote
+
+instance From MoneyQuote Rational where
+  from = via @Bfx.MoneyQuote
+
+deriving via
+  Rational
+  instance
+    PersistFieldSql MoneyQuote
+
+instance PersistField MoneyQuote where
+  toPersistValue =
+    PersistRational . from
+  fromPersistValue = \case
+    PersistRational x ->
+      first show $
+        from @Bfx.MoneyQuote `composeTryRhs` tryFrom $ x
+    x ->
+      Left $
+        "MoneyQuote PersistValue is invalid "
+          <> show x
+
+newtype
+  FeeRate
+    (a :: Bfx.MarketRelation)
+    (b :: Bfx.CurrencyRelation)
+  = FeeRate (Bfx.FeeRate a b)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show
+    )
+
+instance From (FeeRate a b) (Bfx.FeeRate a b)
+
+instance From (Bfx.FeeRate a b) (FeeRate a b)
+
+instance From (FeeRate a b) Rational where
+  from = via @(Bfx.FeeRate a b)
+
+instance TryFrom Rational (FeeRate a b) where
+  tryFrom =
+    from @(Bfx.FeeRate a b)
+      `composeTryRhs` tryFrom
+
+deriving via
+  Rational
+  instance
+    PersistFieldSql (FeeRate a b)
+
+instance PersistField (FeeRate a b) where
+  toPersistValue = PersistRational . from
+  fromPersistValue = \case
+    x0@(PersistRational x) ->
+      first (const $ failure x0) $ tryFrom x
+    x0 ->
+      Left $ failure x0
+    where
+      failure =
+        ("FeeRate PersistValue is invalid " <>) . show

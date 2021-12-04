@@ -9,7 +9,7 @@ module BitfinexClient.Data.GetOrders
 where
 
 import BitfinexClient.Data.Type
-import BitfinexClient.Import
+import BitfinexClient.Import hiding (currencyPair)
 
 data Options = Options
   { currencyPair :: Maybe CurrencyPair,

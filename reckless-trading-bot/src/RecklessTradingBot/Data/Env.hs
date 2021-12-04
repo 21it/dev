@@ -10,6 +10,7 @@ where
 
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.FeeSummary as FeeSummary
+import qualified BitfinexClient.Math as Bfx
 import Control.Monad.Logger (runNoLoggingT)
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as C8
@@ -33,9 +34,8 @@ import RecklessTradingBot.Import.External
 
 data TradingConf = TradingConf
   { tradingConfPair :: Bfx.CurrencyPair,
-    tradingConfFee :: Bfx.FeeRate 'Bfx.Maker,
-    tradingConfMinOrderAmt ::
-      MVar (MoneyAmount 'Bfx.Base)
+    tradingConfFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
+    tradingConfMinOrderAmt :: MVar MoneyBase
   }
   deriving stock (Eq)
 
@@ -80,7 +80,7 @@ newRawConfig = liftIO $ do
         "RECKLESS_TRADING_BOT_PAIRS"
         op
       <*> var
-        ( err . Bfx.newProfitRate
+        ( err . tryFrom @(Ratio Natural)
             <=< auto
             <=< nonempty
         )
@@ -218,8 +218,8 @@ newTradingConf symDetails feeDetails sym =
     Nothing -> error $ "Missing " <> show sym
     Just cfg -> do
       let amtDef = Bfx.currencyPairMinOrderAmt cfg
-      let amtInclFee = into @(Bfx.PosRat) amtDef / (1 - from fee)
-      when (amtInclFee <= 0)
+      let amtInclFee = Bfx.applyFee amtDef fee
+      when (amtInclFee <= from @(Ratio Natural) 0)
         . error
         $ "Wrong min Order " <> show amtInclFee
       amtVar <-

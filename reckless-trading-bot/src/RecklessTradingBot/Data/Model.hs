@@ -38,8 +38,8 @@ share
     Price
       base (CurrencyCode 'Bfx.Base)
       quote (CurrencyCode 'Bfx.Quote)
-      buy (ExchangeRate 'Bfx.Buy)
-      sell (ExchangeRate 'Bfx.Sell)
+      buy (QuotePerBase 'Bfx.Buy)
+      sell (QuotePerBase 'Bfx.Sell)
       at UTCTime
       deriving Eq Show
 
@@ -62,10 +62,10 @@ share
       --
       intRef OrderId Maybe
       extRef (OrderExternalId 'Bfx.Buy) Maybe
-      price (ExchangeRate 'Bfx.Buy)
-      gain (MoneyAmount 'Bfx.Base)
-      loss (MoneyAmount 'Bfx.Quote)
-      fee (FeeRate 'Bfx.Base)
+      price (QuotePerBase 'Bfx.Buy)
+      gain MoneyBase
+      loss MoneyQuote
+      fee (FeeRate 'Bfx.Maker 'Bfx.Base)
       status OrderStatus
       at UTCTime
       deriving Eq Show
@@ -73,10 +73,10 @@ share
     CounterOrder
       intRef OrderId
       extRef (OrderExternalId 'Bfx.Sell) Maybe
-      price (ExchangeRate 'Bfx.Sell)
-      gain (MoneyAmount 'Bfx.Quote)
-      loss (MoneyAmount 'Bfx.Base)
-      fee (FeeRate 'Bfx.Quote)
+      price (QuotePerBase 'Bfx.Sell)
+      gain MoneyQuote
+      loss MoneyBase
+      fee (FeeRate 'Bfx.Maker 'Bfx.Quote)
       status OrderStatus
       at UTCTime
       deriving Eq Show
