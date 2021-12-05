@@ -352,6 +352,7 @@ newtype CurrencyCode (a :: CurrencyRelation) = CurrencyCode
     )
 
 newCurrencyCode ::
+  forall a.
   Text ->
   Either
     (TryFromException Text (CurrencyCode a))
