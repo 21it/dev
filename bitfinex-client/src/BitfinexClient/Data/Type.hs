@@ -23,6 +23,7 @@ module BitfinexClient.Data.Type
     RebateRate (..),
     ProfitRate (..),
     CurrencyCode (..),
+    newCurrencyCode,
     CurrencyPair,
     currencyPairBase,
     currencyPairQuote,
@@ -202,7 +203,9 @@ data OrderStatus
 
 newOrderStatus ::
   Text ->
-  Either (TryFromException Text OrderStatus) OrderStatus
+  Either
+    (TryFromException Text OrderStatus)
+    OrderStatus
 newOrderStatus = \case
   "ACTIVE" -> Right Active
   x | "EXECUTED" `T.isPrefixOf` x -> Right Executed
@@ -231,7 +234,9 @@ data ExchangeAction
 
 newExchangeAction ::
   Rational ->
-  Either (TryFromException Rational ExchangeAction) ExchangeAction
+  Either
+    (TryFromException Rational ExchangeAction)
+    ExchangeAction
 newExchangeAction x
   | x > 0 = Right Buy
   | x < 0 = Right Sell
@@ -345,6 +350,16 @@ newtype CurrencyCode (a :: CurrencyRelation) = CurrencyCode
     ( Generic,
       TH.Lift
     )
+
+newCurrencyCode ::
+  Text ->
+  Either
+    (TryFromException Text (CurrencyCode a))
+    (CurrencyCode a)
+newCurrencyCode raw =
+  case T.strip raw of
+    x | length x == 3 -> Right . CurrencyCode $ T.toUpper x
+    _ -> Left $ TryFromException raw Nothing
 
 data CurrencyPair = CurrencyPair
   { currencyPairBase :: CurrencyCode 'Base,

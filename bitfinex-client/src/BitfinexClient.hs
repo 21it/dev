@@ -5,6 +5,7 @@ module BitfinexClient
   ( symbolsDetails,
     marketAveragePrice,
     feeSummary,
+    wallets,
     retrieveOrders,
     ordersHistory,
     getOrders,
@@ -27,6 +28,7 @@ import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import qualified BitfinexClient.Data.GetOrders as GetOrders
 import qualified BitfinexClient.Data.MarketAveragePrice as MarketAveragePrice
 import qualified BitfinexClient.Data.SubmitOrder as SubmitOrder
+import qualified BitfinexClient.Data.Wallets as Wallets
 import BitfinexClient.Import
 import qualified BitfinexClient.Import.Internal as X
 import qualified BitfinexClient.Math as Math
@@ -65,6 +67,26 @@ feeSummary ::
 feeSummary env =
   Generic.prv
     (Generic.Rpc :: Generic.Rpc 'FeeSummary)
+    env
+    (mempty :: Map Int Int)
+
+wallets ::
+  ( MonadIO m
+  ) =>
+  Env ->
+  ExceptT
+    Error
+    m
+    ( Map
+        (CurrencyCode 'Base)
+        ( Map
+            Wallets.WalletType
+            Wallets.Response
+        )
+    )
+wallets env =
+  Generic.prv
+    (Generic.Rpc :: Generic.Rpc 'Wallets)
     env
     (mempty :: Map Int Int)
 

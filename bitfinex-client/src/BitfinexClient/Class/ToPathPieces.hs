@@ -64,3 +64,12 @@ instance ToPathPieces 'CancelOrderMulti req where
         "cancel",
         "multi"
       ]
+
+instance ToPathPieces 'Wallets req where
+  toPathPieces =
+    const
+      [ "v2",
+        "auth",
+        "r",
+        "wallets"
+      ]

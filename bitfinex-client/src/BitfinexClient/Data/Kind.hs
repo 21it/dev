@@ -12,6 +12,7 @@ data Method
   = SymbolsDetails
   | MarketAveragePrice
   | FeeSummary
+  | Wallets
   | SubmitOrder
   | RetrieveOrders
   | OrdersHistory

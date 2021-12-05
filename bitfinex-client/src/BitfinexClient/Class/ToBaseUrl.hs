@@ -33,5 +33,8 @@ instance ToBaseUrl 'OrdersHistory where
 instance ToBaseUrl 'CancelOrderMulti where
   toBaseUrl = base
 
+instance ToBaseUrl 'Wallets where
+  toBaseUrl = base
+
 base :: BaseUrl
 base = "https://api.bitfinex.com"

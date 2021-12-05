@@ -11,6 +11,7 @@ import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
+import qualified BitfinexClient.Data.Wallets as Wallets
 import BitfinexClient.Data.Web
 import BitfinexClient.Import.External
 import BitfinexClient.Parser
@@ -134,5 +135,70 @@ instance FromRpc 'SymbolsDetails (Map CurrencyPair CurrencyPairConf) where
                 currencyPairMinMargin = minMargin,
                 currencyPairMaxOrderAmt = maxOrderAmt,
                 currencyPairMinOrderAmt = minOrderAmt
+              }
+          )
+
+instance
+  FromRpc
+    'Wallets
+    ( Map
+        (CurrencyCode 'Base)
+        ( Map
+            Wallets.WalletType
+            Wallets.Response
+        )
+    )
+  where
+  fromRpc (RawResponse raw) = do
+    xs <-
+      maybeToRight
+        "Json is not an Array"
+        $ raw ^? _Array
+    foldrM parser mempty xs
+    where
+      parser x acc = do
+        (currency, walletType, res) <- parseEntry x
+        pure $
+          Map.alter
+            ( Just
+                . Map.insert walletType res
+                . fromMaybe mempty
+            )
+            currency
+            acc
+      parseEntry x = do
+        walletType <-
+          first show . Wallets.newWalletType
+            =<< maybeToRight
+              "WalletType is missing"
+              (x ^? nth 0 . _String)
+        currency <-
+          first show . newCurrencyCode
+            =<< maybeToRight
+              "CurrencyCode is missing"
+              (x ^? nth 1 . _String)
+        balance <-
+          first show . tryFrom @Rational
+            =<< maybeToRight
+              "Balance is missing"
+              (toRational <$> x ^? nth 2 . _Number)
+        unsettledInterest <-
+          first show . tryFrom @Rational
+            =<< maybeToRight
+              "UnsettledBalance is missing"
+              (toRational <$> x ^? nth 3 . _Number)
+        availableBalance <-
+          first show . tryFrom @Rational
+            =<< maybeToRight
+              "AvailableBalance is missing"
+              (toRational <$> x ^? nth 4 . _Number)
+        pure
+          ( currency,
+            walletType,
+            Wallets.Response
+              { Wallets.balance = balance,
+                Wallets.unsettledInterest = unsettledInterest,
+                Wallets.availableBalance = availableBalance,
+                Wallets.lastChange = x ^? nth 5 . _String
               }
           )

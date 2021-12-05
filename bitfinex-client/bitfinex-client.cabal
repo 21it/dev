@@ -41,6 +41,7 @@ library
       BitfinexClient.Data.QQ
       BitfinexClient.Data.SubmitOrder
       BitfinexClient.Data.Type
+      BitfinexClient.Data.Wallets
       BitfinexClient.Data.Web
       BitfinexClient.Import
       BitfinexClient.Import.External

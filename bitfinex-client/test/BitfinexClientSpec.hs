@@ -70,3 +70,6 @@ spec = before newEnv $ do
       [feeRateMakerBase| 0.001 |]
       prof
       SubmitOrder.optsPostOnly
+  itRight
+    "wallets succeeds"
+    Bitfinex.wallets
