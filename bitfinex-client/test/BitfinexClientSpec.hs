@@ -38,7 +38,7 @@ spec = before newEnv $ do
     sell <- Bitfinex.marketAveragePrice Sell amt sym
     liftIO $ buy `shouldSatisfy` (> sell)
   itLeft "marketAveragePrice fails" . const $ do
-    let amt = MoneyAmt $ quOf 2 MoneyBaseAmt
+    let amt = MoneyAmt $ quOf 2 MoneyBaseAmt :: MoneyBase
     let sym = [currencyPair|BTCADA|]
     Bitfinex.marketAveragePrice Buy amt sym
   itRight

@@ -8,7 +8,17 @@ where
 
 import BitfinexClient.Data.Web
 import BitfinexClient.Import.External
-import Env (header, help, keep, nonempty, parse, str, var)
+import Env
+  ( Mod,
+    Var,
+    header,
+    help,
+    keep,
+    nonempty,
+    parse,
+    str,
+    var,
+  )
 
 data Env = Env
   { envApiKey :: ApiKey,
@@ -23,4 +33,5 @@ newEnv =
         <$> var (str <=< nonempty) "BITFINEX_API_KEY" op
         <*> var (str <=< nonempty) "BITFINEX_PRV_KEY" op
   where
+    op :: Mod Var a
     op = keep <> help ""

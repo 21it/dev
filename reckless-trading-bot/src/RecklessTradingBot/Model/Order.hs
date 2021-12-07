@@ -59,8 +59,11 @@ updateBfx rowId bfxOrder _ = runSql $ do
     ]
   pure ss
   where
+    extRef :: OrderExternalId 'Bfx.Buy
     extRef = from $ Bfx.orderId bfxOrder
+    rate :: QuotePerBase 'Bfx.Buy
     rate = from $ Bfx.orderRate bfxOrder
+    ss :: OrderStatus
     ss = from $ Bfx.orderStatus bfxOrder
 
 getOngoing ::

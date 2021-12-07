@@ -169,5 +169,6 @@ instance PersistField (FeeRate a b) where
     x0 ->
       Left $ failure x0
     where
+      failure :: (Show c) => c -> Text
       failure =
         ("FeeRate PersistValue is invalid " <>) . show

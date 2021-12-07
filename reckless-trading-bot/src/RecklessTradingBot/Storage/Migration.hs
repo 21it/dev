@@ -21,13 +21,14 @@ migrateAfter =
   [ 0 ~> 1 := [priceIndexes]
   ]
   where
+    priceIndexesSql :: Text
     priceIndexesSql =
       "CREATE INDEX IF NOT EXISTS "
         <> "price_base_quote_idx "
         <> "ON price (base, quote);"
     priceIndexes =
       RawOperation "Create Price indexes" $
-        lift . return $
+        lift . pure $
           [MigrateSql priceIndexesSql []]
 
 migrateAll :: (Storage m, KatipContext m) => m ()
@@ -40,7 +41,7 @@ migrateAll = do
   runM migrateAfter
   $(logTM) InfoS "Persistent database migrated!"
   where
-    runM [] = return ()
+    runM [] = pure ()
     runM x = do
       pool <- getSqlPool
       liftIO $ runSqlPool (P.runMigration defaultSettings x) pool

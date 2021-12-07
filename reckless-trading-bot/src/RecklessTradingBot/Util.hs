@@ -17,4 +17,4 @@ spawnLink x =
   withRunInIO $ \run -> do
     pid <- async $ run x
     link pid
-    return pid
+    pure pid

@@ -63,7 +63,8 @@ library
       FunctionalDependencies
       FlexibleContexts
       StrictData
-  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction
+      NoNamedWildCards
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings
   build-depends:
       aeson
     , async
@@ -112,7 +113,8 @@ executable reckless-trading-bot-exe
       FunctionalDependencies
       FlexibleContexts
       StrictData
-  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
+      NoNamedWildCards
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.15 && <5
     , reckless-trading-bot
@@ -141,7 +143,8 @@ test-suite reckless-trading-bot-test
       FunctionalDependencies
       FlexibleContexts
       StrictData
-  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
+      NoNamedWildCards
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.15 && <5
     , hspec

@@ -26,6 +26,7 @@ tweakMakerRate ::
 tweakMakerRate act (QuotePerBase rate) =
   QuotePerBase $ rate |* tweak
   where
+    tweak :: Ratio Natural
     tweak =
       case act of
         Buy -> 999 % 1000

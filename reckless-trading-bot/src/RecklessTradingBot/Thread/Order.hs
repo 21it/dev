@@ -86,6 +86,7 @@ resolveOngoingT fee ent@(Entity rowId row) =
         "Ignoring unexpected " <> (show ent :: Text)
       pure ss
   where
+    ss :: OrderStatus
     ss = from $ orderStatus row
 
 placeOrder ::
