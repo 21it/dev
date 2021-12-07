@@ -6,6 +6,7 @@ module BitfinexClient
     marketAveragePrice,
     feeSummary,
     wallets,
+    spendableExchangeBalance,
     retrieveOrders,
     ordersHistory,
     getOrders,
@@ -19,6 +20,8 @@ module BitfinexClient
     cancelOrderByGroupId,
     submitCounterOrder,
     submitCounterOrderMaker,
+    dumpIntoQuote,
+    dumpIntoQuoteMaker,
     module X,
   )
 where
@@ -37,13 +40,15 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 symbolsDetails ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   ExceptT Error m (Map CurrencyPair CurrencyPairConf)
 symbolsDetails =
   Generic.pub (Generic.Rpc :: Generic.Rpc 'SymbolsDetails) [] ()
 
 marketAveragePrice ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   ExchangeAction ->
   MoneyBase ->
   CurrencyPair ->
@@ -61,7 +66,8 @@ marketAveragePrice act amt sym =
       }
 
 feeSummary ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   ExceptT Error m FeeSummary.Response
 feeSummary env =
@@ -90,8 +96,24 @@ wallets env =
     env
     (mempty :: Map Int Int)
 
+spendableExchangeBalance ::
+  ( MonadIO m
+  ) =>
+  Env ->
+  CurrencyCode 'Base ->
+  ExceptT Error m MoneyBase
+spendableExchangeBalance env cc =
+  --
+  -- TODO : implement QQ for Money amounts
+  --
+  maybe (from @(Ratio Natural) 0) Wallets.availableBalance
+    . Map.lookup Wallets.Exchange
+    . Map.findWithDefault mempty cc
+    <$> wallets env
+
 retrieveOrders ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   GetOrders.Options ->
   ExceptT Error m (Map OrderId (Order 'Remote))
@@ -100,7 +122,8 @@ retrieveOrders =
     (Generic.Rpc :: Generic.Rpc 'RetrieveOrders)
 
 ordersHistory ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   GetOrders.Options ->
   ExceptT Error m (Map OrderId (Order 'Remote))
@@ -109,7 +132,8 @@ ordersHistory =
     (Generic.Rpc :: Generic.Rpc 'OrdersHistory)
 
 getOrders ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   GetOrders.Options ->
   ExceptT Error m (Map OrderId (Order 'Remote))
@@ -119,7 +143,8 @@ getOrders env opts = do
   pure $ xs1 <> xs0
 
 getOrder ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderId ->
   ExceptT Error m (Order 'Remote)
@@ -130,7 +155,8 @@ getOrder env id0 = do
   except $ maybeToRight (ErrorMissingOrder id0) mOrder
 
 verifyOrder ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderId ->
   SubmitOrder.Request ->
@@ -156,7 +182,8 @@ verifyOrder env id0 req = do
     opts = SubmitOrder.options req
 
 submitOrder ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   ExchangeAction ->
   MoneyBase ->
@@ -180,7 +207,8 @@ submitOrder env act amt sym rate opts = do
 
 submitOrderMaker ::
   forall m.
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   ExchangeAction ->
   MoneyBase ->
@@ -215,7 +243,8 @@ submitOrderMaker env act amt sym rate0 opts0 =
           this (attempt + 1) newRate
 
 cancelOrderMulti ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   CancelOrderMulti.Request ->
   ExceptT Error m (Map OrderId (Order 'Remote))
@@ -224,7 +253,8 @@ cancelOrderMulti =
     (Generic.Rpc :: Generic.Rpc 'CancelOrderMulti)
 
 cancelOrderById ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderId ->
   ExceptT Error m (Order 'Remote)
@@ -239,7 +269,8 @@ cancelOrderById env id0 = do
     maybeToRight (ErrorMissingOrder id0) mOrder
 
 cancelOrderByClientId ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderClientId ->
   UTCTime ->
@@ -253,7 +284,8 @@ cancelOrderByClientId env cid utc =
       )
 
 cancelOrderByGroupId ::
-  MonadIO m =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderGroupId ->
   ExceptT Error m (Map OrderId (Order 'Remote))
@@ -263,7 +295,8 @@ cancelOrderByGroupId env gid = do
 
 submitCounterOrder ::
   forall a b m.
-  (MonadIO m) =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderId ->
   FeeRate a b ->
@@ -274,7 +307,8 @@ submitCounterOrder =
   submitCounterOrder' submitOrder
 
 submitCounterOrderMaker ::
-  (MonadIO m) =>
+  ( MonadIO m
+  ) =>
   Env ->
   OrderId ->
   FeeRate 'Maker 'Quote ->
@@ -285,7 +319,8 @@ submitCounterOrderMaker =
   submitCounterOrder' submitOrderMaker
 
 submitCounterOrder' ::
-  (MonadIO m) =>
+  ( MonadIO m
+  ) =>
   ( Env ->
     ExchangeAction ->
     MoneyBase ->
@@ -311,3 +346,43 @@ submitCounterOrder' submit env id0 fee prof opts = do
   if orderAction order == Buy && orderStatus order == Executed
     then submit env Sell exitAmt (orderSymbol order) exitRate opts
     else throwE $ ErrorOrderState order
+
+dumpIntoQuote' ::
+  ( MonadIO m
+  ) =>
+  ( Env ->
+    ExchangeAction ->
+    MoneyBase ->
+    CurrencyPair ->
+    QuotePerBase ->
+    SubmitOrder.Options ->
+    ExceptT Error m (Order 'Remote)
+  ) ->
+  Env ->
+  CurrencyPair ->
+  SubmitOrder.Options ->
+  ExceptT Error m (Order 'Remote)
+dumpIntoQuote' submit env sym opts = do
+  amt <- spendableExchangeBalance env $ currencyPairBase sym
+  rate <- marketAveragePrice Sell amt sym
+  submit env Sell amt sym rate opts
+
+dumpIntoQuote ::
+  ( MonadIO m
+  ) =>
+  Env ->
+  CurrencyPair ->
+  SubmitOrder.Options ->
+  ExceptT Error m (Order 'Remote)
+dumpIntoQuote =
+  dumpIntoQuote' submitOrder
+
+dumpIntoQuoteMaker ::
+  ( MonadIO m
+  ) =>
+  Env ->
+  CurrencyPair ->
+  SubmitOrder.Options ->
+  ExceptT Error m (Order 'Remote)
+dumpIntoQuoteMaker =
+  dumpIntoQuote' submitOrderMaker

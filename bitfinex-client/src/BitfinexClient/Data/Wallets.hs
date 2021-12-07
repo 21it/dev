@@ -1,7 +1,7 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Wallets
-  ( WalletType,
+  ( WalletType (..),
     newWalletType,
     Response (..),
   )

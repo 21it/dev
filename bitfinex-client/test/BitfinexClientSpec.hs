@@ -73,3 +73,9 @@ spec = before newEnv $ do
   itRight
     "wallets succeeds"
     Bitfinex.wallets
+
+--itRight "dumpIntoQuoteMaker succeeds" $ \env ->
+--  Bitfinex.dumpIntoQuoteMaker
+--    env
+--    [currencyPair|ADABTC|]
+--    SubmitOrder.optsPostOnly
