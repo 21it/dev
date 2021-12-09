@@ -17,6 +17,8 @@ import qualified Data.ByteString.Char8 as C8
 import qualified Data.Map as Map
 import Env
   ( Error (UnreadError),
+    Mod,
+    Var,
     auto,
     header,
     help,
@@ -117,7 +119,11 @@ newRawConfig = liftIO $ do
         "RECKLESS_TRADING_BOT_LOG_VERBOSITY"
         op
   where
+    op :: Mod Var a
     op = keep <> help ""
+    json ::
+      String ->
+      Either Env.Error (Set Bfx.CurrencyPair)
     json =
       first
         UnreadError
@@ -129,7 +135,7 @@ newRawConfig = liftIO $ do
       Either Env.Error b
     err = first $ UnreadError . show
 
-withEnv :: MonadUnliftIO m => (Env -> m ()) -> m ()
+withEnv :: forall m. (MonadUnliftIO m) => (Env -> m ()) -> m ()
 withEnv this = do
   rc <- newRawConfig
   handleScribe <-
@@ -143,7 +149,7 @@ withEnv this = do
         stdout
         (permitItem InfoS)
         (rawConfigLogVerbosity rc)
-  let mkLogEnv =
+  let mkLogEnv :: m LogEnv =
         liftIO $
           registerScribe
             "stdout"
@@ -152,7 +158,7 @@ withEnv this = do
             =<< initLogEnv
               "RecklessTradingBot"
               (Environment $ rawConfigLogEnv rc)
-  let mkSqlPool =
+  let mkSqlPool :: m (Pool SqlBackend) =
         liftIO
           . runNoLoggingT
           $ createPostgresqlPool
@@ -187,7 +193,9 @@ withEnv this = do
             envKatipNS = mempty
           }
   where
+    rmLogEnv :: LogEnv -> m ()
     rmLogEnv = void . liftIO . closeScribes
+    rmSqlPool :: Pool a -> m ()
     rmSqlPool = liftIO . destroyAllResources
 
 newTradingConfSet ::
