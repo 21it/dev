@@ -7,6 +7,7 @@ module BitfinexClient.Math
   )
 where
 
+import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External

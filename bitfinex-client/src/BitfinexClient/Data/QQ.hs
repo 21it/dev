@@ -57,6 +57,7 @@ mkQQ parser =
             Right x -> [|x|]
     }
   where
+    failure :: Text -> a
     failure field =
       error $
         show (typeRep $ Proxy @target)

@@ -6,6 +6,7 @@ module BitfinexClient.Parser
   )
 where
 
+import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 import Data.Aeson.Lens

@@ -1,31 +1,59 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-missing-deriving-strategies #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# OPTIONS_GHC -Wno-unused-type-patterns #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module BitfinexClient.Data.Kind
-  ( Method (..),
-    CurrencyRelation (..),
-    MarketRelation (..),
-    Location (..),
-  )
-where
+module BitfinexClient.Data.Kind where
 
-data Method
-  = SymbolsDetails
-  | MarketAveragePrice
-  | FeeSummary
-  | Wallets
-  | SubmitOrder
-  | RetrieveOrders
-  | OrdersHistory
-  | CancelOrderMulti
+import BitfinexClient.Import.External
+import Data.Singletons.Base.TH
 
-data CurrencyRelation
-  = Base
-  | Quote
+$( singletons
+     [d|
+       data Method
+         = SymbolsDetails
+         | MarketAveragePrice
+         | FeeSummary
+         | Wallets
+         | SubmitOrder
+         | RetrieveOrders
+         | OrdersHistory
+         | CancelOrderMulti
 
-data MarketRelation
-  = Maker
-  | Taker
+       data CurrencyRelation
+         = Base
+         | Quote
 
-data Location
-  = Local
-  | Remote
+       data MarketRelation
+         = Maker
+         | Taker
+
+       data Location
+         = Local
+         | Remote
+
+       data ExchangeAction
+         = Buy
+         | Sell
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
+       |]
+ )
+
+deriving stock instance Generic ExchangeAction
+
+newExchangeAction ::
+  Rational ->
+  Either
+    (TryFromException Rational ExchangeAction)
+    ExchangeAction
+newExchangeAction x
+  | x > 0 = Right Buy
+  | x < 0 = Right Sell
+  | otherwise = Left $ TryFromException x Nothing

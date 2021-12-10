@@ -17,8 +17,6 @@ module BitfinexClient.Data.Type
 
     -- * Trading
     -- $trading
-    ExchangeAction (..),
-    newExchangeAction,
     FeeRate (..),
     RebateRate (..),
     ProfitRate (..),
@@ -220,28 +218,6 @@ newOrderStatus = \case
 -- $trading
 -- Data related to trading and money.
 
-data ExchangeAction
-  = Buy
-  | Sell
-  deriving stock
-    ( Eq,
-      Ord,
-      Show,
-      Generic,
-      Enum,
-      Bounded
-    )
-
-newExchangeAction ::
-  Rational ->
-  Either
-    (TryFromException Rational ExchangeAction)
-    ExchangeAction
-newExchangeAction x
-  | x > 0 = Right Buy
-  | x < 0 = Right Sell
-  | otherwise = Left $ TryFromException x Nothing
-
 newtype
   FeeRate
     (a :: MarketRelation)
@@ -318,18 +294,6 @@ instance TryFrom Rational ProfitRate where
 
 instance From ProfitRate Rational where
   from = via @PosRat
-
---
--- TODO : add Buy/Sell phantom kind param
---
-instance ToRequestParam (ExchangeAction, MoneyBase) where
-  toTextParam (act, amt) =
-    toTextParam $
-      case act of
-        Buy -> absAmt
-        Sell -> (-1) * absAmt
-    where
-      absAmt = abs $ into @Rational amt
 
 newtype CurrencyCode (a :: CurrencyRelation) = CurrencyCode
   { unCurrencyCode :: Text

@@ -19,6 +19,7 @@ module BitfinexClient.Data.Metro
 where
 
 import BitfinexClient.Class.ToRequestParam
+import BitfinexClient.Data.Kind
 import BitfinexClient.Import.External
 import Data.Metrology.Poly as Metro
 --
@@ -154,3 +155,15 @@ instance TryFrom Rational QuotePerBase where
 instance From QuotePerBase Rational where
   from =
     via @(Ratio Natural)
+
+--
+-- TODO : add Buy/Sell phantom kind param
+--
+instance ToRequestParam (ExchangeAction, MoneyBase) where
+  toTextParam (act, amt) =
+    toTextParam $
+      case act of
+        Buy -> absAmt
+        Sell -> (-1) * absAmt
+    where
+      absAmt = abs $ into @Rational amt
