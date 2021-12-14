@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Parser
@@ -6,13 +7,13 @@ module BitfinexClient.Parser
   )
 where
 
-import BitfinexClient.Data.Kind
+import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 import Data.Aeson.Lens
 import qualified Data.Map as Map
 
-parseOrder :: AsValue a => a -> Either Text (Order b)
+parseOrder :: (AsValue a) => a -> Either Text (Order b)
 parseOrder x = do
   id0 <-
     maybeToRight "OrderId is missing" $
@@ -35,12 +36,9 @@ parseOrder x = do
   amt0 <-
     maybeToRight "OrderAmount is missing" $
       toRational <$> x ^? nth 7 . _Number
-  amt <-
+  amt@(SomeMoneyAmt sAct _) <-
     first (const $ "OrderAmount is invalid " <> show amt0) $
-      tryFrom $ abs amt0
-  act <-
-    first (const $ "OrderAmount is invalid " <> show amt0) $
-      newExchangeAction amt0
+      tryFrom amt0
   ss0 <-
     maybeToRight "OrderStatus is missing" $
       x ^? nth 13 . _String
@@ -52,15 +50,14 @@ parseOrder x = do
       "ExchangeRate is missing"
       $ x ^? nth 16 . _Number
   rate <-
-    first (const $ "ExchangeRate is invalid " <> show price)
-      . tryFrom
-      $ toRational price
+    first (const $ "ExchangeRate is invalid " <> show price) $
+      SomeQuotePerBase sAct
+        <$> tryFrom (toRational price)
   pure
     Order
       { orderId = id0,
         orderGroupId = gid,
         orderClientId = cid,
-        orderAction = act,
         orderAmount = amt,
         orderSymbol = sym,
         orderRate = rate,

@@ -45,7 +45,7 @@ instance FromRpc 'SubmitOrder (Order 'Remote) where
         $ raw ^? nth 4 . nth 0
     parseOrder order
 
-instance FromRpc 'MarketAveragePrice QuotePerBase where
+instance FromRpc 'MarketAveragePrice (QuotePerBase act) where
   fromRpc (RawResponse raw) = do
     x <-
       maybeToRight

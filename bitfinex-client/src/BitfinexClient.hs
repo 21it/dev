@@ -47,21 +47,20 @@ symbolsDetails =
   Generic.pub (Generic.Rpc :: Generic.Rpc 'SymbolsDetails) [] ()
 
 marketAveragePrice ::
-  ( MonadIO m
+  ( MonadIO m,
+    ToRequestParam (MoneyBase act)
   ) =>
-  ExchangeAction ->
-  MoneyBase ->
+  MoneyBase act ->
   CurrencyPair ->
-  ExceptT Error m QuotePerBase
-marketAveragePrice act amt sym =
+  ExceptT Error m (QuotePerBase act)
+marketAveragePrice amt sym =
   Generic.pub
     (Generic.Rpc :: Generic.Rpc 'MarketAveragePrice)
-    [ SomeQueryParam "amount" (act, amt),
+    [ SomeQueryParam "amount" amt,
       SomeQueryParam "symbol" sym
     ]
     MarketAveragePrice.Request
-      { MarketAveragePrice.action = act,
-        MarketAveragePrice.amount = amt,
+      { MarketAveragePrice.amount = amt,
         MarketAveragePrice.symbol = sym
       }
 
@@ -101,7 +100,7 @@ spendableExchangeBalance ::
   ) =>
   Env ->
   CurrencyCode 'Base ->
-  ExceptT Error m MoneyBase
+  ExceptT Error m (MoneyBase 'Sell)
 spendableExchangeBalance env cc =
   --
   -- TODO : implement QQ for Money amounts
@@ -155,11 +154,12 @@ getOrder env id0 = do
   except $ maybeToRight (ErrorMissingOrder id0) mOrder
 
 verifyOrder ::
-  ( MonadIO m
+  ( MonadIO m,
+    SingI act
   ) =>
   Env ->
   OrderId ->
-  SubmitOrder.Request ->
+  SubmitOrder.Request act ->
   ExceptT Error m (Order 'Remote)
 verifyOrder env id0 req = do
   remOrd <- getOrder env id0
@@ -169,10 +169,11 @@ verifyOrder env id0 req = do
             orderGroupId = SubmitOrder.groupId opts,
             orderClientId =
               SubmitOrder.clientId opts <|> orderClientId remOrd,
-            orderAction = SubmitOrder.action req,
-            orderAmount = SubmitOrder.amount req,
+            orderAmount =
+              SomeMoneyAmt sing $ SubmitOrder.amount req,
             orderSymbol = SubmitOrder.symbol req,
-            orderRate = SubmitOrder.rate req,
+            orderRate =
+              SomeQuotePerBase sing $ SubmitOrder.rate req,
             orderStatus = orderStatus remOrd
           }
   if remOrd == locOrd
@@ -182,41 +183,43 @@ verifyOrder env id0 req = do
     opts = SubmitOrder.options req
 
 submitOrder ::
-  ( MonadIO m
+  ( MonadIO m,
+    ToRequestParam (MoneyBase act),
+    SingI act
   ) =>
   Env ->
-  ExchangeAction ->
-  MoneyBase ->
+  MoneyBase act ->
   CurrencyPair ->
-  QuotePerBase ->
+  QuotePerBase act ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
-submitOrder env act amt sym rate opts = do
+submitOrder env amt sym rate opts = do
   order :: Order 'Remote <-
     Generic.prv (Generic.Rpc :: Generic.Rpc 'SubmitOrder) env req
   verifyOrder env (orderId order) req
   where
     req =
       SubmitOrder.Request
-        { SubmitOrder.action = act,
-          SubmitOrder.amount = amt,
+        { SubmitOrder.amount = amt,
           SubmitOrder.symbol = sym,
           SubmitOrder.rate = rate,
           SubmitOrder.options = opts
         }
 
 submitOrderMaker ::
-  forall m.
-  ( MonadIO m
+  forall act m.
+  ( MonadIO m,
+    ToRequestParam (MoneyBase act),
+    SingI act,
+    Typeable act
   ) =>
   Env ->
-  ExchangeAction ->
-  MoneyBase ->
+  MoneyBase act ->
   CurrencyPair ->
-  QuotePerBase ->
+  QuotePerBase act ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Remote)
-submitOrderMaker env act amt sym rate0 opts0 =
+submitOrderMaker env amt sym rate0 opts0 =
   this 0 rate0
   where
     opts =
@@ -227,10 +230,10 @@ submitOrderMaker env act amt sym rate0 opts0 =
         }
     this ::
       Int ->
-      QuotePerBase ->
+      QuotePerBase act ->
       ExceptT Error m (Order 'Remote)
     this attempt rate = do
-      order <- submitOrder env act amt sym rate opts
+      order <- submitOrder env amt sym rate opts
       if orderStatus order /= PostOnlyCanceled
         then pure order
         else do
@@ -239,7 +242,8 @@ submitOrderMaker env act amt sym rate0 opts0 =
             tryFromT
               . bfxRoundRatio
               . into @(Ratio Natural)
-              $ Math.tweakMakerRate act rate
+              . Math.tweakMakerRate
+              $ SomeQuotePerBase sing rate
           this (attempt + 1) newRate
 
 cancelOrderMulti ::
@@ -322,10 +326,9 @@ submitCounterOrder' ::
   ( MonadIO m
   ) =>
   ( Env ->
-    ExchangeAction ->
-    MoneyBase ->
+    MoneyBase 'Sell ->
     CurrencyPair ->
-    QuotePerBase ->
+    QuotePerBase 'Sell ->
     SubmitOrder.Options ->
     ExceptT Error m (Order 'Remote)
   ) ->
@@ -337,24 +340,27 @@ submitCounterOrder' ::
   ExceptT Error m (Order 'Remote)
 submitCounterOrder' submit env id0 fee prof opts = do
   order <- getOrder env id0
-  let (exitAmt, exitRate) =
-        Math.newCounterOrder
-          (orderAmount order)
-          (orderRate order)
-          fee
-          prof
-  if orderAction order == Buy && orderStatus order == Executed
-    then submit env Sell exitAmt (orderSymbol order) exitRate opts
-    else throwE $ ErrorOrderState order
+  case (orderAmount order, orderRate order) of
+    ( SomeMoneyAmt SBuy enterAmt,
+      SomeQuotePerBase SBuy enterRate
+      ) | orderStatus order == Executed -> do
+        let (exitAmt, exitRate) =
+              Math.newCounterOrder
+                enterAmt
+                enterRate
+                fee
+                prof
+        submit env exitAmt (orderSymbol order) exitRate opts
+    _ ->
+      throwE $ ErrorOrderState order
 
 dumpIntoQuote' ::
   ( MonadIO m
   ) =>
   ( Env ->
-    ExchangeAction ->
-    MoneyBase ->
+    MoneyBase 'Sell ->
     CurrencyPair ->
-    QuotePerBase ->
+    QuotePerBase 'Sell ->
     SubmitOrder.Options ->
     ExceptT Error m (Order 'Remote)
   ) ->
@@ -364,8 +370,8 @@ dumpIntoQuote' ::
   ExceptT Error m (Order 'Remote)
 dumpIntoQuote' submit env sym opts = do
   amt <- spendableExchangeBalance env $ currencyPairBase sym
-  rate <- marketAveragePrice Sell amt sym
-  submit env Sell amt sym rate opts
+  rate <- marketAveragePrice amt sym
+  submit env amt sym rate opts
 
 dumpIntoQuote ::
   ( MonadIO m

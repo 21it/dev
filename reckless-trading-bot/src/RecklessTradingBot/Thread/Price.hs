@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Thread.Price (apply) where
@@ -19,16 +20,11 @@ loop cfg = do
   createPrice cfg
   loop cfg
 
-createPrice :: Env m => TradingConf -> m ()
+createPrice :: (Env m) => TradingConf -> m ()
 createPrice cfg = do
-  amt <-
-    coerce
-      <$> readMVar (tradingConfMinOrderAmt cfg)
-  let getPrice x =
-        Bfx.marketAveragePrice x amt sym
   res <-
     runExceptT . withExceptT ErrorBfx $
-      (,) <$> getPrice Bfx.Buy <*> getPrice Bfx.Sell
+      (,) <$> getPrice @'Bfx.Buy <*> getPrice @'Bfx.Sell
   case res of
     --
     -- TODO : log error and do something
@@ -43,4 +39,17 @@ createPrice cfg = do
           (QuotePerBase sell)
       putCurrPrice price
   where
-    sym = tradingConfPair cfg
+    sym :: Bfx.CurrencyPair
+    sym =
+      tradingConfPair cfg
+    getPrice ::
+      forall (act :: Bfx.ExchangeAction) m.
+      ( Env m,
+        Bfx.ToRequestParam (Bfx.MoneyBase act)
+      ) =>
+      ExceptT Bfx.Error m (Bfx.QuotePerBase act)
+    getPrice = do
+      amt <- liftIO . readMVar $ tradingConfMinOrderAmt cfg
+      Bfx.marketAveragePrice
+        (coerce amt :: Bfx.MoneyBase act)
+        sym

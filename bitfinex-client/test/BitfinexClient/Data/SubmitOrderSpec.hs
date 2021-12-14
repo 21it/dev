@@ -20,7 +20,6 @@ spec = before newEnv $
       rate <- tryFromT @(Ratio Natural) $ 1 % 1234
       let req =
             SubmitOrder.Request
-              Buy
               testAmt
               [currencyPair|ADABTC|]
               rate

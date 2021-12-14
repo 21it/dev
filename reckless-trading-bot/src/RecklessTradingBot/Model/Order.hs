@@ -62,7 +62,13 @@ updateBfx rowId bfxOrder _ = runSql $ do
     extRef :: OrderExternalId 'Bfx.Buy
     extRef = from $ Bfx.orderId bfxOrder
     rate :: QuotePerBase 'Bfx.Buy
-    rate = from $ Bfx.orderRate bfxOrder
+    rate =
+      --
+      -- TODO : improve this!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      --
+      case Bfx.orderRate bfxOrder of
+        Bfx.SomeQuotePerBase Bfx.SBuy x -> from x
+        e -> error $ "Wrong QuotePerBase " <> show e
     ss :: OrderStatus
     ss = from $ Bfx.orderStatus bfxOrder
 

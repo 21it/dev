@@ -34,13 +34,13 @@ spec = before newEnv $ do
   itRight "marketAveragePrice succeeds" . const $ do
     let amt = testAmt
     let sym = [currencyPair|ADABTC|]
-    buy <- Bitfinex.marketAveragePrice Buy amt sym
-    sell <- Bitfinex.marketAveragePrice Sell amt sym
+    buy <- Bitfinex.marketAveragePrice amt sym
+    sell <- Bitfinex.marketAveragePrice amt sym
     liftIO $ buy `shouldSatisfy` (> sell)
   itLeft "marketAveragePrice fails" . const $ do
-    let amt = MoneyAmt $ quOf 2 MoneyBaseAmt :: MoneyBase
+    let amt = MoneyAmt $ quOf 2 MoneyBaseAmt :: MoneyBase 'Buy
     let sym = [currencyPair|BTCADA|]
-    Bitfinex.marketAveragePrice Buy amt sym
+    Bitfinex.marketAveragePrice amt sym
   itRight
     "feeSummary succeeds"
     Bitfinex.feeSummary
@@ -48,8 +48,8 @@ spec = before newEnv $ do
     let amt = testAmt
     let sym = [currencyPair|ADABTC|]
     let opts = SubmitOrder.optsPostOnly
-    rate <- Bitfinex.marketAveragePrice Buy amt sym
-    order <- Bitfinex.submitOrderMaker env Buy amt sym rate opts
+    rate <- Bitfinex.marketAveragePrice amt sym
+    order <- Bitfinex.submitOrderMaker env amt sym rate opts
     Bitfinex.cancelOrderById env $ orderId order
   itRight "retrieveOrders succeeds" $ \env ->
     Bitfinex.retrieveOrders env $

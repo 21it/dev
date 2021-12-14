@@ -37,7 +37,7 @@ import RecklessTradingBot.Import.External
 data TradingConf = TradingConf
   { tradingConfPair :: Bfx.CurrencyPair,
     tradingConfFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
-    tradingConfMinOrderAmt :: MVar MoneyBase
+    tradingConfMinOrderAmt :: MVar (MoneyBase 'Bfx.Buy)
   }
   deriving stock (Eq)
 

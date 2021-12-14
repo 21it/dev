@@ -7,6 +7,7 @@ module BitfinexClient.Data.Wallets
   )
 where
 
+import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Import.External
 
@@ -26,9 +27,9 @@ newWalletType = \case
   x -> Left $ TryFromException x Nothing
 
 data Response = Response
-  { balance :: MoneyBase,
-    unsettledInterest :: MoneyBase,
-    availableBalance :: MoneyBase,
+  { balance :: MoneyBase 'Sell,
+    unsettledInterest :: MoneyBase 'Sell,
+    availableBalance :: MoneyBase 'Sell,
     lastChange :: Maybe Text
   }
   deriving stock (Eq, Ord, Show)

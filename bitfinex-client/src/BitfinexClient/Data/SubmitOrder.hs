@@ -14,11 +14,10 @@ import qualified Data.Aeson as A
 --
 -- TODO : quote and base type parameters
 --
-data Request = Request
-  { action :: ExchangeAction,
-    amount :: MoneyBase,
+data Request (act :: ExchangeAction) = Request
+  { amount :: MoneyBase act,
     symbol :: CurrencyPair,
-    rate :: QuotePerBase,
+    rate :: QuotePerBase act,
     options :: Options
   }
   deriving stock (Eq, Ord, Show)
@@ -46,7 +45,10 @@ optsPostOnly =
       flags = [PostOnly]
     }
 
-instance ToJSON Request where
+instance
+  (ToRequestParam (MoneyBase act)) =>
+  ToJSON (Request act)
+  where
   toJSON req =
     eradicateNull $
       A.object
@@ -57,7 +59,7 @@ instance ToJSON Request where
           "type"
             A..= ("EXCHANGE LIMIT" :: Text),
           "amount"
-            A..= toTextParam (action req, amount req),
+            A..= toTextParam (amount req),
           "symbol"
             A..= toTextParam (symbol req),
           "price"

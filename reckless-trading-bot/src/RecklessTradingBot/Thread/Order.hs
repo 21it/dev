@@ -92,7 +92,7 @@ resolveOngoingT fee ent@(Entity rowId row) =
 placeOrder ::
   Env m =>
   OrderId ->
-  MoneyBase ->
+  MoneyBase 'Bfx.Buy ->
   Bfx.CurrencyPair ->
   Price ->
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
@@ -114,7 +114,7 @@ placeOrder rowId amt sym price fee = do
 placeOrderT ::
   Env m =>
   OrderId ->
-  MoneyBase ->
+  MoneyBase 'Bfx.Buy ->
   Bfx.CurrencyPair ->
   Price ->
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
@@ -131,10 +131,9 @@ placeOrderT rowId amt sym price fee = do
       Bfx.submitOrderMaker
       ( \f -> do
           f
-            Bfx.Buy
             (from amt)
             sym
-            (from $ priceBuy price)
+            (from $ priceBuy price :: Bfx.QuotePerBase 'Bfx.Buy)
             Bfx.optsPostOnly
               { Bfx.clientId = Just cid
               }

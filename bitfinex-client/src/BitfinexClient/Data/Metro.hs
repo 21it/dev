@@ -1,31 +1,35 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Metro
   ( MoneyAmt (..),
+    SomeMoneyAmt (..),
     MoneyBase,
     MoneyBase',
     MoneyBaseAmt (..),
+    SomeMoneyBase,
     MoneyQuote,
     MoneyQuote',
     MoneyQuoteAmt (..),
+    SomeMoneyQuote,
     QuotePerBase (..),
     QuotePerBase',
+    SomeQuotePerBase (..),
     quotePerBaseAmt,
   )
 where
 
 import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
-import BitfinexClient.Import.External
+import BitfinexClient.Import.External as Ext
 import Data.Metrology.Poly as Metro
 --
 -- TODO : somehow remove unsafe
 --
 import qualified Data.Metrology.Unsafe as Unsafe
+import GHC.Natural (naturalFromInteger)
 import qualified Prelude
 
 data MoneyBaseDim -- = MoneyBaseDim
@@ -70,14 +74,34 @@ type MoneyQuote' =
 -- MoneyAmt sugar
 --
 
-newtype MoneyAmt dim = MoneyAmt
+newtype MoneyAmt dim (act :: ExchangeAction) = MoneyAmt
   { unMoneyAmt :: MkQu_DLN dim LCSU' (Ratio Natural)
   }
   deriving stock (Eq, Ord)
 
+data SomeMoneyAmt dim
+  = forall act.
+    ( Show (MoneyAmt dim act)
+    ) =>
+    SomeMoneyAmt
+      (Sing act)
+      (MoneyAmt dim act)
+
+deriving stock instance Show (SomeMoneyAmt dim)
+
+instance Eq (SomeMoneyAmt dim) where
+  (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
+    case eqExchangeAction sx sy of
+      Just Refl -> x == y
+      Nothing -> False
+
 type MoneyBase = MoneyAmt MoneyBaseDim
 
 type MoneyQuote = MoneyAmt MoneyQuoteDim
+
+type SomeMoneyBase = SomeMoneyAmt MoneyBaseDim
+
+type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
 
 --
 -- TODO : derive some newtype instances to use directly
@@ -91,24 +115,58 @@ instance
   ( Show unit,
     Lookup dim LCSU' ~ unit
   ) =>
-  Prelude.Show (MoneyAmt dim)
+  Prelude.Show (MoneyAmt dim act)
   where
   show x =
     show (unQu $ unMoneyAmt x)
       <> " "
       <> show (undefined :: unit)
 
-instance From (Ratio Natural) (MoneyAmt dim) where
+--
+-- TODO : remove (Ratio Natural) instances, because
+-- they are lossy in general case (MoneyAmt dim act).
+-- Maybe leave (MoneyAmt dim 'Buy) instances because
+-- they are not lossy.
+--
+instance From (Ratio Natural) (MoneyAmt dim act) where
   from = MoneyAmt . Unsafe.Qu
 
-instance From (MoneyAmt dim) (Ratio Natural) where
+instance From (MoneyAmt dim act) (Ratio Natural) where
   from = unQu . unMoneyAmt
 
-instance TryFrom Rational (MoneyAmt dim) where
+instance TryFrom Rational (MoneyAmt dim act) where
   tryFrom = from @(Ratio Natural) `composeTryRhs` tryFrom
 
-instance From (MoneyAmt dim) Rational where
+instance From (MoneyAmt dim act) Rational where
   from = via @(Ratio Natural)
+
+instance
+  ( Show (Lookup dim LCSU')
+  ) =>
+  TryFrom Rational (SomeMoneyAmt dim)
+  where
+  tryFrom = \case
+    rat
+      | rat > 0 ->
+        Right
+          . SomeMoneyAmt (sing :: Sing 'Buy)
+          . MoneyAmt
+          . Unsafe.Qu
+          $ nat rat
+    rat
+      | rat < 0 ->
+        Right
+          . SomeMoneyAmt (sing :: Sing 'Sell)
+          . MoneyAmt
+          . Unsafe.Qu
+          $ nat rat
+    rat ->
+      Left $
+        TryFromException rat Nothing
+    where
+      nat x =
+        (naturalFromInteger . abs $ numerator x)
+          Ext.% (naturalFromInteger . abs $ denominator x)
 
 --
 -- QuotePerBase sugar
@@ -117,7 +175,7 @@ instance From (MoneyAmt dim) Rational where
 type QuotePerBase' =
   MoneyQuote' %/ MoneyBase'
 
-newtype QuotePerBase = QuotePerBase
+newtype QuotePerBase (act :: ExchangeAction) = QuotePerBase
   { unQuotePerBase :: QuotePerBase'
   }
   deriving stock
@@ -128,42 +186,75 @@ newtype QuotePerBase = QuotePerBase
 quotePerBaseAmt :: MoneyQuoteAmt :/ MoneyBaseAmt
 quotePerBaseAmt = MoneyQuoteAmt :/ MoneyBaseAmt
 
-instance Prelude.Show QuotePerBase where
+--
+-- TODO : show act as well?
+--
+instance Prelude.Show (QuotePerBase act) where
   show x =
     show (unQuotePerBase x # quotePerBaseAmt)
       <> " "
       <> show quotePerBaseAmt
 
-instance ToRequestParam QuotePerBase where
+instance ToRequestParam (QuotePerBase act) where
   toTextParam =
     toTextParam
-      . from @QuotePerBase @(Ratio Natural)
+      . from @(QuotePerBase act) @(Ratio Natural)
 
-instance TryFrom (Ratio Natural) QuotePerBase where
+instance TryFrom (Ratio Natural) (QuotePerBase act) where
   tryFrom x
     | x > 0 = Right . QuotePerBase $ x Metro.% quotePerBaseAmt
     | otherwise = Left $ TryFromException x Nothing
 
-instance From QuotePerBase (Ratio Natural) where
+instance From (QuotePerBase act) (Ratio Natural) where
   from =
     (# quotePerBaseAmt) . unQuotePerBase
 
-instance TryFrom Rational QuotePerBase where
+instance TryFrom Rational (QuotePerBase act) where
   tryFrom =
     tryVia @(Ratio Natural)
 
-instance From QuotePerBase Rational where
+instance From (QuotePerBase act) Rational where
   from =
     via @(Ratio Natural)
 
+instance ToRequestParam (MoneyBase 'Buy) where
+  toTextParam =
+    toTextParam
+      . abs
+      . into @Rational
+
+instance ToRequestParam (MoneyBase 'Sell) where
+  toTextParam =
+    toTextParam
+      . ((-1) *)
+      . abs
+      . into @Rational
+
 --
--- TODO : add Buy/Sell phantom kind param
+-- SomeQuotePerBase sugar
 --
-instance ToRequestParam (ExchangeAction, MoneyBase) where
-  toTextParam (act, amt) =
-    toTextParam $
-      case act of
-        Buy -> absAmt
-        Sell -> (-1) * absAmt
-    where
-      absAmt = abs $ into @Rational amt
+
+data SomeQuotePerBase :: Type where
+  SomeQuotePerBase ::
+    Sing act ->
+    QuotePerBase act ->
+    SomeQuotePerBase
+
+deriving stock instance Show SomeQuotePerBase
+
+instance Eq SomeQuotePerBase where
+  (SomeQuotePerBase sx x) == (SomeQuotePerBase sy y) =
+    case eqExchangeAction sx sy of
+      Just Refl -> x == y
+      Nothing -> False
+
+instance From SomeQuotePerBase (Ratio Natural) where
+  from (SomeQuotePerBase _ x) = from x
+
+eqExchangeAction ::
+  SExchangeAction a ->
+  SExchangeAction b ->
+  Maybe (a :~: b)
+eqExchangeAction SBuy SBuy = Just Refl
+eqExchangeAction SSell SSell = Just Refl
+eqExchangeAction _ _ = Nothing

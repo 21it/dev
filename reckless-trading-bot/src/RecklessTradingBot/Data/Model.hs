@@ -63,8 +63,8 @@ share
       intRef OrderId Maybe
       extRef (OrderExternalId 'Bfx.Buy) Maybe
       price (QuotePerBase 'Bfx.Buy)
-      gain MoneyBase
-      loss MoneyQuote
+      gain (MoneyBase 'Bfx.Buy)
+      loss (MoneyQuote 'Bfx.Buy)
       fee (FeeRate 'Bfx.Maker 'Bfx.Base)
       status OrderStatus
       at UTCTime
@@ -74,8 +74,8 @@ share
       intRef OrderId
       extRef (OrderExternalId 'Bfx.Sell) Maybe
       price (QuotePerBase 'Bfx.Sell)
-      gain MoneyQuote
-      loss MoneyBase
+      gain (MoneyQuote 'Bfx.Sell)
+      loss (MoneyBase 'Bfx.Sell)
       fee (FeeRate 'Bfx.Maker 'Bfx.Quote)
       status OrderStatus
       at UTCTime
