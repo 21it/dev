@@ -27,17 +27,33 @@ default-extensions:
 - MultiParamTypeClasses
 - LambdaCase
 - OverloadedStrings
-- ScopedTypeVariables
 - GeneralizedNewtypeDeriving
 - DerivingStrategies
 - DerivingVia
-- StandaloneDeriving
-- DataKinds
-- KindSignatures
 - FunctionalDependencies
-- FlexibleContexts
 - StrictData
+# Singletons
+- DataKinds
+- DefaultSignatures
+- EmptyCase
+- ExistentialQuantification
+- FlexibleContexts
+- FlexibleInstances
+- GADTs
+- InstanceSigs
+- KindSignatures
+- NoCUSKs
 - NoNamedWildCards
+- NoStarIsType
+- PolyKinds
+- RankNTypes
+- ScopedTypeVariables
+- StandaloneDeriving
+- StandaloneKindSignatures
+- TypeApplications
+- TypeFamilies
+- TypeOperators
+- UndecidableInstances
 
 ghc-options:
 # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
@@ -89,6 +105,7 @@ library:
   - envparse
   - extra
   - units
+  - singletons
 
 executables:
   reckless-trading-bot-exe:

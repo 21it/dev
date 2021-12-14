@@ -42,33 +42,28 @@ create (Entity priceId price) = do
         }
 
 updateBfx ::
-  (Storage m) =>
+  ( Storage m
+  ) =>
   OrderId ->
-  Bfx.Order 'Bfx.Remote ->
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
+  Bfx.SomeOrder 'Bfx.Remote ->
   m OrderStatus
-updateBfx rowId bfxOrder _ = runSql $ do
-  P.update
-    rowId
+updateBfx rowId (Bfx.SomeOrder bfxS bfxOrder) = runSql $ do
+  P.update rowId $
     --
-    -- TODO : !!!
+    -- TODO : FIXME !!!
     --
-    [ OrderExtRef P.=. Just extRef,
-      OrderPrice P.=. rate,
-      OrderStatus P.=. ss
-    ]
+    case bfxS of
+      Bfx.SBuy ->
+        [ OrderExtRef P.=. Just (from $ Bfx.orderId bfxOrder),
+          OrderPrice P.=. from (Bfx.orderRate bfxOrder),
+          OrderStatus P.=. ss
+        ]
+      Bfx.SSell ->
+        [ OrderExtRef P.=. Just (from $ Bfx.orderId bfxOrder),
+          OrderStatus P.=. ss
+        ]
   pure ss
   where
-    extRef :: OrderExternalId 'Bfx.Buy
-    extRef = from $ Bfx.orderId bfxOrder
-    rate :: QuotePerBase 'Bfx.Buy
-    rate =
-      --
-      -- TODO : improve this!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      --
-      case Bfx.orderRate bfxOrder of
-        Bfx.SomeQuotePerBase Bfx.SBuy x -> from x
-        e -> error $ "Wrong QuotePerBase " <> show e
     ss :: OrderStatus
     ss = from $ Bfx.orderStatus bfxOrder
 

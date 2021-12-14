@@ -7,13 +7,18 @@ module BitfinexClient.Parser
   )
 where
 
+import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 import Data.Aeson.Lens
 import qualified Data.Map as Map
 
-parseOrder :: (AsValue a) => a -> Either Text (Order b)
+parseOrder ::
+  ( AsValue a
+  ) =>
+  a ->
+  Either Text (SomeOrder 'Remote)
 parseOrder x = do
   id0 <-
     maybeToRight "OrderId is missing" $
@@ -36,7 +41,7 @@ parseOrder x = do
   amt0 <-
     maybeToRight "OrderAmount is missing" $
       toRational <$> x ^? nth 7 . _Number
-  amt@(SomeMoneyAmt sAct _) <-
+  SomeMoneyAmt sAct amt <-
     first (const $ "OrderAmount is invalid " <> show amt0) $
       tryFrom amt0
   ss0 <-
@@ -51,9 +56,8 @@ parseOrder x = do
       $ x ^? nth 16 . _Number
   rate <-
     first (const $ "ExchangeRate is invalid " <> show price) $
-      SomeQuotePerBase sAct
-        <$> tryFrom (toRational price)
-  pure
+      tryFrom (toRational price)
+  pure . SomeOrder sAct $
     Order
       { orderId = id0,
         orderGroupId = gid,
@@ -64,7 +68,11 @@ parseOrder x = do
         orderStatus = ss1
       }
 
-parseOrderMap :: AsValue a => a -> Either Text (Map OrderId (Order b))
+parseOrderMap ::
+  ( AsValue a
+  ) =>
+  a ->
+  Either Text (Map OrderId (SomeOrder 'Remote))
 parseOrderMap raw = do
   xs <-
     maybeToRight
@@ -73,5 +81,5 @@ parseOrderMap raw = do
   foldrM parser mempty xs
   where
     parser x acc = do
-      order <- parseOrder x
-      pure $ Map.insert (orderId order) order acc
+      someOrder@(SomeOrder _ order) <- parseOrder x
+      pure $ Map.insert (orderId order) someOrder acc

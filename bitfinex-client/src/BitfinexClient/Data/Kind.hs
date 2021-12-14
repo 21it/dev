@@ -48,12 +48,10 @@ $( singletons
 
 deriving stock instance Generic ExchangeAction
 
-newExchangeAction ::
-  Rational ->
-  Either
-    (TryFromException Rational ExchangeAction)
-    ExchangeAction
-newExchangeAction x
-  | x > 0 = Right Buy
-  | x < 0 = Right Sell
-  | otherwise = Left $ TryFromException x Nothing
+eqExchangeAction ::
+  SExchangeAction a ->
+  SExchangeAction b ->
+  Maybe (a :~: b)
+eqExchangeAction SBuy SBuy = Just Refl
+eqExchangeAction SSell SSell = Just Refl
+eqExchangeAction _ _ = Nothing

@@ -37,7 +37,6 @@ import Data.Time.Clock as X
 import Data.Type.Equality as X ((:~:) (..))
 import Data.Typeable as X (typeOf)
 import Network.HTTP.Client as X (HttpException (..))
-import Prelude.Singletons as X (SMaybe (..))
 import Universum as X hiding (ByteString, catch)
 import UnliftIO as X (catch)
 import Witch as X

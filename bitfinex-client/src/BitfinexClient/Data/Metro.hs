@@ -250,11 +250,3 @@ instance Eq SomeQuotePerBase where
 
 instance From SomeQuotePerBase (Ratio Natural) where
   from (SomeQuotePerBase _ x) = from x
-
-eqExchangeAction ::
-  SExchangeAction a ->
-  SExchangeAction b ->
-  Maybe (a :~: b)
-eqExchangeAction SBuy SBuy = Just Refl
-eqExchangeAction SSell SSell = Just Refl
-eqExchangeAction _ _ = Nothing

@@ -16,7 +16,10 @@ import qualified RecklessTradingBot.Model.Price as Price
 -- running. This way I can avoid lock-by-row
 -- transactional complexity of postgres
 -- procedures, and do simple insert/update instead.
-apply :: Env m => m ()
+apply ::
+  ( Env m
+  ) =>
+  m ()
 apply = do
   $(logTM) InfoS "Spawned"
   xs <-
@@ -24,7 +27,11 @@ apply = do
       =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: Env m => TradingConf -> m ()
+loop ::
+  ( Env m
+  ) =>
+  TradingConf ->
+  m ()
 loop cfg = do
   priceEnt@(Entity _ price) <- rcvNextPrice sym
   resolved <- mapM (resolveOngoing fee) =<< Order.getOngoing sym
@@ -59,13 +66,13 @@ resolveOngoingT ::
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   Entity Order ->
   ExceptT Error m OrderStatus
-resolveOngoingT fee ent@(Entity rowId row) =
+resolveOngoingT _ ent@(Entity rowId row) =
   case orderExtRef row of
     Just ref | ss == OrderActive -> do
       $(logTM) DebugS . logStr $
         "Updating " <> (show ent :: Text)
       bfxOrder <- withBfxT Bfx.getOrder ($ from ref)
-      lift $ Order.updateBfx rowId bfxOrder fee
+      lift $ Order.updateBfx rowId bfxOrder
     _ | ss == OrderNew -> do
       $(logTM) ErrorS . logStr $
         "Cancelling unexpected " <> (show ent :: Text)
@@ -76,7 +83,7 @@ resolveOngoingT fee ent@(Entity rowId row) =
           (\f -> f cid $ orderAt row)
       case res of
         Just bfxOrder ->
-          lift $ Order.updateBfx rowId bfxOrder fee
+          lift $ Order.updateBfx rowId bfxOrder
         Nothing -> do
           $(logTM) ErrorS . logStr $
             "Nonexistent " <> (show ent :: Text)
@@ -90,7 +97,8 @@ resolveOngoingT fee ent@(Entity rowId row) =
     ss = from $ orderStatus row
 
 placeOrder ::
-  Env m =>
+  ( Env m
+  ) =>
   OrderId ->
   MoneyBase 'Bfx.Buy ->
   Bfx.CurrencyPair ->
@@ -112,7 +120,8 @@ placeOrder rowId amt sym price fee = do
       "Order failed " <> (show err :: Text)
 
 placeOrderT ::
-  Env m =>
+  ( Env m
+  ) =>
   OrderId ->
   MoneyBase 'Bfx.Buy ->
   Bfx.CurrencyPair ->
@@ -121,10 +130,10 @@ placeOrderT ::
   ExceptT
     Error
     m
-    ( Bfx.Order 'Bfx.Remote,
+    ( Bfx.Order 'Bfx.Buy 'Bfx.Remote,
       OrderStatus
     )
-placeOrderT rowId amt sym price fee = do
+placeOrderT rowId amt sym price _ = do
   cid <- tryFromT rowId
   bfxOrder <-
     withBfxT
@@ -139,8 +148,9 @@ placeOrderT rowId amt sym price fee = do
               }
       )
   ss <-
-    lift $
-      Order.updateBfx rowId bfxOrder fee
+    lift
+      . Order.updateBfx rowId
+      $ Bfx.SomeOrder sing bfxOrder
   pure (bfxOrder, ss)
 
 --

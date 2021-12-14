@@ -53,17 +53,32 @@ library
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
-      ScopedTypeVariables
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
-      StandaloneDeriving
-      DataKinds
-      KindSignatures
       FunctionalDependencies
-      FlexibleContexts
       StrictData
+      DataKinds
+      DefaultSignatures
+      EmptyCase
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      InstanceSigs
+      KindSignatures
+      NoCUSKs
       NoNamedWildCards
+      NoStarIsType
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      StandaloneKindSignatures
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings
   build-depends:
       aeson
@@ -81,6 +96,7 @@ library
     , persistent-migration
     , persistent-postgresql
     , resource-pool
+    , singletons
     , stm
     , text
     , time
@@ -103,17 +119,32 @@ executable reckless-trading-bot-exe
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
-      ScopedTypeVariables
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
-      StandaloneDeriving
-      DataKinds
-      KindSignatures
       FunctionalDependencies
-      FlexibleContexts
       StrictData
+      DataKinds
+      DefaultSignatures
+      EmptyCase
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      InstanceSigs
+      KindSignatures
+      NoCUSKs
       NoNamedWildCards
+      NoStarIsType
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      StandaloneKindSignatures
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.15 && <5
@@ -133,17 +164,32 @@ test-suite reckless-trading-bot-test
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
-      ScopedTypeVariables
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
-      StandaloneDeriving
-      DataKinds
-      KindSignatures
       FunctionalDependencies
-      FlexibleContexts
       StrictData
+      DataKinds
+      DefaultSignatures
+      EmptyCase
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      InstanceSigs
+      KindSignatures
+      NoCUSKs
       NoNamedWildCards
+      NoStarIsType
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      StandaloneKindSignatures
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.15 && <5

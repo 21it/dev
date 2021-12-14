@@ -115,7 +115,7 @@ retrieveOrders ::
   ) =>
   Env ->
   GetOrders.Options ->
-  ExceptT Error m (Map OrderId (Order 'Remote))
+  ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 retrieveOrders =
   Generic.prv
     (Generic.Rpc :: Generic.Rpc 'RetrieveOrders)
@@ -125,7 +125,7 @@ ordersHistory ::
   ) =>
   Env ->
   GetOrders.Options ->
-  ExceptT Error m (Map OrderId (Order 'Remote))
+  ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 ordersHistory =
   Generic.prv
     (Generic.Rpc :: Generic.Rpc 'OrdersHistory)
@@ -135,7 +135,7 @@ getOrders ::
   ) =>
   Env ->
   GetOrders.Options ->
-  ExceptT Error m (Map OrderId (Order 'Remote))
+  ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 getOrders env opts = do
   xs0 <- retrieveOrders env opts
   xs1 <- ordersHistory env opts
@@ -146,7 +146,7 @@ getOrder ::
   ) =>
   Env ->
   OrderId ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (SomeOrder 'Remote)
 getOrder env id0 = do
   mOrder <-
     Map.lookup id0
@@ -154,35 +154,50 @@ getOrder env id0 = do
   except $ maybeToRight (ErrorMissingOrder id0) mOrder
 
 verifyOrder ::
+  forall act m.
   ( MonadIO m,
     SingI act
   ) =>
   Env ->
   OrderId ->
   SubmitOrder.Request act ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order act 'Remote)
 verifyOrder env id0 req = do
-  remOrd <- getOrder env id0
-  let locOrd =
-        Order
-          { orderId = id0,
-            orderGroupId = SubmitOrder.groupId opts,
-            orderClientId =
-              SubmitOrder.clientId opts <|> orderClientId remOrd,
-            orderAmount =
-              SomeMoneyAmt sing $ SubmitOrder.amount req,
-            orderSymbol = SubmitOrder.symbol req,
-            orderRate =
-              SomeQuotePerBase sing $ SubmitOrder.rate req,
-            orderStatus = orderStatus remOrd
-          }
-  if remOrd == locOrd
-    then pure remOrd
-    else throwE $ ErrorUnverifiedOrder (coerce locOrd) remOrd
+  someRemOrd@(SomeOrder remSing remOrd) <- getOrder env id0
+  case eqExchangeAction remSing locSing of
+    Nothing -> throwE $ ErrorOrderState someRemOrd
+    Just Refl -> do
+      let locOrd =
+            Order
+              { orderId =
+                  id0,
+                orderGroupId =
+                  SubmitOrder.groupId opts,
+                orderClientId =
+                  SubmitOrder.clientId opts
+                    <|> orderClientId remOrd,
+                orderAmount =
+                  SubmitOrder.amount req,
+                orderSymbol =
+                  SubmitOrder.symbol req,
+                orderRate =
+                  SubmitOrder.rate req,
+                orderStatus =
+                  orderStatus remOrd
+              }
+      if remOrd == locOrd
+        then pure remOrd
+        else
+          throwE $
+            ErrorUnverifiedOrder
+              (SomeOrder locSing $ coerce locOrd)
+              someRemOrd
   where
     opts = SubmitOrder.options req
+    locSing = sing :: Sing act
 
 submitOrder ::
+  forall act m.
   ( MonadIO m,
     ToRequestParam (MoneyBase act),
     SingI act
@@ -192,9 +207,9 @@ submitOrder ::
   CurrencyPair ->
   QuotePerBase act ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order act 'Remote)
 submitOrder env amt sym rate opts = do
-  order :: Order 'Remote <-
+  order :: Order act 'Remote <-
     Generic.prv (Generic.Rpc :: Generic.Rpc 'SubmitOrder) env req
   verifyOrder env (orderId order) req
   where
@@ -218,7 +233,7 @@ submitOrderMaker ::
   CurrencyPair ->
   QuotePerBase act ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order act 'Remote)
 submitOrderMaker env amt sym rate0 opts0 =
   this 0 rate0
   where
@@ -231,13 +246,15 @@ submitOrderMaker env amt sym rate0 opts0 =
     this ::
       Int ->
       QuotePerBase act ->
-      ExceptT Error m (Order 'Remote)
+      ExceptT Error m (Order act 'Remote)
     this attempt rate = do
       order <- submitOrder env amt sym rate opts
       if orderStatus order /= PostOnlyCanceled
         then pure order
         else do
-          when (attempt >= 10) $ throwE $ ErrorOrderState order
+          when (attempt >= 10) $
+            throwE $
+              ErrorOrderState $ SomeOrder sing order
           newRate <-
             tryFromT
               . bfxRoundRatio
@@ -251,7 +268,7 @@ cancelOrderMulti ::
   ) =>
   Env ->
   CancelOrderMulti.Request ->
-  ExceptT Error m (Map OrderId (Order 'Remote))
+  ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 cancelOrderMulti =
   Generic.prv
     (Generic.Rpc :: Generic.Rpc 'CancelOrderMulti)
@@ -261,7 +278,7 @@ cancelOrderById ::
   ) =>
   Env ->
   OrderId ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (SomeOrder 'Remote)
 cancelOrderById env id0 = do
   mOrder <-
     Map.lookup id0
@@ -278,7 +295,7 @@ cancelOrderByClientId ::
   Env ->
   OrderClientId ->
   UTCTime ->
-  ExceptT Error m (Maybe (Order 'Remote))
+  ExceptT Error m (Maybe (SomeOrder 'Remote))
 cancelOrderByClientId env cid utc =
   listToMaybe . elems
     <$> cancelOrderMulti
@@ -292,7 +309,7 @@ cancelOrderByGroupId ::
   ) =>
   Env ->
   OrderGroupId ->
-  ExceptT Error m (Map OrderId (Order 'Remote))
+  ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 cancelOrderByGroupId env gid = do
   cancelOrderMulti env . CancelOrderMulti.ByOrderGroupId $
     Set.singleton gid
@@ -306,7 +323,7 @@ submitCounterOrder ::
   FeeRate a b ->
   ProfitRate ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order 'Sell 'Remote)
 submitCounterOrder =
   submitCounterOrder' submitOrder
 
@@ -318,7 +335,7 @@ submitCounterOrderMaker ::
   FeeRate 'Maker 'Quote ->
   ProfitRate ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order 'Sell 'Remote)
 submitCounterOrderMaker =
   submitCounterOrder' submitOrderMaker
 
@@ -330,29 +347,27 @@ submitCounterOrder' ::
     CurrencyPair ->
     QuotePerBase 'Sell ->
     SubmitOrder.Options ->
-    ExceptT Error m (Order 'Remote)
+    ExceptT Error m (Order 'Sell 'Remote)
   ) ->
   Env ->
   OrderId ->
   FeeRate a b ->
   ProfitRate ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order 'Sell 'Remote)
 submitCounterOrder' submit env id0 fee prof opts = do
-  order <- getOrder env id0
-  case (orderAmount order, orderRate order) of
-    ( SomeMoneyAmt SBuy enterAmt,
-      SomeQuotePerBase SBuy enterRate
-      ) | orderStatus order == Executed -> do
-        let (exitAmt, exitRate) =
-              Math.newCounterOrder
-                enterAmt
-                enterRate
-                fee
-                prof
-        submit env exitAmt (orderSymbol order) exitRate opts
+  someRemOrd@(SomeOrder remSing remOrder) <- getOrder env id0
+  case remSing of
+    SBuy | orderStatus remOrder == Executed -> do
+      let (exitAmt, exitRate) =
+            Math.newCounterOrder
+              (orderAmount remOrder)
+              (orderRate remOrder)
+              fee
+              prof
+      submit env exitAmt (orderSymbol remOrder) exitRate opts
     _ ->
-      throwE $ ErrorOrderState order
+      throwE $ ErrorOrderState someRemOrd
 
 dumpIntoQuote' ::
   ( MonadIO m
@@ -362,12 +377,12 @@ dumpIntoQuote' ::
     CurrencyPair ->
     QuotePerBase 'Sell ->
     SubmitOrder.Options ->
-    ExceptT Error m (Order 'Remote)
+    ExceptT Error m (Order 'Sell 'Remote)
   ) ->
   Env ->
   CurrencyPair ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuote' submit env sym opts = do
   amt <- spendableExchangeBalance env $ currencyPairBase sym
   rate <- marketAveragePrice amt sym
@@ -379,7 +394,7 @@ dumpIntoQuote ::
   Env ->
   CurrencyPair ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuote =
   dumpIntoQuote' submitOrder
 
@@ -389,6 +404,6 @@ dumpIntoQuoteMaker ::
   Env ->
   CurrencyPair ->
   SubmitOrder.Options ->
-  ExceptT Error m (Order 'Remote)
+  ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuoteMaker =
   dumpIntoQuote' submitOrderMaker

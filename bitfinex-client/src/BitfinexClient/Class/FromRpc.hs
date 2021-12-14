@@ -23,7 +23,11 @@ import qualified Data.Vector as V
 class FromRpc (method :: Method) res where
   fromRpc :: RawResponse -> Either Text res
 
-instance FromRpc 'CancelOrderMulti (Map OrderId (Order 'Remote)) where
+instance
+  FromRpc
+    'CancelOrderMulti
+    (Map OrderId (SomeOrder 'Remote))
+  where
   fromRpc (RawResponse raw) = do
     xs <-
       maybeToRight
@@ -31,19 +35,39 @@ instance FromRpc 'CancelOrderMulti (Map OrderId (Order 'Remote)) where
         $ raw ^? nth 4
     parseOrderMap xs
 
-instance FromRpc 'RetrieveOrders (Map OrderId (Order 'Remote)) where
+instance
+  FromRpc
+    'RetrieveOrders
+    (Map OrderId (SomeOrder 'Remote))
+  where
   fromRpc (RawResponse raw) = parseOrderMap raw
 
-instance FromRpc 'OrdersHistory (Map OrderId (Order 'Remote)) where
+instance
+  FromRpc
+    'OrdersHistory
+    (Map OrderId (SomeOrder 'Remote))
+  where
   fromRpc (RawResponse raw) = parseOrderMap raw
 
-instance FromRpc 'SubmitOrder (Order 'Remote) where
+instance FromRpc 'SubmitOrder (SomeOrder 'Remote) where
   fromRpc (RawResponse raw) = do
     order <-
       maybeToRight
         "Order is missing"
         $ raw ^? nth 4 . nth 0
     parseOrder order
+
+instance
+  ( SingI act
+  ) =>
+  FromRpc 'SubmitOrder (Order act 'Remote)
+  where
+  fromRpc raw = do
+    SomeOrder orderSing order <-
+      fromRpc @'SubmitOrder @(SomeOrder 'Remote) raw
+    case eqExchangeAction (sing :: Sing act) orderSing of
+      Nothing -> Left "Incorrect ExchangeAction"
+      Just Refl -> pure order
 
 instance FromRpc 'MarketAveragePrice (QuotePerBase act) where
   fromRpc (RawResponse raw) = do
