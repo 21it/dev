@@ -55,7 +55,9 @@ pub rpc qs req = catchWeb $ do
   let webReq1 =
         Web.setQueryString
           (unQueryParam <$> qs)
-          $ webReq0 {Web.method = show $ toRequestMethod @method}
+          $ webReq0
+            { Web.method = show $ toRequestMethod @method
+            }
   webRes <-
     Web.httpLbs webReq1 manager
   let rawRes =
@@ -142,7 +144,8 @@ sign prvKey apiPath nonce reqBody =
       <> BL.toStrict reqBody
 
 catchWeb ::
-  (MonadIO m) =>
+  ( MonadIO m
+  ) =>
   IO (Either Error a) ->
   ExceptT Error m a
 catchWeb this =
@@ -151,13 +154,16 @@ catchWeb this =
   --
   ExceptT . liftIO $
     this
-      `catch` (\(x :: HttpException) -> pure . Left $ ErrorWebException x)
+      `catch` ( \(x :: HttpException) ->
+                  pure . Left $ ErrorWebException x
+              )
 
 --
 -- TODO : improve error messages in parsers???
 --
 parserFailure ::
-  Typeable method =>
+  ( Typeable method
+  ) =>
   Rpc method ->
   Web.Request ->
   Web.Response ByteString ->

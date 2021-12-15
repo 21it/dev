@@ -98,10 +98,14 @@ type MoneyBase = MoneyAmt MoneyBaseDim
 type MoneyQuote = MoneyAmt MoneyQuoteDim
 
 instance (SingI act) => ToRequestParam (MoneyBase act) where
-  toTextParam =
-    toTextParam . into @Rational
+  toTextParam amt =
+    case sing :: Sing act of
+      SBuy -> toTextParam $ success amt
+      SSell -> toTextParam $ (-1) * success amt
+    where
+      success :: MoneyAmt dim act -> Rational
+      success = abs . from . unQu . unMoneyAmt
 
--- | Dumb Witch instances
 instance From (Ratio Natural) (MoneyAmt dim act) where
   from =
     MoneyAmt . Unsafe.Qu
@@ -110,24 +114,13 @@ instance From (MoneyAmt dim act) (Ratio Natural) where
   from =
     unQu . unMoneyAmt
 
--- | Smart Witch instances
-instance (SingI act) => TryFrom Rational (MoneyAmt dim act) where
-  tryFrom rat =
-    case sing :: Sing act of
-      SBuy | rat >= 0 -> success rat
-      SSell | rat <= 0 -> success rat
-      _ -> Left $ TryFromException rat Nothing
-    where
-      success = Right . MoneyAmt . Unsafe.Qu . absRat
+instance TryFrom Rational (MoneyAmt dim act) where
+  tryFrom =
+    from @(Ratio Natural) `composeTryRhs` tryFrom
 
-instance (SingI act) => From (MoneyAmt dim act) Rational where
-  from amt =
-    case sing :: Sing act of
-      SBuy -> success amt
-      SSell -> (-1) * success amt
-    where
-      success :: MoneyAmt dim act -> Rational
-      success = abs . from . unQu . unMoneyAmt
+instance From (MoneyAmt dim act) Rational where
+  from =
+    via @(Ratio Natural)
 
 deriving via
   Rational
