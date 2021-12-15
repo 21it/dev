@@ -44,7 +44,7 @@ symbolsDetails ::
   ) =>
   ExceptT Error m (Map CurrencyPair CurrencyPairConf)
 symbolsDetails =
-  Generic.pub (Generic.Rpc :: Generic.Rpc 'SymbolsDetails) [] ()
+  Generic.pub @'SymbolsDetails [] ()
 
 marketAveragePrice ::
   ( MonadIO m,
@@ -55,7 +55,7 @@ marketAveragePrice ::
   ExceptT Error m (QuotePerBase act)
 marketAveragePrice amt sym =
   Generic.pub
-    (Generic.Rpc :: Generic.Rpc 'MarketAveragePrice)
+    @'MarketAveragePrice
     [ SomeQueryParam "amount" amt,
       SomeQueryParam "symbol" sym
     ]
@@ -71,7 +71,7 @@ feeSummary ::
   ExceptT Error m FeeSummary.Response
 feeSummary env =
   Generic.prv
-    (Generic.Rpc :: Generic.Rpc 'FeeSummary)
+    @'FeeSummary
     env
     (mempty :: Map Int Int)
 
@@ -91,7 +91,7 @@ wallets ::
     )
 wallets env =
   Generic.prv
-    (Generic.Rpc :: Generic.Rpc 'Wallets)
+    @'Wallets
     env
     (mempty :: Map Int Int)
 
@@ -117,8 +117,7 @@ retrieveOrders ::
   GetOrders.Options ->
   ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 retrieveOrders =
-  Generic.prv
-    (Generic.Rpc :: Generic.Rpc 'RetrieveOrders)
+  Generic.prv @'RetrieveOrders
 
 ordersHistory ::
   ( MonadIO m
@@ -127,8 +126,7 @@ ordersHistory ::
   GetOrders.Options ->
   ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 ordersHistory =
-  Generic.prv
-    (Generic.Rpc :: Generic.Rpc 'OrdersHistory)
+  Generic.prv @'OrdersHistory
 
 getOrders ::
   ( MonadIO m
@@ -210,7 +208,7 @@ submitOrder ::
   ExceptT Error m (Order act 'Remote)
 submitOrder env amt sym rate opts = do
   order :: Order act 'Remote <-
-    Generic.prv (Generic.Rpc :: Generic.Rpc 'SubmitOrder) env req
+    Generic.prv @'SubmitOrder env req
   verifyOrder env (orderId order) req
   where
     req =
@@ -269,8 +267,7 @@ cancelOrderMulti ::
   CancelOrderMulti.Request ->
   ExceptT Error m (Map OrderId (SomeOrder 'Remote))
 cancelOrderMulti =
-  Generic.prv
-    (Generic.Rpc :: Generic.Rpc 'CancelOrderMulti)
+  Generic.prv @'CancelOrderMulti
 
 cancelOrderById ::
   ( MonadIO m

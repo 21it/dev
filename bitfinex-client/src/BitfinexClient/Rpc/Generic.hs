@@ -1,9 +1,9 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Rpc.Generic
-  ( Rpc (..),
-    pub,
+  ( pub,
     prv,
   )
 where
@@ -24,27 +24,23 @@ import qualified Network.HTTP.Client as Web
 import qualified Network.HTTP.Client.TLS as Tls
 import qualified Network.HTTP.Types as Web
 
-data Rpc (method :: Method)
-  = Rpc
-
 --
 -- TODO : better generic Error values including
 -- info about Rpc and Requests!!!!!!!!
 --
 pub ::
-  forall m method req res.
+  forall method req res m.
   ( MonadIO m,
-    Typeable method,
+    SingI method,
     ToBaseUrl method,
     ToPathPieces method req,
     ToRequestMethod method,
     FromRpc method res
   ) =>
-  Rpc method ->
   [SomeQueryParam] ->
   req ->
   ExceptT Error m res
-pub rpc qs req = catchWeb $ do
+pub qs req = catchWeb $ do
   manager <-
     Web.newManager Tls.tlsManagerSettings
   webReq0 <-
@@ -65,26 +61,25 @@ pub rpc qs req = catchWeb $ do
   pure $
     if Web.responseStatus webRes == Web.ok200
       then
-        first (parserFailure rpc webReq1 webRes rawRes)
+        first (parserFailure @method webReq1 webRes rawRes)
           . fromRpc @method
           $ rawRes
       else Left $ ErrorWebPub webReq1 webRes
 
 prv ::
-  forall m method req res.
+  forall method req res m.
   ( MonadIO m,
-    Typeable method,
+    SingI method,
     ToBaseUrl method,
     ToPathPieces method req,
     ToRequestMethod method,
     ToJSON req,
     FromRpc method res
   ) =>
-  Rpc method ->
   Env ->
   req ->
   ExceptT Error m res
-prv rpc env req = catchWeb $ do
+prv env req = catchWeb $ do
   manager <-
     Web.newManager Tls.tlsManagerSettings
   let apiPath =
@@ -124,7 +119,7 @@ prv rpc env req = catchWeb $ do
   pure $
     if Web.responseStatus webRes == Web.ok200
       then
-        first (parserFailure rpc webReq1 webRes rawRes)
+        first (parserFailure @method webReq1 webRes rawRes)
           . fromRpc @method
           $ rawRes
       else Left $ ErrorWebPrv reqBody webReq1 webRes
@@ -162,17 +157,17 @@ catchWeb this =
 -- TODO : improve error messages in parsers???
 --
 parserFailure ::
-  ( Typeable method
+  forall (method :: Method).
+  ( SingI method
   ) =>
-  Rpc method ->
   Web.Request ->
   Web.Response ByteString ->
   Web.RawResponse ->
   Text ->
   Error
-parserFailure rpc webReq webRes res err =
+parserFailure webReq webRes res err =
   ErrorParser webReq webRes $
-    show (typeOf rpc)
+    show (fromSing (sing :: Sing method))
       <> " failed because "
       <> err
       <> " in "
