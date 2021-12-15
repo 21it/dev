@@ -36,7 +36,7 @@ create (Entity priceId price) = do
           --
           orderGain = from @(Ratio Natural) 0,
           orderLoss = from @(Ratio Natural) 0,
-          orderFee = FeeRate [Bfx.feeRateMakerBase| 0 |],
+          orderFee = [Bfx.feeRateMakerBase| 0 |],
           orderStatus = OrderNew,
           orderAt = ct
         }
@@ -75,11 +75,9 @@ getOngoing sym =
   runSql $
     P.selectList
       [ OrderBase
-          P.==. CurrencyCode
-            (Bfx.currencyPairBase sym),
+          P.==. Bfx.currencyPairBase sym,
         OrderQuote
-          P.==. CurrencyCode
-            (Bfx.currencyPairQuote sym),
+          P.==. Bfx.currencyPairQuote sym,
         OrderStatus
           P.<-. [OrderNew, OrderActive]
       ]

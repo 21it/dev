@@ -93,35 +93,15 @@ instance
       <> " "
       <> show (undefined :: unit)
 
-data SomeMoneyAmt dim
-  = forall act.
-    ( Show (MoneyAmt dim act)
-    ) =>
-    SomeMoneyAmt
-      (Sing act)
-      (MoneyAmt dim act)
-
-instance Eq (SomeMoneyAmt dim) where
-  (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
-    case eqExchangeAction sx sy of
-      Just Refl -> x == y
-      Nothing -> False
-
-deriving stock instance Show (SomeMoneyAmt dim)
-
 type MoneyBase = MoneyAmt MoneyBaseDim
 
 type MoneyQuote = MoneyAmt MoneyQuoteDim
-
-type SomeMoneyBase = SomeMoneyAmt MoneyBaseDim
-
-type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
 
 instance (SingI act) => ToRequestParam (MoneyBase act) where
   toTextParam =
     toTextParam . into @Rational
 
--- | Dumb constructors
+-- | Dumb Witch instances
 instance From (Ratio Natural) (MoneyAmt dim act) where
   from =
     MoneyAmt . Unsafe.Qu
@@ -130,7 +110,7 @@ instance From (MoneyAmt dim act) (Ratio Natural) where
   from =
     unQu . unMoneyAmt
 
--- | Smart constructors
+-- | Smart Witch instances
 instance (SingI act) => TryFrom Rational (MoneyAmt dim act) where
   tryFrom rat =
     case sing :: Sing act of
@@ -148,6 +128,58 @@ instance (SingI act) => From (MoneyAmt dim act) Rational where
     where
       success :: MoneyAmt dim act -> Rational
       success = abs . from . unQu . unMoneyAmt
+
+deriving via
+  Rational
+  instance
+    ( SingI act
+    ) =>
+    PersistFieldSql (MoneyAmt dim act)
+
+instance
+  ( SingI act
+  ) =>
+  PersistField (MoneyAmt dim act)
+  where
+  toPersistValue =
+    PersistRational . via @(Ratio Natural)
+  fromPersistValue raw =
+    case raw of
+      PersistRational x ->
+        first (const failure) $
+          from @(Ratio Natural) `composeTryRhs` tryFrom $ x
+      _ ->
+        Left failure
+    where
+      failure =
+        "MoneyAmt "
+          <> show (fromSing (sing :: Sing act))
+          <> " PersistValue is invalid "
+          <> show raw
+
+--
+-- SomeMoneyAmt sugar
+--
+
+data SomeMoneyAmt dim
+  = forall act.
+    ( Show (MoneyAmt dim act)
+    ) =>
+    SomeMoneyAmt
+      (Sing act)
+      (MoneyAmt dim act)
+
+type SomeMoneyBase = SomeMoneyAmt MoneyBaseDim
+
+type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
+
+instance Eq (SomeMoneyAmt dim) where
+  (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
+    case eqExchangeAction sx sy of
+      Just Refl -> x == y
+      Nothing -> False
+
+deriving stock instance Show (SomeMoneyAmt dim)
 
 instance
   ( Show (Lookup dim LCSU')
@@ -218,6 +250,22 @@ instance From (QuotePerBase act) Rational where
   from =
     via @(Ratio Natural)
 
+deriving via
+  Rational
+  instance
+    PersistFieldSql (QuotePerBase act)
+
+instance PersistField (QuotePerBase act) where
+  toPersistValue =
+    PersistRational . from
+  fromPersistValue raw =
+    case raw of
+      PersistRational x -> first (const failure) $ tryFrom x
+      _ -> Left failure
+    where
+      failure =
+        "QuotePerBase PersistValue is invalid " <> show raw
+
 --
 -- SomeQuotePerBase sugar
 --
@@ -228,13 +276,13 @@ data SomeQuotePerBase :: Type where
     QuotePerBase act ->
     SomeQuotePerBase
 
-deriving stock instance Show SomeQuotePerBase
-
 instance Eq SomeQuotePerBase where
   (SomeQuotePerBase sx x) == (SomeQuotePerBase sy y) =
     case eqExchangeAction sx sy of
       Just Refl -> x == y
       Nothing -> False
+
+deriving stock instance Show SomeQuotePerBase
 
 --
 -- TODO : derive some newtype instances to use directly

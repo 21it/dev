@@ -36,6 +36,14 @@ import Data.Time.Clock as X
   )
 import Data.Type.Equality as X ((:~:) (..))
 import Data.Typeable as X (typeOf)
+import Database.Persist as X
+  ( PersistField (..),
+    PersistValue (..),
+    SqlType (..),
+  )
+import Database.Persist.Sql as X
+  ( PersistFieldSql (..),
+  )
 import Network.HTTP.Client as X (HttpException (..))
 import Universum as X hiding (ByteString, catch)
 import UnliftIO as X (catch)

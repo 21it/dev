@@ -30,7 +30,6 @@ library
       RecklessTradingBot.Data.AppM
       RecklessTradingBot.Data.Env
       RecklessTradingBot.Data.Model
-      RecklessTradingBot.Data.Money
       RecklessTradingBot.Data.Time
       RecklessTradingBot.Data.Type
       RecklessTradingBot.Import

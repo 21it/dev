@@ -32,11 +32,7 @@ createPrice cfg = do
     Left {} ->
       sleep 60
     Right (buy, sell) -> do
-      price <-
-        Price.create
-          sym
-          (QuotePerBase buy)
-          (QuotePerBase sell)
+      price <- Price.create sym buy sell
       putCurrPrice price
   where
     sym :: Bfx.CurrencyPair

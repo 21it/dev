@@ -20,18 +20,46 @@ $( singletons
          | RetrieveOrders
          | OrdersHistory
          | CancelOrderMulti
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
 
        data CurrencyRelation
          = Base
          | Quote
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
 
        data MarketRelation
          = Maker
          | Taker
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
 
        data Location
          = Local
          | Remote
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
 
        data ExchangeAction
          = Buy
@@ -45,6 +73,14 @@ $( singletons
            )
        |]
  )
+
+deriving stock instance Generic Method
+
+deriving stock instance Generic CurrencyRelation
+
+deriving stock instance Generic MarketRelation
+
+deriving stock instance Generic Location
 
 deriving stock instance Generic ExchangeAction
 

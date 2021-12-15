@@ -11,7 +11,6 @@ import RecklessTradingBot.Data.Env as X
 import RecklessTradingBot.Data.Model as X hiding
   ( Key,
   )
-import RecklessTradingBot.Data.Money as X
 import RecklessTradingBot.Data.Time as X
 import RecklessTradingBot.Data.Type as X
 import RecklessTradingBot.Import.External as X

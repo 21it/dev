@@ -235,8 +235,8 @@ newOrderStatus = \case
 
 newtype
   FeeRate
-    (a :: MarketRelation)
-    (b :: CurrencyRelation) = FeeRate
+    (mrel :: MarketRelation)
+    (crel :: CurrencyRelation) = FeeRate
   { unFeeRate :: Ratio Natural
   }
   deriving newtype
@@ -249,20 +249,38 @@ newtype
       TH.Lift
     )
 
-instance From (FeeRate a b) (Ratio Natural)
+instance From (FeeRate mrel crel) (Ratio Natural)
 
-instance TryFrom (Ratio Natural) (FeeRate a b) where
+instance TryFrom (Ratio Natural) (FeeRate mrel crel) where
   tryFrom x
     | x < 1 = Right $ FeeRate x
     | otherwise = Left $ TryFromException x Nothing
 
-instance From (FeeRate a b) Rational where
+instance From (FeeRate mrel crel) Rational where
   from = via @(Ratio Natural)
 
-instance TryFrom Rational (FeeRate a b) where
+instance TryFrom Rational (FeeRate mrel crel) where
   tryFrom = tryVia @(Ratio Natural)
 
-newtype RebateRate (a :: MarketRelation)
+deriving via
+  Rational
+  instance
+    PersistFieldSql (FeeRate mrel crel)
+
+instance PersistField (FeeRate mrel crel) where
+  toPersistValue =
+    PersistRational . from
+  fromPersistValue raw =
+    case raw of
+      PersistRational x ->
+        first (const failure) $ tryFrom x
+      _ ->
+        Left failure
+    where
+      failure =
+        "FeeRate PersistValue is invalid " <> show raw
+
+newtype RebateRate (mrel :: MarketRelation)
   = RebateRate Rational
   deriving newtype
     ( Eq,
@@ -274,9 +292,9 @@ newtype RebateRate (a :: MarketRelation)
     ( Generic
     )
 
-instance From (RebateRate a) Rational
+instance From (RebateRate mrel) Rational
 
-instance From Rational (RebateRate a)
+instance From Rational (RebateRate mrel)
 
 newtype ProfitRate = ProfitRate
   { unProfitRate :: PosRat
@@ -310,7 +328,7 @@ instance TryFrom Rational ProfitRate where
 instance From ProfitRate Rational where
   from = via @PosRat
 
-newtype CurrencyCode (a :: CurrencyRelation) = CurrencyCode
+newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
   { unCurrencyCode :: Text
   }
   deriving newtype
@@ -330,12 +348,30 @@ newtype CurrencyCode (a :: CurrencyRelation) = CurrencyCode
       TH.Lift
     )
 
+deriving via
+  Text
+  instance
+    PersistFieldSql (CurrencyCode crel)
+
+instance PersistField (CurrencyCode crel) where
+  toPersistValue =
+    PersistText . coerce
+  fromPersistValue raw =
+    case raw of
+      PersistText x ->
+        first (const failure) $ newCurrencyCode x
+      _ ->
+        Left failure
+    where
+      failure =
+        "CurrencyCode PersistValue is invalid " <> show raw
+
 newCurrencyCode ::
-  forall a.
+  forall crel.
   Text ->
   Either
-    (TryFromException Text (CurrencyCode a))
-    (CurrencyCode a)
+    (TryFromException Text (CurrencyCode crel))
+    (CurrencyCode crel)
 newCurrencyCode raw =
   case T.strip raw of
     x | length x == 3 -> Right . CurrencyCode $ T.toUpper x
@@ -498,50 +534,50 @@ data Error
     )
 
 tryErrorE ::
-  forall a b.
-  ( Show a,
-    Typeable a,
-    Typeable b
+  forall source target.
+  ( Show source,
+    Typeable source,
+    Typeable target
   ) =>
-  Either (TryFromException a b) b ->
-  Either Error b
+  Either (TryFromException source target) target ->
+  Either Error target
 tryErrorE =
   first $
     ErrorTryFrom . SomeException
 
 tryErrorT ::
-  forall a b m.
-  ( Show a,
-    Typeable a,
-    Typeable b,
+  forall source target m.
+  ( Show source,
+    Typeable source,
+    Typeable target,
     Monad m
   ) =>
-  Either (TryFromException a b) b ->
-  ExceptT Error m b
+  Either (TryFromException source target) target ->
+  ExceptT Error m target
 tryErrorT =
   except . tryErrorE
 
 tryFromE ::
-  forall a b.
-  ( Show a,
-    Typeable a,
-    Typeable b,
-    TryFrom a b
+  forall source target.
+  ( Show source,
+    Typeable source,
+    Typeable target,
+    TryFrom source target
   ) =>
-  a ->
-  Either Error b
+  source ->
+  Either Error target
 tryFromE =
   tryErrorE . tryFrom
 
 tryFromT ::
-  forall a b m.
-  ( Show a,
-    Typeable a,
-    Typeable b,
-    TryFrom a b,
+  forall source target m.
+  ( Show source,
+    Typeable source,
+    Typeable target,
+    TryFrom source target,
     Monad m
   ) =>
-  a ->
-  ExceptT Error m b
+  source ->
+  ExceptT Error m target
 tryFromT =
   except . tryFromE

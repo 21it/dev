@@ -100,7 +100,7 @@ placeOrder ::
   ( Env m
   ) =>
   OrderId ->
-  MoneyBase 'Bfx.Buy ->
+  Bfx.MoneyBase 'Bfx.Buy ->
   Bfx.CurrencyPair ->
   Price ->
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
@@ -123,7 +123,7 @@ placeOrderT ::
   ( Env m
   ) =>
   OrderId ->
-  MoneyBase 'Bfx.Buy ->
+  Bfx.MoneyBase 'Bfx.Buy ->
   Bfx.CurrencyPair ->
   Price ->
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->

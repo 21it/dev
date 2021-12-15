@@ -17,7 +17,6 @@ module RecklessTradingBot.Data.Model where
 
 import qualified BitfinexClient as Bfx
 import Database.Persist.TH
-import RecklessTradingBot.Data.Money
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 import RecklessTradingBot.Orphan ()
@@ -36,10 +35,10 @@ share
   [persistLowerCase|
 
     Price
-      base (CurrencyCode 'Bfx.Base)
-      quote (CurrencyCode 'Bfx.Quote)
-      buy (QuotePerBase 'Bfx.Buy)
-      sell (QuotePerBase 'Bfx.Sell)
+      base (Bfx.CurrencyCode 'Bfx.Base)
+      quote (Bfx.CurrencyCode 'Bfx.Quote)
+      buy (Bfx.QuotePerBase 'Bfx.Buy)
+      sell (Bfx.QuotePerBase 'Bfx.Sell)
       at UTCTime
       deriving Eq Show
 
@@ -53,8 +52,8 @@ share
       -- if Order will not correspond to
       -- single price in the future
       --
-      base (CurrencyCode 'Bfx.Base)
-      quote (CurrencyCode 'Bfx.Quote)
+      base (Bfx.CurrencyCode 'Bfx.Base)
+      quote (Bfx.CurrencyCode 'Bfx.Quote)
       --
       -- Order might refer to another Order
       -- as follow-up in some strategies,
@@ -62,10 +61,10 @@ share
       --
       intRef OrderId Maybe
       extRef (OrderExternalId 'Bfx.Buy) Maybe
-      price (QuotePerBase 'Bfx.Buy)
-      gain (MoneyBase 'Bfx.Buy)
-      loss (MoneyQuote 'Bfx.Buy)
-      fee (FeeRate 'Bfx.Maker 'Bfx.Base)
+      price (Bfx.QuotePerBase 'Bfx.Buy)
+      gain (Bfx.MoneyBase 'Bfx.Buy)
+      loss (Bfx.MoneyQuote 'Bfx.Buy)
+      fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Base)
       status OrderStatus
       at UTCTime
       deriving Eq Show
@@ -73,10 +72,10 @@ share
     CounterOrder
       intRef OrderId
       extRef (OrderExternalId 'Bfx.Sell) Maybe
-      price (QuotePerBase 'Bfx.Sell)
-      gain (MoneyQuote 'Bfx.Sell)
-      loss (MoneyBase 'Bfx.Sell)
-      fee (FeeRate 'Bfx.Maker 'Bfx.Quote)
+      price (Bfx.QuotePerBase 'Bfx.Sell)
+      gain (Bfx.MoneyQuote 'Bfx.Sell)
+      loss (Bfx.MoneyBase 'Bfx.Sell)
+      fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote)
       status OrderStatus
       at UTCTime
       deriving Eq Show

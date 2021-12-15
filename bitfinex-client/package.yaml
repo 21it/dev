@@ -37,6 +37,7 @@ default-extensions:
 - OverloadedLists
 - GeneralizedNewtypeDeriving
 - DerivingStrategies
+- DerivingVia
 - DeriveGeneric
 - DeriveLift
 # Singletons
@@ -98,6 +99,7 @@ library:
   - siggy-chardust
   # other
   - witch
+  - persistent
   - unordered-containers
   - envparse
   - cryptonite
