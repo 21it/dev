@@ -11,4 +11,9 @@ data Request (act :: ExchangeAction) = Request
   { amount :: MoneyBase act,
     symbol :: CurrencyPair
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )

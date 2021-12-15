@@ -48,6 +48,9 @@ $( singletons
 
 deriving stock instance Generic ExchangeAction
 
+--
+-- TODO : generalize it somehow?
+--
 eqExchangeAction ::
   SExchangeAction a ->
   SExchangeAction b ->

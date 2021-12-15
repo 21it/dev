@@ -19,7 +19,8 @@ class ToRequestParam a where
 
 data SomeQueryParam
   = forall a.
-    (ToRequestParam a) =>
+    ( ToRequestParam a
+    ) =>
     SomeQueryParam BS.ByteString a
 
 unQueryParam ::

@@ -259,8 +259,7 @@ submitOrderMaker env amt sym rate0 opts0 =
             tryFromT
               . bfxRoundRatio
               . into @(Ratio Natural)
-              . Math.tweakMakerRate
-              $ SomeQuotePerBase sing rate
+              $ Math.tweakMakerRate rate
           this (attempt + 1) newRate
 
 cancelOrderMulti ::

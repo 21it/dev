@@ -24,19 +24,19 @@ where
 import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
 import BitfinexClient.Import.External as Ext
+import BitfinexClient.Util
 import Data.Metrology.Poly as Metro
 --
 -- TODO : somehow remove unsafe
 --
 import qualified Data.Metrology.Unsafe as Unsafe
-import GHC.Natural (naturalFromInteger)
 import qualified Prelude
 
-data MoneyBaseDim -- = MoneyBaseDim
+data MoneyBaseDim
 
 instance Dimension MoneyBaseDim
 
-data MoneyQuoteDim -- = MoneyQuoteDim
+data MoneyQuoteDim
 
 instance Dimension MoneyQuoteDim
 
@@ -77,39 +77,10 @@ type MoneyQuote' =
 newtype MoneyAmt dim (act :: ExchangeAction) = MoneyAmt
   { unMoneyAmt :: MkQu_DLN dim LCSU' (Ratio Natural)
   }
-  deriving stock (Eq, Ord)
-
-data SomeMoneyAmt dim
-  = forall act.
-    ( Show (MoneyAmt dim act)
-    ) =>
-    SomeMoneyAmt
-      (Sing act)
-      (MoneyAmt dim act)
-
-deriving stock instance Show (SomeMoneyAmt dim)
-
-instance Eq (SomeMoneyAmt dim) where
-  (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
-    case eqExchangeAction sx sy of
-      Just Refl -> x == y
-      Nothing -> False
-
-type MoneyBase = MoneyAmt MoneyBaseDim
-
-type MoneyQuote = MoneyAmt MoneyQuoteDim
-
-type SomeMoneyBase = SomeMoneyAmt MoneyBaseDim
-
-type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
-
---
--- TODO : derive some newtype instances to use directly
--- in dimentional expressions without coercing?
---
-
-unQu :: Qu a lcsu n -> n
-unQu (Unsafe.Qu x) = x
+  deriving stock
+    ( Eq,
+      Ord
+    )
 
 instance
   ( Show unit,
@@ -122,58 +93,88 @@ instance
       <> " "
       <> show (undefined :: unit)
 
---
--- TODO : remove (Ratio Natural) instances, because
--- they are lossy in general case (MoneyAmt dim act).
--- Maybe leave (MoneyAmt dim 'Buy) instances because
--- they are not lossy.
---
+data SomeMoneyAmt dim
+  = forall act.
+    ( Show (MoneyAmt dim act)
+    ) =>
+    SomeMoneyAmt
+      (Sing act)
+      (MoneyAmt dim act)
+
+instance Eq (SomeMoneyAmt dim) where
+  (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
+    case eqExchangeAction sx sy of
+      Just Refl -> x == y
+      Nothing -> False
+
+deriving stock instance Show (SomeMoneyAmt dim)
+
+type MoneyBase = MoneyAmt MoneyBaseDim
+
+type MoneyQuote = MoneyAmt MoneyQuoteDim
+
+type SomeMoneyBase = SomeMoneyAmt MoneyBaseDim
+
+type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
+
+instance (SingI act) => ToRequestParam (MoneyBase act) where
+  toTextParam =
+    toTextParam . into @Rational
+
+-- | Dumb constructors
 instance From (Ratio Natural) (MoneyAmt dim act) where
-  from = MoneyAmt . Unsafe.Qu
+  from =
+    MoneyAmt . Unsafe.Qu
 
 instance From (MoneyAmt dim act) (Ratio Natural) where
-  from = unQu . unMoneyAmt
+  from =
+    unQu . unMoneyAmt
 
-instance TryFrom Rational (MoneyAmt dim act) where
-  tryFrom = from @(Ratio Natural) `composeTryRhs` tryFrom
+-- | Smart constructors
+instance (SingI act) => TryFrom Rational (MoneyAmt dim act) where
+  tryFrom rat =
+    case sing :: Sing act of
+      SBuy | rat >= 0 -> success rat
+      SSell | rat <= 0 -> success rat
+      _ -> Left $ TryFromException rat Nothing
+    where
+      success = Right . MoneyAmt . Unsafe.Qu . absRat
 
-instance From (MoneyAmt dim act) Rational where
-  from = via @(Ratio Natural)
+instance (SingI act) => From (MoneyAmt dim act) Rational where
+  from amt =
+    case sing :: Sing act of
+      SBuy -> success amt
+      SSell -> (-1) * success amt
+    where
+      success :: MoneyAmt dim act -> Rational
+      success = abs . from . unQu . unMoneyAmt
 
 instance
   ( Show (Lookup dim LCSU')
   ) =>
-  TryFrom Rational (SomeMoneyAmt dim)
+  From Rational (SomeMoneyAmt dim)
   where
-  tryFrom = \case
-    rat
-      | rat > 0 ->
-        Right
-          . SomeMoneyAmt (sing :: Sing 'Buy)
+  from rat =
+    --
+    -- TODO : should it be TryFrom to exclude 0?
+    --
+    if rat >= 0
+      then
+        SomeMoneyAmt (sing :: Sing 'Buy)
           . MoneyAmt
           . Unsafe.Qu
-          $ nat rat
-    rat
-      | rat < 0 ->
-        Right
-          . SomeMoneyAmt (sing :: Sing 'Sell)
+          $ absRat rat
+      else
+        SomeMoneyAmt (sing :: Sing 'Sell)
           . MoneyAmt
           . Unsafe.Qu
-          $ nat rat
-    rat ->
-      Left $
-        TryFromException rat Nothing
-    where
-      nat x =
-        (naturalFromInteger . abs $ numerator x)
-          Ext.% (naturalFromInteger . abs $ denominator x)
+          $ absRat rat
 
 --
 -- QuotePerBase sugar
 --
 
-type QuotePerBase' =
-  MoneyQuote' %/ MoneyBase'
+type QuotePerBase' = MoneyQuote' %/ MoneyBase'
 
 newtype QuotePerBase (act :: ExchangeAction) = QuotePerBase
   { unQuotePerBase :: QuotePerBase'
@@ -217,19 +218,6 @@ instance From (QuotePerBase act) Rational where
   from =
     via @(Ratio Natural)
 
-instance ToRequestParam (MoneyBase 'Buy) where
-  toTextParam =
-    toTextParam
-      . abs
-      . into @Rational
-
-instance ToRequestParam (MoneyBase 'Sell) where
-  toTextParam =
-    toTextParam
-      . ((-1) *)
-      . abs
-      . into @Rational
-
 --
 -- SomeQuotePerBase sugar
 --
@@ -248,5 +236,10 @@ instance Eq SomeQuotePerBase where
       Just Refl -> x == y
       Nothing -> False
 
-instance From SomeQuotePerBase (Ratio Natural) where
-  from (SomeQuotePerBase _ x) = from x
+--
+-- TODO : derive some newtype instances to use directly
+-- in dimentional expressions without coercing?
+--
+
+unQu :: Qu a lcsu n -> n
+unQu (Unsafe.Qu x) = x

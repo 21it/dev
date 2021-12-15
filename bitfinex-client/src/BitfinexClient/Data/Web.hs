@@ -22,14 +22,22 @@ import qualified Prelude
 
 newtype PrvKey
   = PrvKey BS.ByteString
-  deriving newtype (Eq, Ord, IsString)
+  deriving newtype
+    ( Eq,
+      Ord,
+      IsString
+    )
 
 instance Prelude.Show PrvKey where
   show = const "SECRET"
 
 newtype ApiKey
   = ApiKey BS.ByteString
-  deriving newtype (Eq, Ord, IsString)
+  deriving newtype
+    ( Eq,
+      Ord,
+      IsString
+    )
 
 instance Prelude.Show ApiKey where
   show = const "SECRET"
@@ -37,7 +45,11 @@ instance Prelude.Show ApiKey where
 data RequestMethod
   = GET
   | POST
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show
+    )
 
 newtype BaseUrl
   = BaseUrl Text

@@ -15,7 +15,12 @@ data Options = Options
   { currencyPair :: Maybe CurrencyPair,
     orderIds :: Set OrderId
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
 
 optsDef :: Options
 optsDef =
@@ -25,10 +30,16 @@ optsDef =
     }
 
 optsSym :: CurrencyPair -> Options
-optsSym sym = optsDef {currencyPair = Just sym}
+optsSym sym =
+  optsDef
+    { currencyPair = Just sym
+    }
 
 optsIds :: Set OrderId -> Options
-optsIds ids = optsDef {orderIds = ids}
+optsIds ids =
+  optsDef
+    { orderIds = ids
+    }
 
 instance ToJSON Options where
   toJSON = toJSON . orderIds

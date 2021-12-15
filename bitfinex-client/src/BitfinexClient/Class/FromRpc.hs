@@ -40,31 +40,28 @@ instance
     'RetrieveOrders
     (Map OrderId (SomeOrder 'Remote))
   where
-  fromRpc (RawResponse raw) = parseOrderMap raw
+  fromRpc (RawResponse raw) =
+    parseOrderMap raw
 
 instance
   FromRpc
     'OrdersHistory
     (Map OrderId (SomeOrder 'Remote))
   where
-  fromRpc (RawResponse raw) = parseOrderMap raw
-
-instance FromRpc 'SubmitOrder (SomeOrder 'Remote) where
-  fromRpc (RawResponse raw) = do
-    order <-
-      maybeToRight
-        "Order is missing"
-        $ raw ^? nth 4 . nth 0
-    parseOrder order
+  fromRpc (RawResponse raw) =
+    parseOrderMap raw
 
 instance
   ( SingI act
   ) =>
   FromRpc 'SubmitOrder (Order act 'Remote)
   where
-  fromRpc raw = do
-    SomeOrder orderSing order <-
-      fromRpc @'SubmitOrder @(SomeOrder 'Remote) raw
+  fromRpc (RawResponse raw) = do
+    rawOrder <-
+      maybeToRight
+        "Order is missing"
+        $ raw ^? nth 4 . nth 0
+    SomeOrder orderSing order <- parseOrder rawOrder
     case eqExchangeAction (sing :: Sing act) orderSing of
       Nothing -> Left "Incorrect ExchangeAction"
       Just Refl -> pure order
@@ -105,7 +102,11 @@ instance FromRpc 'FeeSummary FeeSummary.Response where
           <=< maybeToRight (field <> " is missing")
           $ raw ^? nth 4 . nth ix0 . nth ix1 . _Number
 
-instance FromRpc 'SymbolsDetails (Map CurrencyPair CurrencyPairConf) where
+instance
+  FromRpc
+    'SymbolsDetails
+    (Map CurrencyPair CurrencyPairConf)
+  where
   fromRpc (RawResponse raw) = do
     xs <-
       maybeToRight
@@ -137,26 +138,38 @@ instance FromRpc 'SymbolsDetails (Map CurrencyPair CurrencyPairConf) where
           maybeToRight "Init Margin is missing" $
             x ^? key "initial_margin" . _String
         initMargin <-
-          first (const $ "Init Margin is invalid " <> show initMargin0) $
-            tryReadViaRatio @(Ratio Natural) initMargin0
+          first
+            ( const $
+                "Init Margin is invalid " <> show initMargin0
+            )
+            $ tryReadViaRatio @(Ratio Natural) initMargin0
         minMargin0 <-
           maybeToRight "Min Margin is missing" $
             x ^? key "minimum_margin" . _String
         minMargin <-
-          first (const $ "Min Margin is invalid " <> show minMargin0) $
-            tryReadViaRatio @(Ratio Natural) minMargin0
+          first
+            ( const $
+                "Min Margin is invalid " <> show minMargin0
+            )
+            $ tryReadViaRatio @(Ratio Natural) minMargin0
         maxOrderAmt0 <-
           maybeToRight "Max Order Size is missing" $
             x ^? key "maximum_order_size" . _String
         maxOrderAmt <-
-          first (const $ "Max Order Size is invalid " <> show maxOrderAmt0) $
-            readViaRatio @(Ratio Natural) maxOrderAmt0
+          first
+            ( const $
+                "Max Order Size is invalid " <> show maxOrderAmt0
+            )
+            $ readViaRatio @(Ratio Natural) maxOrderAmt0
         minOrderAmt0 <-
           maybeToRight "Min Order Size is missing" $
             x ^? key "minimum_order_size" . _String
         minOrderAmt <-
-          first (const $ "Min Order Size is invalid " <> show minOrderAmt0) $
-            readViaRatio @(Ratio Natural) minOrderAmt0
+          first
+            ( const $
+                "Min Order Size is invalid " <> show minOrderAmt0
+            )
+            $ readViaRatio @(Ratio Natural) minOrderAmt0
         pure
           ( sym,
             CurrencyPairConf

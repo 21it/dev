@@ -38,95 +38,114 @@ instance PersistField (CurrencyCode a) where
         "CurrencyCode PersistValue is invalid "
           <> show x
 
-newtype QuotePerBase (a :: Bfx.ExchangeAction)
-  = QuotePerBase (Bfx.QuotePerBase a)
+newtype QuotePerBase (act :: Bfx.ExchangeAction)
+  = QuotePerBase (Bfx.QuotePerBase act)
   deriving newtype
     ( Eq,
       Ord,
       Show
     )
 
-instance From (Bfx.QuotePerBase a) (QuotePerBase a)
+instance From (Bfx.QuotePerBase act) (QuotePerBase act)
 
-instance From (QuotePerBase a) (Bfx.QuotePerBase a)
+instance From (QuotePerBase act) (Bfx.QuotePerBase act)
 
-instance From (QuotePerBase a) Rational where
-  from = via @(Bfx.QuotePerBase a)
+instance From (QuotePerBase act) Rational where
+  from = via @(Bfx.QuotePerBase act)
 
 deriving via
   Rational
   instance
-    (Typeable a) =>
-    PersistFieldSql (QuotePerBase a)
+    (Typeable act) =>
+    PersistFieldSql (QuotePerBase act)
 
-instance (Typeable a) => PersistField (QuotePerBase a) where
+instance (Typeable act) => PersistField (QuotePerBase act) where
   toPersistValue =
     PersistRational
       . from
   fromPersistValue = \case
     PersistRational x ->
       first show $
-        from @(Bfx.QuotePerBase a) `composeTryRhs` tryFrom $ x
+        from @(Bfx.QuotePerBase act) `composeTryRhs` tryFrom $ x
     x ->
       Left $
         "QuotePerBase PersistValue is invalid " <> show x
 
-newtype MoneyBase a
-  = MoneyBase (Bfx.MoneyBase a)
+newtype MoneyBase act
+  = MoneyBase (Bfx.MoneyBase act)
   deriving newtype
     ( Eq,
       Ord,
       Show
     )
 
-instance From (Ratio Natural) (MoneyBase a) where
-  from = via @(Bfx.MoneyBase a)
+instance From (Ratio Natural) (MoneyBase act) where
+  from = via @(Bfx.MoneyBase act)
 
-instance From (Bfx.MoneyBase a) (MoneyBase a)
+instance From (Bfx.MoneyBase act) (MoneyBase act)
 
-instance From (MoneyBase a) (Bfx.MoneyBase a)
+instance From (MoneyBase act) (Bfx.MoneyBase act)
 
-instance From (MoneyBase a) Rational where
-  from = via @(Bfx.MoneyBase a)
+instance (SingI act) => From (MoneyBase act) Rational where
+  from = via @(Bfx.MoneyBase act)
 
 deriving via
   Rational
   instance
-    (Typeable a) =>
-    PersistFieldSql (MoneyBase a)
+    ( Typeable act,
+      SingI act
+    ) =>
+    PersistFieldSql (MoneyBase act)
 
-instance (Typeable a) => PersistField (MoneyBase a) where
+instance
+  ( Typeable act,
+    SingI act
+  ) =>
+  PersistField (MoneyBase act)
+  where
   toPersistValue =
     PersistRational . from
   fromPersistValue = \case
     PersistRational x ->
       first show $
-        from @(Bfx.MoneyBase a) `composeTryRhs` tryFrom $ x
+        from @(Bfx.MoneyBase act) `composeTryRhs` tryFrom $ x
     x ->
       Left $
         "MoneyBase PersistValue is invalid "
           <> show x
 
-newtype MoneyQuote a
-  = MoneyQuote (Bfx.MoneyQuote a)
+newtype MoneyQuote act
+  = MoneyQuote (Bfx.MoneyQuote act)
   deriving newtype (Eq, Ord, Show)
 
-instance From (Ratio Natural) (MoneyQuote a) where
-  from = via @(Bfx.MoneyQuote a)
+instance From (Ratio Natural) (MoneyQuote act) where
+  from = via @(Bfx.MoneyQuote act)
 
 instance From (Bfx.MoneyQuote act) (MoneyQuote act)
 
 instance From (MoneyQuote act) (Bfx.MoneyQuote act)
 
-instance From (MoneyQuote act) Rational where
+instance
+  ( SingI act
+  ) =>
+  From (MoneyQuote act) Rational
+  where
   from = via @(Bfx.MoneyQuote act)
 
 deriving via
   Rational
   instance
-    (Typeable act) => PersistFieldSql (MoneyQuote act)
+    ( Typeable act,
+      SingI act
+    ) =>
+    PersistFieldSql (MoneyQuote act)
 
-instance (Typeable act) => PersistField (MoneyQuote act) where
+instance
+  ( Typeable act,
+    SingI act
+  ) =>
+  PersistField (MoneyQuote act)
+  where
   toPersistValue =
     PersistRational . from
   fromPersistValue = \case

@@ -15,7 +15,14 @@ data WalletType
   = Exchange
   | Margin
   | Funding
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic,
+      Enum,
+      Bounded
+    )
 
 newWalletType ::
   Text ->
@@ -32,4 +39,9 @@ data Response = Response
     availableBalance :: MoneyBase 'Sell,
     lastChange :: Maybe Text
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )

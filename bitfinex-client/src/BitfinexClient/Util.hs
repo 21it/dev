@@ -4,6 +4,7 @@
 
 module BitfinexClient.Util
   ( eradicateNull,
+    absRat,
     readVia,
     tryReadVia,
     readViaRatio,
@@ -17,6 +18,7 @@ import qualified Data.HashMap.Strict as HS
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
 import qualified Data.Vector as V
+import GHC.Natural (naturalFromInteger)
 
 eradicateNull :: A.Value -> A.Value
 eradicateNull = \case
@@ -28,6 +30,11 @@ eradicateNull = \case
       \case
         A.Null -> Nothing
         x -> Just $ eradicateNull x
+
+absRat :: Rational -> Ratio Natural
+absRat x =
+  (naturalFromInteger . abs $ numerator x)
+    % (naturalFromInteger . abs $ denominator x)
 
 readVia ::
   forall through target source.

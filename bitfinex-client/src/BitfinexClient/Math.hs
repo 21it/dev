@@ -21,18 +21,19 @@ applyFee amt fee =
     unMoneyAmt amt |* unFeeRate fee
 
 tweakMakerRate ::
-  SomeQuotePerBase ->
-  SomeQuotePerBase
-tweakMakerRate (SomeQuotePerBase s (QuotePerBase rate)) =
-  SomeQuotePerBase s
-    . QuotePerBase
-    $ rate |* tweak
+  forall act.
+  ( SingI act
+  ) =>
+  QuotePerBase act ->
+  QuotePerBase act
+tweakMakerRate (QuotePerBase rate) =
+  QuotePerBase $ rate |* tweak
   where
     tweak :: Ratio Natural
     tweak =
-      case fromSing s of
-        Buy -> 999 % 1000
-        Sell -> 1001 % 1000
+      case sing :: Sing act of
+        SBuy -> 999 % 1000
+        SSell -> 1001 % 1000
 
 newCounterOrder ::
   MoneyBase 'Buy ->

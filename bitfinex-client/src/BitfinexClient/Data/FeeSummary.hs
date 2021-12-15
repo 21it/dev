@@ -19,4 +19,9 @@ data Response = Response
     takerCrypto2FiatFee :: FeeRate 'Taker 'Base,
     takerDerivativeFee :: FeeRate 'Taker 'Base
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )

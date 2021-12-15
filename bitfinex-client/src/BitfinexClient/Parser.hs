@@ -38,12 +38,9 @@ parseOrder x = do
   sym <-
     first (const $ "Symbol is invalid " <> sym0) $
       newCurrencyPair' sym0
-  amt0 <-
-    maybeToRight "OrderAmount is missing" $
-      toRational <$> x ^? nth 7 . _Number
   SomeMoneyAmt sAct amt <-
-    first (const $ "OrderAmount is invalid " <> show amt0) $
-      tryFrom amt0
+    maybeToRight "OrderAmount is missing" $
+      from . toRational <$> x ^? nth 7 . _Number
   ss0 <-
     maybeToRight "OrderStatus is missing" $
       x ^? nth 13 . _String
