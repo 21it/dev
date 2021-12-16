@@ -22,7 +22,7 @@ spec = before newEnv $
             SubmitOrder.Request
               testAmt
               [currencyPair|ADABTC|]
-              rate
+              (rate :: QuotePerBase 'Buy)
               SubmitOrder.optsPostOnly
       liftIO $
         A.encode req

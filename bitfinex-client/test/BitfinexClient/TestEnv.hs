@@ -17,7 +17,7 @@ eraseFirst :: Bifunctor f => f a b -> f () b
 eraseFirst =
   first $ const ()
 
-testAmt :: MoneyBase 'Buy
+testAmt :: MoneyBase act
 testAmt =
   from @(Ratio Natural) $
     200200201 % 100000000
