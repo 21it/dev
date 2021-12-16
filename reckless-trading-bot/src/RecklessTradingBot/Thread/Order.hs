@@ -16,10 +16,7 @@ import qualified RecklessTradingBot.Model.Price as Price
 -- running. This way I can avoid lock-by-row
 -- transactional complexity of postgres
 -- procedures, and do simple insert/update instead.
-apply ::
-  ( Env m
-  ) =>
-  m ()
+apply :: (Env m) => m ()
 apply = do
   $(logTM) InfoS "Spawned"
   xs <-
@@ -27,42 +24,40 @@ apply = do
       =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop ::
-  ( Env m
-  ) =>
-  TradingConf ->
-  m ()
+loop :: (Env m) => TradingConf -> m ()
 loop cfg = do
   priceEnt@(Entity _ price) <- rcvNextPrice sym
   resolved <- mapM (resolveOngoing fee) =<< Order.getOngoing sym
   when (getAll $ mconcat resolved) $ do
-    seq0 <- Price.getSeq sym
-    when (goodPriceSeq seq0) $ do
+    priceSeq <- Price.getSeq sym
+    when (goodPriceSeq priceSeq) $ do
       amt <- readMVar $ tradingConfMinOrderAmt cfg
-      orderRowId <- entityKey <$> Order.create priceEnt
-      placeOrder orderRowId amt sym price fee
+      rowId <- entityKey <$> Order.create priceEnt
+      placeOrder rowId amt sym price fee
   loop cfg
   where
     sym = tradingConfPair cfg
     fee = tradingConfFee cfg
 
 resolveOngoing ::
-  Env m =>
+  ( Env m
+  ) =>
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   Entity Order ->
   m All
 resolveOngoing fee order = do
   res <- runExceptT $ resolveOngoingT fee order
   case res of
-    Left err -> do
+    Left e -> do
       $(logTM) ErrorS . logStr $
-        "Resolve ongoing failed " <> (show err :: Text)
+        "Resolve ongoing failed " <> (show e :: Text)
       pure $ All False
     Right ss ->
       pure . All $ finalStatus ss
 
 resolveOngoingT ::
-  Env m =>
+  ( Env m
+  ) =>
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   Entity Order ->
   ExceptT Error m OrderStatus
@@ -115,9 +110,9 @@ placeOrder rowId amt sym price fee = do
             <> (show ss :: Text)
             <> " of Bitfinex order "
             <> show bfxOrder
-  whenLeft res $ \err ->
+  whenLeft res $ \e ->
     $(logTM) ErrorS . logStr $
-      "Order failed " <> (show err :: Text)
+      "Order failed " <> (show e :: Text)
 
 placeOrderT ::
   ( Env m

@@ -19,10 +19,10 @@ createUpdate ::
   Bfx.QuotePerBase 'Bfx.Buy ->
   Bfx.QuotePerBase 'Bfx.Sell ->
   m (Entity Price)
-createUpdate pair buy sell = do
+createUpdate sym buy sell = do
   ct <- liftIO getCurrentTime
   let next = newPrice ct
-  mPrev <- getLatest pair
+  mPrev <- getLatest sym
   runSql $
     case mPrev of
       Just (Entity id0 prev) | theSamePrice prev next -> do
@@ -39,8 +39,8 @@ createUpdate pair buy sell = do
   where
     newPrice ct =
       Price
-        { priceBase = Bfx.currencyPairBase pair,
-          priceQuote = Bfx.currencyPairQuote pair,
+        { priceBase = Bfx.currencyPairBase sym,
+          priceQuote = Bfx.currencyPairQuote sym,
           priceBuy = buy,
           priceSell = sell,
           priceInsertedAt = ct,
@@ -90,6 +90,6 @@ getLatestLimit lim sym =
                         P.==. P.val (Bfx.currencyPairQuote sym)
                     )
           )
-        P.orderBy [P.desc (row P.^. PriceId)]
+        P.orderBy [P.desc $ row P.^. PriceId]
         P.limit lim
         pure row

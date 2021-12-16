@@ -17,11 +17,11 @@ apply = do
 loop :: (Env m) => TradingConf -> m ()
 loop cfg = do
   sleepPriceTtl $ tradingConfPair cfg
-  upsertPrice cfg
+  createUpdate cfg
   loop cfg
 
-upsertPrice :: (Env m) => TradingConf -> m ()
-upsertPrice cfg = do
+createUpdate :: (Env m) => TradingConf -> m ()
+createUpdate cfg = do
   res <-
     runExceptT . withExceptT ErrorBfx $
       (,) <$> getPrice @'Bfx.Buy <*> getPrice @'Bfx.Sell
@@ -30,8 +30,10 @@ upsertPrice cfg = do
       $(logTM) ErrorS $ logStr (show e :: Text)
       sleep 60
     Right (buy, sell) -> do
-      price <- Price.createUpdate sym buy sell
-      putCurrPrice price
+      priceEnt@(Entity _ price) <-
+        Price.createUpdate sym buy sell
+      when (priceUpdatedAt price == priceInsertedAt price) $
+        putCurrPrice priceEnt
   where
     sym :: Bfx.CurrencyPair
     sym =

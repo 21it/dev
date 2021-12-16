@@ -3,9 +3,9 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Model.Order
-  ( getOngoing,
-    create,
+  ( create,
     updateBfx,
+    getOngoing,
   )
 where
 
