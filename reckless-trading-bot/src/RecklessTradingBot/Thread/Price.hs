@@ -8,31 +8,29 @@ import qualified BitfinexClient as Bfx
 import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Model.Price as Price
 
-apply :: Env m => m ()
+apply :: (Env m) => m ()
 apply = do
   $(logTM) InfoS "Spawned"
   xs <- mapM (spawnLink . loop) . toList =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: Env m => TradingConf -> m ()
+loop :: (Env m) => TradingConf -> m ()
 loop cfg = do
-  sleepTillNextPrice $ tradingConfPair cfg
-  createPrice cfg
+  sleepPriceTtl $ tradingConfPair cfg
+  upsertPrice cfg
   loop cfg
 
-createPrice :: (Env m) => TradingConf -> m ()
-createPrice cfg = do
+upsertPrice :: (Env m) => TradingConf -> m ()
+upsertPrice cfg = do
   res <-
     runExceptT . withExceptT ErrorBfx $
       (,) <$> getPrice @'Bfx.Buy <*> getPrice @'Bfx.Sell
   case res of
-    --
-    -- TODO : log error and do something
-    --
-    Left {} ->
+    Left e -> do
+      $(logTM) ErrorS $ logStr (show e :: Text)
       sleep 60
     Right (buy, sell) -> do
-      price <- Price.create sym buy sell
+      price <- Price.createUpdate sym buy sell
       putCurrPrice price
   where
     sym :: Bfx.CurrencyPair

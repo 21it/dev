@@ -39,7 +39,8 @@ share
       quote (Bfx.CurrencyCode 'Bfx.Quote)
       buy (Bfx.QuotePerBase 'Bfx.Buy)
       sell (Bfx.QuotePerBase 'Bfx.Sell)
-      at UTCTime
+      insertedAt UTCTime
+      updatedAt UTCTime
       deriving Eq Show
 
     Order

@@ -115,7 +115,9 @@ instance
     res <-
       foldrM parser mempty $
         V.filter
-          (\x -> (length <$> x ^? key "pair" . _String) == Just 6)
+          ( \x ->
+              (length <$> x ^? key "pair" . _String) == Just 6
+          )
           xs
     if null res
       then Left "SymbolsDetails are empty"

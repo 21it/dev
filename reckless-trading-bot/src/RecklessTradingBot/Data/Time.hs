@@ -16,7 +16,11 @@ newtype Seconds = Seconds
   { unSeconds :: NominalDiffTime
   }
   deriving newtype
-    (Eq, Ord, Show, Num)
+    ( Eq,
+      Ord,
+      Show,
+      Num
+    )
 
 newSeconds :: NominalDiffTime -> Either Error Seconds
 newSeconds x =

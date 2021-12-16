@@ -34,6 +34,7 @@ library
       RecklessTradingBot.Data.Type
       RecklessTradingBot.Import
       RecklessTradingBot.Import.External
+      RecklessTradingBot.Import.Psql
       RecklessTradingBot.Model.Order
       RecklessTradingBot.Model.Price
       RecklessTradingBot.Orphan

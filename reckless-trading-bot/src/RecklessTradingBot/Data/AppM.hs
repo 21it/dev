@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-missing-deriving-strategies #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -81,20 +82,22 @@ instance (MonadUnliftIO m) => Env (AppM m) where
              )
           then pure ent
           else waitForPrice chan
-  sleepTillNextPrice sym = do
-    ttl0 <- asks EnvData.envPriceTtl
-    mx <- Price.getLatest sym
-    case mx of
+  sleepPriceTtl sym = do
+    wantedTtl <- asks EnvData.envPriceTtl
+    mPrice <- Price.getLatest sym
+    case mPrice of
       Nothing -> pure ()
-      Just x -> do
+      Just price -> do
         ct <- liftIO getCurrentTime
         case newSeconds
           . diffUTCTime ct
-          . priceAt
-          $ entityVal x of
-          --
-          -- TODO : add unexpected error logging
-          --
-          Left {} -> sleep ttl0
-          Right ttl1 | ttl1 < ttl0 -> sleep $ ttl0 - ttl1
-          Right {} -> pure ()
+          . priceUpdatedAt
+          $ entityVal price of
+          Left e -> do
+            $(logTM) ErrorS $ logStr (show e :: Text)
+            sleep wantedTtl
+          Right realTtl
+            | realTtl < wantedTtl ->
+              sleep $ wantedTtl - realTtl
+          Right {} ->
+            pure ()
