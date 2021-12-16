@@ -68,19 +68,32 @@ spec = before newEnv $ do
   itLeft "getOrder fails" $ \env ->
     Bitfinex.getOrder env $ OrderId 0
   itLeft "submitCounterOrderMaker fails" $ \env -> do
-    prof <- tryFromT @Rational $ 1 % 1000
     Bitfinex.submitCounterOrderMaker
       env
       (OrderId 0)
       [feeRateMakerBase| 0.001 |]
-      prof
+      [profitRate| 0.001 |]
       SubmitOrder.optsPostOnly
   itRight
     "wallets succeeds"
     Bitfinex.wallets
 
---itRight "dumpIntoQuoteMaker succeeds" $ \env ->
---  Bitfinex.dumpIntoQuoteMaker
---    env
---    [currencyPair|ADABTC|]
---    SubmitOrder.optsPostOnly
+--describe "End2End" $ do
+--  itRight "submitOrderMaker" $ \env -> do
+--    let amt = testAmt :: MoneyBase 'Buy
+--    let sym = [currencyPair|ADABTC|]
+--    let opts = SubmitOrder.optsPostOnly
+--    rate <- Bitfinex.marketAveragePrice amt sym
+--    Bitfinex.submitOrderMaker env amt sym rate opts
+--  itRight "submitCounterOrderMaker" $ \env ->
+--    Bitfinex.submitCounterOrderMaker
+--      env
+--      (OrderId 0)
+--      [feeRateMakerBase| 0.001 |]
+--      [profitRate| 0.001 |]
+--      SubmitOrder.optsPostOnly
+--  itRight "dumpIntoQuoteMaker" $ \env ->
+--    Bitfinex.dumpIntoQuoteMaker
+--      env
+--      [currencyPair|ADABTC|]
+--      SubmitOrder.optsPostOnly

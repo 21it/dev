@@ -198,7 +198,8 @@ submitOrder ::
   forall act m.
   ( MonadIO m,
     ToRequestParam (MoneyBase act),
-    SingI act
+    SingI act,
+    Typeable act
   ) =>
   Env ->
   MoneyBase act ->
@@ -207,17 +208,18 @@ submitOrder ::
   SubmitOrder.Options ->
   ExceptT Error m (Order act 'Remote)
 submitOrder env amt sym rate opts = do
+  newAmt <- tryFromT $ bfxRoundRatio amt
+  newRate <- tryFromT $ bfxRoundRatio rate
+  let req =
+        SubmitOrder.Request
+          { SubmitOrder.amount = newAmt,
+            SubmitOrder.symbol = sym,
+            SubmitOrder.rate = newRate,
+            SubmitOrder.options = opts
+          }
   order :: Order act 'Remote <-
     Generic.prv @'SubmitOrder env req
   verifyOrder env (orderId order) req
-  where
-    req =
-      SubmitOrder.Request
-        { SubmitOrder.amount = amt,
-          SubmitOrder.symbol = sym,
-          SubmitOrder.rate = rate,
-          SubmitOrder.options = opts
-        }
 
 submitOrderMaker ::
   forall act m.
@@ -250,15 +252,12 @@ submitOrderMaker env amt sym rate0 opts0 =
       if orderStatus order /= PostOnlyCanceled
         then pure order
         else do
-          when (attempt >= 10) $
-            throwE $
-              ErrorOrderState $ SomeOrder sing order
-          newRate <-
-            tryFromT
-              . bfxRoundRatio
-              . into @(Ratio Natural)
-              $ Math.tweakMakerRate rate
-          this (attempt + 1) newRate
+          when (attempt >= 10)
+            . throwE
+            . ErrorOrderState
+            $ SomeOrder sing order
+          this (attempt + 1) $
+            Math.tweakMakerRate rate
 
 cancelOrderMulti ::
   ( MonadIO m

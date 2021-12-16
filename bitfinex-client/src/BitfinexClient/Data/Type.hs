@@ -302,7 +302,8 @@ newtype ProfitRate = ProfitRate
       Show
     )
   deriving stock
-    ( Generic
+    ( Generic,
+      TH.Lift
     )
 
 instance TryFrom (Ratio Natural) ProfitRate where

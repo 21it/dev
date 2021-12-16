@@ -9,6 +9,7 @@ module BitfinexClient.Data.QQ
     feeRateMakerQuote,
     feeRateTakerBase,
     feeRateTakerQuote,
+    profitRate,
     ccBase,
     ccQuote,
     currencyPair,
@@ -106,6 +107,10 @@ feeRateTakerBase =
 feeRateTakerQuote :: QuasiQuoter
 feeRateTakerQuote =
   mkTryRatQQ @(Ratio Natural) @(FeeRate 'Taker 'Quote)
+
+profitRate :: QuasiQuoter
+profitRate =
+  mkTryRatQQ @(Ratio Natural) @ProfitRate
 
 ccBase :: QuasiQuoter
 ccBase =
