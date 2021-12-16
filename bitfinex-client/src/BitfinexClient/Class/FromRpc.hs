@@ -130,7 +130,7 @@ instance
             x ^? key "pair" . _String
         sym <-
           first (const $ "Symbol is invalid " <> show sym0) $
-            newCurrencyPair' sym0
+            newCurrencyPair sym0
         prec <-
           maybeToRight "Precision is missing" $
             x ^? key "price_precision" . _Integral

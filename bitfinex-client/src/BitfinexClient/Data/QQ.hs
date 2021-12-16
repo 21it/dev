@@ -130,6 +130,5 @@ currencyPair :: QuasiQuoter
 currencyPair =
   mkQQ $
     showError
-      . newCurrencyPair'
-      . T.strip
+      . newCurrencyPair
       . T.pack

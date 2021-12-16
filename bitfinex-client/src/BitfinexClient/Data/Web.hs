@@ -53,7 +53,12 @@ data RequestMethod
 
 newtype BaseUrl
   = BaseUrl Text
-  deriving newtype (Eq, Ord, Show, IsString)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      IsString
+    )
 
 newtype RawResponse
   = RawResponse ByteString

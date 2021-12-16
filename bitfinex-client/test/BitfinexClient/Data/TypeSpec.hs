@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -19,10 +20,12 @@ spec = do
       unOrderFlagSet [Hidden, PostOnly]
         `shouldBe` OrderFlagAcc 4160
   describe "Trading" $ do
-    it "newCurrencyPair succeeds" $
-      newCurrencyPair "ADA" "BTC" `shouldSatisfy` isRight
-    it "newCurrencyPair fails" $
-      newCurrencyPair "BTC" "BTC" `shouldSatisfy` isLeft
+    it "currencyPairCon succeeds" $
+      currencyPairCon [ccBase|ADA|] [ccQuote|BTC|]
+        `shouldSatisfy` isRight
+    it "currencyPairCon fails" $
+      currencyPairCon [ccBase|BTC|] [ccQuote|BTC|]
+        `shouldSatisfy` isLeft
   describe "Misc" $ do
     it "PosRat succeeds" $
       tryFrom @Rational @PosRat 1 `shouldSatisfy` isRight

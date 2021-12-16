@@ -32,7 +32,7 @@ unQueryParam (SomeQueryParam name x) =
 data E8
 
 instance HasResolution E8 where
-  resolution _ = 100000000
+  resolution = const 100000000
 
 instance ToRequestParam Rational where
   toTextParam x =

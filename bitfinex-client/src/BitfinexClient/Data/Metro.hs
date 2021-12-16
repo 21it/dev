@@ -156,7 +156,8 @@ instance
 
 data SomeMoneyAmt dim
   = forall act.
-    ( Show (MoneyAmt dim act)
+    ( Show (MoneyAmt dim act),
+      SingI act
     ) =>
     SomeMoneyAmt
       (Sing act)
@@ -215,11 +216,13 @@ quotePerBaseAmt = MoneyQuoteAmt :/ MoneyBaseAmt
 --
 -- TODO : show act as well?
 --
-instance Prelude.Show (QuotePerBase act) where
+instance (SingI act) => Prelude.Show (QuotePerBase act) where
   show x =
     show (unQuotePerBase x # quotePerBaseAmt)
       <> " "
       <> show quotePerBaseAmt
+      <> " "
+      <> show (fromSing (sing :: Sing act))
 
 instance ToRequestParam (QuotePerBase act) where
   toTextParam =
@@ -265,6 +268,8 @@ instance PersistField (QuotePerBase act) where
 
 data SomeQuotePerBase :: Type where
   SomeQuotePerBase ::
+    ( SingI act
+    ) =>
     Sing act ->
     QuotePerBase act ->
     SomeQuotePerBase
@@ -276,11 +281,6 @@ instance Eq SomeQuotePerBase where
       Nothing -> False
 
 deriving stock instance Show SomeQuotePerBase
-
---
--- TODO : derive some newtype instances to use directly
--- in dimentional expressions without coercing?
---
 
 unQu :: Qu a lcsu n -> n
 unQu (Unsafe.Qu x) = x

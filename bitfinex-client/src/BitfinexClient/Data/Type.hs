@@ -24,18 +24,16 @@ module BitfinexClient.Data.Type
     CurrencyCode (..),
     newCurrencyCode,
     CurrencyPair,
+    currencyPairCon,
     currencyPairBase,
     currencyPairQuote,
     newCurrencyPair,
-    newCurrencyPair',
     CurrencyPairConf (..),
 
     -- * Misc
     -- $misc
     PosRat,
     unPosRat,
-    subPosRat,
-    bfxRoundRatio,
     Error (..),
     tryErrorE,
     tryErrorT,
@@ -138,7 +136,8 @@ data Order (act :: ExchangeAction) (loc :: Location) = Order
 
 data SomeOrder (loc :: Location)
   = forall (act :: ExchangeAction).
-    ( Show (Order act loc)
+    ( Show (Order act loc),
+      SingI act
     ) =>
     SomeOrder
       (Sing act)
@@ -340,8 +339,7 @@ newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
       -- case-insensitive Text
       --
       ToJSON,
-      FromJSON,
-      IsString
+      FromJSON
     )
   deriving stock
     ( Generic,
@@ -389,21 +387,7 @@ data CurrencyPair = CurrencyPair
       TH.Lift
     )
 
-instance FromJSON CurrencyPair where
-  parseJSON = withObject "CurrencyPair" $ \x0 -> do
-    base <- x0 .: "base"
-    quote <- x0 .: "quote"
-    case newCurrencyPair base quote of
-      Left x -> fail $ show x
-      Right x -> pure x
-
-instance ToRequestParam CurrencyPair where
-  toTextParam x =
-    "t"
-      <> (coerce $ currencyPairBase x :: Text)
-      <> (coerce $ currencyPairQuote x :: Text)
-
-newCurrencyPair ::
+currencyPairCon ::
   CurrencyCode 'Base ->
   CurrencyCode 'Quote ->
   Either
@@ -414,7 +398,7 @@ newCurrencyPair ::
         CurrencyPair
     )
     CurrencyPair
-newCurrencyPair base quote =
+currencyPairCon base quote =
   if unCurrencyCode base == unCurrencyCode quote
     then
       Left $
@@ -423,26 +407,45 @@ newCurrencyPair base quote =
       Right $
         CurrencyPair base quote
 
-newCurrencyPair' ::
+instance FromJSON CurrencyPair where
+  parseJSON = withObject "CurrencyPair" $ \x0 -> do
+    base <- x0 .: "base"
+    quote <- x0 .: "quote"
+    case currencyPairCon base quote of
+      Left x -> fail $ show x
+      Right x -> pure x
+
+instance ToRequestParam CurrencyPair where
+  toTextParam x =
+    "t"
+      <> (coerce $ currencyPairBase x :: Text)
+      <> (coerce $ currencyPairQuote x :: Text)
+
+newCurrencyPair ::
   Text ->
   Either (TryFromException Text CurrencyPair) CurrencyPair
-newCurrencyPair' raw
-  | (length raw == 7) && (prefix == "t") = do
-    let (base0, quote0) = T.splitAt 3 xs
-    first (withSource raw) $
-      newCurrencyPair
-        (CurrencyCode $ T.toUpper base0)
-        (CurrencyCode $ T.toUpper quote0)
-  | length raw == 6 = do
-    let (base0, quote0) = T.splitAt 3 raw
-    first (withSource raw) $
-      newCurrencyPair
-        (CurrencyCode $ T.toUpper base0)
-        (CurrencyCode $ T.toUpper quote0)
+newCurrencyPair raw
+  | (length nakedRaw == 7) && (prefix == "t") = do
+    let (base0, quote0) = T.splitAt 3 postfix
+    base <- withFirst $ newCurrencyCode base0
+    quote <- withFirst $ newCurrencyCode quote0
+    withFirst $ currencyPairCon base quote
+  | length nakedRaw == 6 = do
+    let (base0, quote0) = T.splitAt 3 nakedRaw
+    base <- withFirst $ newCurrencyCode base0
+    quote <- withFirst $ newCurrencyCode quote0
+    withFirst $ currencyPairCon base quote
   | otherwise =
-    Left $ TryFromException raw Nothing
+    Left $ TryFromException nakedRaw Nothing
   where
-    (prefix, xs) = T.splitAt 1 raw
+    nakedRaw = T.strip raw
+    (prefix, postfix) = T.splitAt 1 nakedRaw
+    withFirst ::
+      Either (TryFromException source target) a ->
+      Either (TryFromException Text CurrencyPair) a
+    withFirst =
+      first $
+        withTarget @CurrencyPair . withSource raw
 
 data CurrencyPairConf = CurrencyPairConf
   { currencyPairPrecision :: Natural,
@@ -487,29 +490,6 @@ instance TryFrom Rational PosRat where
 
 instance From PosRat Rational where
   from = via @(Ratio Natural)
-
-subPosRat :: PosRat -> PosRat -> Either Error PosRat
-subPosRat x0 x1
-  | x0 > x1 =
-    first
-      (const failure)
-      . tryFrom @(Ratio Natural)
-      $ from x0 - from x1
-  | otherwise = Left failure
-  where
-    failure =
-      ErrorMath $
-        "Expression "
-          <> show x0
-          <> " - "
-          <> show x1
-          <> " is not PosRat"
-
-bfxRoundRatio :: (From a Rational) => a -> Rational
-bfxRoundRatio =
-  sdRound 5
-    . dpRound 8
-    . from
 
 --
 -- TODO : implement Eq/Ord?

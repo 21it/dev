@@ -24,10 +24,6 @@ import qualified Network.HTTP.Client as Web
 import qualified Network.HTTP.Client.TLS as Tls
 import qualified Network.HTTP.Types as Web
 
---
--- TODO : better generic Error values including
--- info about Rpc and Requests!!!!!!!!
---
 pub ::
   forall method req res m.
   ( MonadIO m,
@@ -154,7 +150,7 @@ catchWeb this =
               )
 
 --
--- TODO : improve error messages in parsers???
+-- TODO : add ParserFailure type instead of Text?
 --
 parserFailure ::
   forall (method :: Method).

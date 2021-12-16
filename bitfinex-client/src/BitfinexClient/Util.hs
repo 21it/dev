@@ -3,8 +3,9 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Util
-  ( eradicateNull,
-    absRat,
+  ( absRat,
+    bfxRoundRatio,
+    eradicateNull,
     readVia,
     tryReadVia,
     readViaRatio,
@@ -20,6 +21,17 @@ import qualified Data.Text.Read as T
 import qualified Data.Vector as V
 import GHC.Natural (naturalFromInteger)
 
+absRat :: Rational -> Ratio Natural
+absRat x =
+  (naturalFromInteger . abs $ numerator x)
+    % (naturalFromInteger . abs $ denominator x)
+
+bfxRoundRatio :: (From a Rational) => a -> Rational
+bfxRoundRatio =
+  sdRound 5
+    . dpRound 8
+    . from
+
 eradicateNull :: A.Value -> A.Value
 eradicateNull = \case
   A.Object xs -> A.Object $ HS.mapMaybe devastateNull xs
@@ -30,11 +42,6 @@ eradicateNull = \case
       \case
         A.Null -> Nothing
         x -> Just $ eradicateNull x
-
-absRat :: Rational -> Ratio Natural
-absRat x =
-  (naturalFromInteger . abs $ numerator x)
-    % (naturalFromInteger . abs $ denominator x)
 
 readVia ::
   forall through target source.
