@@ -26,8 +26,3 @@ spec = do
     it "currencyPairCon fails" $
       currencyPairCon [ccBase|BTC|] [ccQuote|BTC|]
         `shouldSatisfy` isLeft
-  describe "Misc" $ do
-    it "PosRat succeeds" $
-      tryFrom @Rational @PosRat 1 `shouldSatisfy` isRight
-    it "PosRat fails" $
-      tryFrom @Rational @PosRat 0 `shouldSatisfy` isLeft

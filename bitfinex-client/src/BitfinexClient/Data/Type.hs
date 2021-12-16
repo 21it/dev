@@ -32,8 +32,6 @@ module BitfinexClient.Data.Type
 
     -- * Misc
     -- $misc
-    PosRat,
-    unPosRat,
     Error (..),
     tryErrorE,
     tryErrorT,
@@ -296,7 +294,7 @@ instance From (RebateRate mrel) Rational
 instance From Rational (RebateRate mrel)
 
 newtype ProfitRate = ProfitRate
-  { unProfitRate :: PosRat
+  { unProfitRate :: Ratio Natural
   }
   deriving newtype
     ( Eq,
@@ -307,25 +305,20 @@ newtype ProfitRate = ProfitRate
     ( Generic
     )
 
-instance From ProfitRate PosRat
-
-instance From PosRat ProfitRate
-
-instance From ProfitRate (Ratio Natural) where
-  from = via @PosRat
-
 instance TryFrom (Ratio Natural) ProfitRate where
-  tryFrom =
-    from @PosRat
-      `composeTryRhs` tryFrom
+  tryFrom x
+    | x > 0 = Right $ ProfitRate x
+    | otherwise = Left $ TryFromException x Nothing
+
+instance From ProfitRate (Ratio Natural)
 
 instance TryFrom Rational ProfitRate where
   tryFrom =
-    from @PosRat
-      `composeTryRhs` tryFrom
+    tryVia @(Ratio Natural)
 
 instance From ProfitRate Rational where
-  from = via @PosRat
+  from =
+    via @(Ratio Natural)
 
 newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
   { unCurrencyCode :: Text
@@ -449,8 +442,8 @@ newCurrencyPair raw
 
 data CurrencyPairConf = CurrencyPairConf
   { currencyPairPrecision :: Natural,
-    currencyPairInitMargin :: PosRat,
-    currencyPairMinMargin :: PosRat,
+    currencyPairInitMargin :: Ratio Natural,
+    currencyPairMinMargin :: Ratio Natural,
     currencyPairMaxOrderAmt :: MoneyBase 'Buy,
     currencyPairMinOrderAmt :: MoneyBase 'Buy
   }
@@ -464,51 +457,20 @@ data CurrencyPairConf = CurrencyPairConf
 -- $misc
 -- General utility data used elsewhere.
 
-newtype PosRat = PosRat
-  { unPosRat :: Ratio Natural
-  }
-  deriving newtype
-    ( Eq,
-      Ord,
-      Show,
-      ToRequestParam
-    )
-  deriving stock
-    ( Generic,
-      TH.Lift
-    )
-
-instance From PosRat (Ratio Natural)
-
-instance TryFrom (Ratio Natural) PosRat where
-  tryFrom x
-    | x > 0 = Right $ PosRat x
-    | otherwise = Left $ TryFromException x Nothing
-
-instance TryFrom Rational PosRat where
-  tryFrom = tryVia @(Ratio Natural)
-
-instance From PosRat Rational where
-  from = via @(Ratio Natural)
-
---
--- TODO : implement Eq/Ord?
---
 data Error
   = ErrorWebException HttpException
   | ErrorWebPub Web.Request (Web.Response ByteString)
   | ErrorWebPrv ByteString Web.Request (Web.Response ByteString)
   | ErrorParser Web.Request (Web.Response ByteString) Text
-  | --
-    -- TODO : remove ErrorSmartCon
-    --
-    ErrorSmartCon Text
   | ErrorMath Text
   | ErrorTryFrom SomeException
   | ErrorMissingOrder OrderId
   | ErrorUnverifiedOrder (SomeOrder 'Local) (SomeOrder 'Remote)
   | ErrorOrderState (SomeOrder 'Remote)
   deriving stock
+    --
+    -- TODO : implement Eq/Ord?
+    --
     ( Show,
       Generic
     )

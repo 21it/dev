@@ -24,8 +24,8 @@ spec = before newEnv $ do
         `shouldBe` Just
           CurrencyPairConf
             { currencyPairPrecision = 5,
-              currencyPairInitMargin = [posRat| 30 % 1 |],
-              currencyPairMinMargin = [posRat| 15 |],
+              currencyPairInitMargin = 30 % 1,
+              currencyPairMinMargin = 15,
               currencyPairMaxOrderAmt =
                 MoneyAmt $ quOf 250000 MoneyBaseAmt,
               currencyPairMinOrderAmt =

@@ -4,8 +4,7 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.QQ
-  ( posRat,
-    --feeRate,
+  ( --feeRate,
     feeRateMakerBase,
     feeRateMakerQuote,
     feeRateTakerBase,
@@ -33,10 +32,10 @@ showError ::
   Either (TryFromException source target) target ->
   Either String target
 showError =
-  first $ \(TryFromException x0 _) ->
+  first $ \(TryFromException x _) ->
     show (typeRep $ Proxy @target)
       <> " can not be read from "
-      <> show x0
+      <> show x
 
 mkQQ ::
   forall target.
@@ -75,13 +74,9 @@ mkTryRatQQ ::
   ) =>
   QuasiQuoter
 mkTryRatQQ =
-  mkQQ $ \x0 ->
-    showError (tryReadViaRatio @through @target x0)
-      <|> showError (tryReadVia @through @target x0)
-
-posRat :: QuasiQuoter
-posRat =
-  mkTryRatQQ @(Ratio Natural) @PosRat
+  mkQQ $ \x ->
+    showError (tryReadViaRatio @through @target x)
+      <|> showError (tryReadVia @through @target x)
 
 --
 -- TODO : for some reason this is not working:

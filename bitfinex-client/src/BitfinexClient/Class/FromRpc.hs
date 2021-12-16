@@ -142,7 +142,7 @@ instance
             ( const $
                 "Init Margin is invalid " <> show initMargin0
             )
-            $ tryReadViaRatio @(Ratio Natural) initMargin0
+            $ tryReadViaRatio @Rational initMargin0
         minMargin0 <-
           maybeToRight "Min Margin is missing" $
             x ^? key "minimum_margin" . _String
@@ -151,7 +151,7 @@ instance
             ( const $
                 "Min Margin is invalid " <> show minMargin0
             )
-            $ tryReadViaRatio @(Ratio Natural) minMargin0
+            $ tryReadViaRatio @Rational minMargin0
         maxOrderAmt0 <-
           maybeToRight "Max Order Size is missing" $
             x ^? key "maximum_order_size" . _String

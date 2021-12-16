@@ -29,7 +29,6 @@ import Data.Metrology.Poly as X
 import Data.Pool as X (Pool, destroyAllResources)
 import Data.Ratio as X ((%))
 import Data.Singletons as X
-import Data.Text as X (strip)
 import Data.Time.Clock as X
   ( DiffTime,
     NominalDiffTime,
