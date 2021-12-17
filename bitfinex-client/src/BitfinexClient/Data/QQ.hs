@@ -4,7 +4,9 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.QQ
-  ( --feeRate,
+  ( mkTryQQ,
+    mkTryRatQQ,
+    --feeRate,
     feeRateMakerBase,
     feeRateMakerQuote,
     feeRateTakerBase,
@@ -64,6 +66,18 @@ mkQQ parser =
           <> " "
           <> field
           <> " is not implemented"
+
+mkTryQQ ::
+  forall through target.
+  ( Read through,
+    TryFrom through target,
+    TH.Lift target,
+    Typeable target
+  ) =>
+  QuasiQuoter
+mkTryQQ =
+  mkQQ $
+    showError . tryReadVia @through @target
 
 mkTryRatQQ ::
   forall through target.

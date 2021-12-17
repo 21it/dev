@@ -65,6 +65,7 @@ library
       DerivingVia
       DeriveGeneric
       DeriveLift
+      QuasiQuotes
       DataKinds
       DefaultSignatures
       EmptyCase
@@ -140,6 +141,7 @@ test-suite bitfinex-client-test
       DerivingVia
       DeriveGeneric
       DeriveLift
+      QuasiQuotes
       DataKinds
       DefaultSignatures
       EmptyCase

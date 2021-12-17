@@ -28,7 +28,7 @@ createUpdate cfg = do
   case res of
     Left e -> do
       $(logTM) ErrorS $ logStr (show e :: Text)
-      sleep 60
+      sleep [seconds|60|]
     Right (buy, sell) -> do
       priceEnt@(Entity _ price) <-
         Price.createUpdate sym buy sell

@@ -30,8 +30,11 @@ default-extensions:
 - GeneralizedNewtypeDeriving
 - DerivingStrategies
 - DerivingVia
+- DeriveGeneric
+- DeriveLift
 - FunctionalDependencies
 - StrictData
+- QuasiQuotes
 # Singletons
 - DataKinds
 - DefaultSignatures
@@ -106,6 +109,7 @@ library:
   - extra
   - units
   - singletons
+  - template-haskell
 
 executables:
   reckless-trading-bot-exe:

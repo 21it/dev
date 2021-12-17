@@ -2,6 +2,7 @@
 
 module RecklessTradingBot.Import.External (module X) where
 
+import BitfinexClient.Data.QQ as X
 import BitfinexClient.Util as X
 import Control.Concurrent.Async as X (waitAnyCancel)
 import Control.Concurrent.STM as X (atomically)

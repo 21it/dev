@@ -56,7 +56,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     ttl <- asks EnvData.envOrderTtl
     ct <- liftIO getCurrentTime
     pure $
-      ct > addUTCTime (unSeconds ttl) (orderAt x)
+      ct > addUTCTime (from ttl) (orderAt x)
   putCurrPrice x = do
     ch <- asks EnvData.envPriceChan
     liftIO . atomically $ writeTChan ch x
@@ -97,7 +97,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
             $(logTM) ErrorS $ logStr (show e :: Text)
             sleep wantedTtl
           Right realTtl
-            | realTtl < wantedTtl ->
-              sleep $ wantedTtl - realTtl
+            | wantedTtl > realTtl ->
+              sleep $ subSeconds wantedTtl realTtl
           Right {} ->
             pure ()

@@ -56,8 +56,11 @@ library
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
+      DeriveGeneric
+      DeriveLift
       FunctionalDependencies
       StrictData
+      QuasiQuotes
       DataKinds
       DefaultSignatures
       EmptyCase
@@ -98,6 +101,7 @@ library
     , resource-pool
     , singletons
     , stm
+    , template-haskell
     , text
     , time
     , transformers
@@ -122,8 +126,11 @@ executable reckless-trading-bot-exe
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
+      DeriveGeneric
+      DeriveLift
       FunctionalDependencies
       StrictData
+      QuasiQuotes
       DataKinds
       DefaultSignatures
       EmptyCase
@@ -167,8 +174,11 @@ test-suite reckless-trading-bot-test
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
+      DeriveGeneric
+      DeriveLift
       FunctionalDependencies
       StrictData
+      QuasiQuotes
       DataKinds
       DefaultSignatures
       EmptyCase

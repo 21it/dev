@@ -3,42 +3,55 @@
 
 module RecklessTradingBot.Data.Time
   ( Seconds,
+    seconds,
     unSeconds,
+    subSeconds,
     sleep,
   )
 where
 
+import Data.Fixed
+import Language.Haskell.TH.Quote
+import qualified Language.Haskell.TH.Syntax as TH (Lift)
 import RecklessTradingBot.Import.External
+import RecklessTradingBot.Orphan ()
 
---
--- TODO : probably just use Pico
---
 newtype Seconds = Seconds
-  { unSeconds :: NominalDiffTime
+  { unSeconds :: Pico
   }
   deriving newtype
     ( Eq,
       Ord,
-      Show,
-      Num
+      Show
     )
   deriving stock
-    ( Generic
+    ( Generic,
+      TH.Lift
     )
 
-instance TryFrom NominalDiffTime Seconds where
+seconds :: QuasiQuoter
+seconds =
+  mkTryQQ @Pico @Seconds
+
+instance TryFrom Pico Seconds where
   tryFrom x
     | x >= 0 = Right $ Seconds x
     | otherwise = Left $ TryFromException x Nothing
 
-instance From Seconds NominalDiffTime
+instance From Seconds Pico
 
-instance TryFrom Pico Seconds where
+instance TryFrom NominalDiffTime Seconds where
   tryFrom =
-    tryFrom `composeTryLhs` secondsToNominalDiffTime
+    tryFrom `composeTryLhs` nominalDiffTimeToSeconds
 
-instance From Seconds Pico where
-  from = via @NominalDiffTime
+instance From Seconds NominalDiffTime where
+  from =
+    via @Pico
+
+subSeconds :: Seconds -> Seconds -> Seconds
+subSeconds x y
+  | x > y = Seconds $ from x - from y
+  | otherwise = Seconds 0
 
 sleep :: MonadIO m => Seconds -> m ()
 sleep =
@@ -46,5 +59,4 @@ sleep =
     . delay
     . round
     . (* 1000000)
-    . nominalDiffTimeToSeconds
-    . coerce
+    . unSeconds
