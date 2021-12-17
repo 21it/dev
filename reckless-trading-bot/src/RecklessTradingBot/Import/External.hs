@@ -2,6 +2,7 @@
 
 module RecklessTradingBot.Import.External (module X) where
 
+import BitfinexClient.Util as X
 import Control.Concurrent.Async as X (waitAnyCancel)
 import Control.Concurrent.STM as X (atomically)
 import Control.Concurrent.STM.TChan as X
@@ -89,9 +90,12 @@ import UnliftIO as X (MonadUnliftIO, bracket, withRunInIO)
 import Witch as X
   ( From (..),
     TryFrom (..),
+    TryFromException (..),
     composeTry,
     composeTryLhs,
     composeTryRhs,
     into,
+    tryInto,
+    tryVia,
     via,
   )

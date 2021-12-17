@@ -15,7 +15,8 @@ import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
 
 create ::
-  Storage m =>
+  ( Storage m
+  ) =>
   Entity Price ->
   m (Entity Order)
 create (Entity priceId price) = do
@@ -55,7 +56,7 @@ updateBfx rowId (Bfx.SomeOrder bfxS bfxOrder) = runSql $ do
     case bfxS of
       Bfx.SBuy ->
         [ OrderExtRef P.=. Just (from $ Bfx.orderId bfxOrder),
-          OrderPrice P.=. from (Bfx.orderRate bfxOrder),
+          OrderPrice P.=. Bfx.orderRate bfxOrder,
           OrderStatus P.=. ss
         ]
       Bfx.SSell ->
@@ -68,7 +69,8 @@ updateBfx rowId (Bfx.SomeOrder bfxS bfxOrder) = runSql $ do
     ss = from $ Bfx.orderStatus bfxOrder
 
 getOngoing ::
-  Storage m =>
+  ( Storage m
+  ) =>
   Bfx.CurrencyPair ->
   m [Entity Order]
 getOngoing sym =

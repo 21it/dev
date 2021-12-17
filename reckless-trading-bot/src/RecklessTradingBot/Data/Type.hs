@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Type
@@ -22,44 +23,57 @@ data LogFormat
 data Error
   = ErrorBfx Bfx.Error
   | ErrorTryFrom SomeException
-  | ErrorSmartCon Text
-  deriving stock (Show)
+  deriving stock
+    ( Show
+    )
 
-newtype OrderExternalId (a :: Bfx.ExchangeAction)
+newtype OrderExternalId (act :: Bfx.ExchangeAction)
   = OrderExternalId Bfx.OrderId
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show
+    )
+  deriving stock
+    ( Generic
+    )
 
 deriving via
-  Int64
+  Text
   instance
-    PersistFieldSql (OrderExternalId a)
+    PersistFieldSql (OrderExternalId act)
 
-instance PersistField (OrderExternalId a) where
+instance PersistField (OrderExternalId act) where
   toPersistValue (OrderExternalId x) =
-    case tryFrom x of
-      Right id0 -> PersistInt64 id0
-      Left {} ->
-        error $
-          "OrderExternalId Int64 overflow "
-            <> show x
+    PersistText . show $ into @Natural x
   fromPersistValue = \case
-    x@(PersistInt64 id0) ->
-      bimap (const $ failure x) OrderExternalId $ tryFrom id0
+    x@(PersistText id0) ->
+      bimap (const $ failure x) OrderExternalId $
+        readVia @Natural id0
     x ->
       Left $ failure x
     where
-      failure x = "OrderExternalId PersistValue is invalid " <> show x
+      failure x =
+        "OrderExternalId PersistValue is invalid " <> show x
 
-instance From Bfx.OrderId (OrderExternalId a)
+instance From Bfx.OrderId (OrderExternalId act)
 
-instance From (OrderExternalId a) Bfx.OrderId
+instance From (OrderExternalId act) Bfx.OrderId
 
 data OrderStatus
   = OrderNew
   | OrderActive
   | OrderExecuted
   | OrderCancelled
-  deriving stock (Eq, Ord, Show, Read)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Read,
+      Enum,
+      Bounded,
+      Generic
+    )
 
 instance From Bfx.OrderStatus OrderStatus where
   --

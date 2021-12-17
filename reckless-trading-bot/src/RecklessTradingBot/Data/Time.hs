@@ -1,17 +1,18 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Time
   ( Seconds,
     unSeconds,
-    newSeconds,
-    newSeconds',
     sleep,
   )
 where
 
-import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 
+--
+-- TODO : probably just use Pico
+--
 newtype Seconds = Seconds
   { unSeconds :: NominalDiffTime
   }
@@ -21,18 +22,23 @@ newtype Seconds = Seconds
       Show,
       Num
     )
+  deriving stock
+    ( Generic
+    )
 
-newSeconds :: NominalDiffTime -> Either Error Seconds
-newSeconds x =
-  if x >= 0
-    then Right $ Seconds x
-    else
-      Left . ErrorSmartCon $
-        "Seconds can not be negative but got " <> show x
+instance TryFrom NominalDiffTime Seconds where
+  tryFrom x
+    | x >= 0 = Right $ Seconds x
+    | otherwise = Left $ TryFromException x Nothing
 
-newSeconds' :: Pico -> Either Error Seconds
-newSeconds' =
-  newSeconds . secondsToNominalDiffTime
+instance From Seconds NominalDiffTime
+
+instance TryFrom Pico Seconds where
+  tryFrom =
+    tryFrom `composeTryLhs` secondsToNominalDiffTime
+
+instance From Seconds Pico where
+  from = via @NominalDiffTime
 
 sleep :: MonadIO m => Seconds -> m ()
 sleep =

@@ -89,7 +89,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
       Nothing -> pure ()
       Just price -> do
         ct <- liftIO getCurrentTime
-        case newSeconds
+        case tryFrom
           . diffUTCTime ct
           . priceUpdatedAt
           $ entityVal price of
