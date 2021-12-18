@@ -62,7 +62,7 @@ instance
         "Order is missing"
         $ raw ^? nth 4 . nth 0
     SomeOrder orderSing order <- parseOrder rawOrder
-    case eqExchangeAction (sing :: Sing act) orderSing of
+    case testEquality (sing :: Sing act) orderSing of
       Nothing -> Left "Incorrect ExchangeAction"
       Just Refl -> pure order
 

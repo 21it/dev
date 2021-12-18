@@ -34,7 +34,10 @@ import Data.Time.Clock as X
     getCurrentTime,
     secondsToDiffTime,
   )
-import Data.Type.Equality as X ((:~:) (..))
+import Data.Type.Equality as X
+  ( TestEquality (..),
+    (:~:) (..),
+  )
 import Data.Typeable as X (typeOf)
 import Database.Persist as X
   ( PersistField (..),

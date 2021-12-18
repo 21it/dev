@@ -162,7 +162,7 @@ verifyOrder ::
   ExceptT Error m (Order act 'Remote)
 verifyOrder env id0 req = do
   someRemOrd@(SomeOrder remSing remOrd) <- getOrder env id0
-  case eqExchangeAction remSing locSing of
+  case testEquality remSing locSing of
     Nothing -> throwE $ ErrorOrderState someRemOrd
     Just Refl -> do
       let locOrd =

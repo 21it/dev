@@ -83,14 +83,3 @@ deriving stock instance Generic MarketRelation
 deriving stock instance Generic Location
 
 deriving stock instance Generic ExchangeAction
-
---
--- TODO : generalize it somehow?
---
-eqExchangeAction ::
-  SExchangeAction a ->
-  SExchangeAction b ->
-  Maybe (a :~: b)
-eqExchangeAction SBuy SBuy = Just Refl
-eqExchangeAction SSell SSell = Just Refl
-eqExchangeAction _ _ = Nothing

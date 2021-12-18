@@ -145,7 +145,7 @@ deriving stock instance Show (SomeOrder loc)
 
 instance Eq (SomeOrder loc) where
   (SomeOrder sx x) == (SomeOrder sy y) =
-    case eqExchangeAction sx sy of
+    case testEquality sx sy of
       Just Refl -> x == y
       Nothing -> False
 

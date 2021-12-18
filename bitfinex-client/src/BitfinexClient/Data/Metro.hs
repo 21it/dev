@@ -169,7 +169,7 @@ type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
 
 instance Eq (SomeMoneyAmt dim) where
   (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
-    case eqExchangeAction sx sy of
+    case testEquality sx sy of
       Just Refl -> x == y
       Nothing -> False
 
@@ -276,7 +276,7 @@ data SomeQuotePerBase :: Type where
 
 instance Eq SomeQuotePerBase where
   (SomeQuotePerBase sx x) == (SomeQuotePerBase sy y) =
-    case eqExchangeAction sx sy of
+    case testEquality sx sy of
       Just Refl -> x == y
       Nothing -> False
 
