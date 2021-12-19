@@ -23,7 +23,6 @@ import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 import BitfinexClient.Util
 import qualified Data.Text as T
-import Data.Typeable (typeRep)
 import Language.Haskell.TH.Quote
 import Language.Haskell.TH.Syntax as TH (Lift)
 
@@ -36,7 +35,7 @@ showError ::
   Either String target
 showError =
   first $ \(TryFromException x _) ->
-    show (typeRep $ Proxy @target)
+    showType @target
       <> " can not be read from "
       <> show x
 
@@ -62,7 +61,7 @@ mkQQ parser =
     failure :: Text -> a
     failure field =
       error $
-        show (typeRep $ Proxy @target)
+        showType @target
           <> " "
           <> field
           <> " is not implemented"

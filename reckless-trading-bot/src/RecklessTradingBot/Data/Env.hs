@@ -2,7 +2,7 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Env
-  ( TradingConf (..),
+  ( TradeConf (..),
     Env (..),
     withEnv,
   )
@@ -33,7 +33,26 @@ import RecklessTradingBot.Data.Time
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 
-data TradingConf = TradingConf
+data RawTradeConf = RawTradeConf
+  { rawTradeConfCurrencyKind :: Bfx.CurrencyKind,
+    rawTradeConfProfitPerOrder :: Bfx.ProfitRate,
+    rawTradeConfMaxQuoteInvestment :: Bfx.MoneyQuote 'Bfx.Sell
+  }
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
+
+instance FromJSON RawTradeConf where
+  parseJSON =
+    A.genericParseJSON
+      A.defaultOptions
+        { A.fieldLabelModifier = A.camelTo2 '_' . drop 12
+        }
+
+data TradeConf = TradeConf
   { tradingConfPair :: Bfx.CurrencyPair,
     tradingConfFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradingConfMinOrderAmt :: MVar (Bfx.MoneyBase 'Bfx.Buy)
@@ -43,7 +62,7 @@ data TradingConf = TradingConf
 data Env = Env
   { -- app
     envBfx :: Bfx.Env,
-    envPairs :: [TradingConf],
+    envPairs :: [TradeConf],
     envProfit :: Bfx.ProfitRate,
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
@@ -201,7 +220,7 @@ newTradingConfSet ::
   MonadIO m =>
   Bfx.Env ->
   Set Bfx.CurrencyPair ->
-  m [TradingConf]
+  m [TradeConf]
 newTradingConfSet bfx syms = do
   ex <-
     runExceptT $
@@ -219,7 +238,7 @@ newTradingConf ::
   Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
   FeeSummary.Response ->
   Bfx.CurrencyPair ->
-  m TradingConf
+  m TradeConf
 newTradingConf symDetails feeDetails sym =
   case Map.lookup sym symDetails of
     Nothing -> error $ "Missing " <> show sym
@@ -232,7 +251,7 @@ newTradingConf symDetails feeDetails sym =
       amtVar <-
         liftIO . newMVar $ from amtInclFee
       pure $
-        TradingConf
+        TradeConf
           { tradingConfPair = sym,
             tradingConfFee = fee,
             tradingConfMinOrderAmt = amtVar

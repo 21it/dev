@@ -25,6 +25,7 @@ import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
 import BitfinexClient.Import.External as Ext
 import BitfinexClient.Util
+import qualified Data.Aeson as A
 import Data.Metrology.Poly as Metro
 --
 -- TODO : somehow remove unsafe
@@ -149,6 +150,19 @@ instance
           <> show (fromSing (sing :: Sing act))
           <> " PersistValue is invalid "
           <> show raw
+
+instance
+  ( Typeable dim,
+    Typeable act
+  ) =>
+  FromJSON (MoneyAmt dim act)
+  where
+  parseJSON = A.withText
+    (showType @(MoneyAmt dim act))
+    $ \x0 -> do
+      case readViaRatio @(Ratio Natural) x0 of
+        Left x -> fail $ show x
+        Right x -> pure x
 
 --
 -- SomeMoneyAmt sugar

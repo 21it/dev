@@ -14,13 +14,13 @@ apply = do
   xs <- mapM (spawnLink . loop) . toList =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => TradingConf -> m ()
+loop :: (Env m) => TradeConf -> m ()
 loop cfg = do
   sleepPriceTtl $ tradingConfPair cfg
   createUpdate cfg
   loop cfg
 
-createUpdate :: (Env m) => TradingConf -> m ()
+createUpdate :: (Env m) => TradeConf -> m ()
 createUpdate cfg = do
   res <-
     runExceptT . withExceptT ErrorBfx $

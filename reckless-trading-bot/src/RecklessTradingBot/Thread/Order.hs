@@ -28,7 +28,7 @@ apply = do
       =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => TradingConf -> m ()
+loop :: (Env m) => TradeConf -> m ()
 loop cfg = do
   priceEnt@(Entity _ price) <- rcvNextPrice sym
   cancelUnexpected =<< Order.getByStatus sym [OrderNew]

@@ -28,6 +28,18 @@ $( singletons
              Bounded
            )
 
+       data CurrencyKind
+         = Crypto
+         | Stable
+         | Fiat
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
+
        data CurrencyRelation
          = Base
          | Quote
@@ -76,6 +88,8 @@ $( singletons
 
 deriving stock instance Generic Method
 
+deriving stock instance Generic CurrencyKind
+
 deriving stock instance Generic CurrencyRelation
 
 deriving stock instance Generic MarketRelation
@@ -83,3 +97,27 @@ deriving stock instance Generic MarketRelation
 deriving stock instance Generic Location
 
 deriving stock instance Generic ExchangeAction
+
+instance ToJSON Method
+
+instance ToJSON CurrencyKind
+
+instance ToJSON CurrencyRelation
+
+instance ToJSON MarketRelation
+
+instance ToJSON Location
+
+instance ToJSON ExchangeAction
+
+instance FromJSON Method
+
+instance FromJSON CurrencyKind
+
+instance FromJSON CurrencyRelation
+
+instance FromJSON MarketRelation
+
+instance FromJSON Location
+
+instance FromJSON ExchangeAction

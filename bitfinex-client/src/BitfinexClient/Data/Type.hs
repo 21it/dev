@@ -45,7 +45,8 @@ import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Import.External
 import BitfinexClient.Orphan ()
-import Data.Aeson (withObject, (.:))
+import BitfinexClient.Util
+import Data.Aeson (withText)
 import qualified Data.Text as T
 import qualified Database.Persist as P
 import qualified Database.Persist.Sql as P
@@ -340,6 +341,14 @@ instance From ProfitRate Rational where
   from =
     via @(Ratio Natural)
 
+instance FromJSON ProfitRate where
+  parseJSON = withText
+    (showType @ProfitRate)
+    $ \x0 -> do
+      case tryReadViaRatio @(Ratio Natural) x0 of
+        Left x -> fail $ show x
+        Right x -> pure x
+
 newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
   { unCurrencyCode :: Text
   }
@@ -347,17 +356,20 @@ newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
     ( Eq,
       Ord,
       Show,
-      --
-      -- TODO : maybe we want to handle it as
-      -- case-insensitive Text
-      --
-      ToJSON,
-      FromJSON
+      ToJSON
     )
   deriving stock
     ( Generic,
       TH.Lift
     )
+
+instance (Typeable crel) => FromJSON (CurrencyCode crel) where
+  parseJSON = withText
+    (showType @(CurrencyCode crel))
+    $ \x0 -> do
+      case newCurrencyCode x0 of
+        Left x -> fail $ show x
+        Right x -> pure x
 
 deriving via
   Text
@@ -400,6 +412,14 @@ data CurrencyPair = CurrencyPair
       TH.Lift
     )
 
+instance FromJSON CurrencyPair where
+  parseJSON = withText
+    (showType @CurrencyPair)
+    $ \x0 -> do
+      case newCurrencyPair x0 of
+        Left x -> fail $ show x
+        Right x -> pure x
+
 currencyPairCon ::
   CurrencyCode 'Base ->
   CurrencyCode 'Quote ->
@@ -419,14 +439,6 @@ currencyPairCon base quote =
     else
       Right $
         CurrencyPair base quote
-
-instance FromJSON CurrencyPair where
-  parseJSON = withObject "CurrencyPair" $ \x0 -> do
-    base <- x0 .: "base"
-    quote <- x0 .: "quote"
-    case currencyPairCon base quote of
-      Left x -> fail $ show x
-      Right x -> pure x
 
 instance ToRequestParam CurrencyPair where
   toTextParam x =

@@ -4,6 +4,7 @@
 
 module BitfinexClient.Util
   ( absRat,
+    showType,
     bfxRoundRatio,
     eradicateNull,
     readVia,
@@ -18,6 +19,7 @@ import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HS
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
+import Data.Typeable (typeRep)
 import qualified Data.Vector as V
 import GHC.Natural (naturalFromInteger)
 
@@ -25,6 +27,10 @@ absRat :: Rational -> Ratio Natural
 absRat x =
   (naturalFromInteger . abs $ numerator x)
     % (naturalFromInteger . abs $ denominator x)
+
+showType :: forall a b. (Typeable a, IsString b) => b
+showType =
+  show . typeRep $ Proxy @a
 
 bfxRoundRatio :: (From a Rational) => a -> Rational
 bfxRoundRatio =

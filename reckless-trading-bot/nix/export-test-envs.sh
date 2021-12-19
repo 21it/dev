@@ -5,10 +5,18 @@
 #
 
 export RECKLESS_TRADING_BOT_PAIRS="
-[
-  {\"base\":\"ADA\",\"quote\":\"BTC\"},
-  {\"base\":\"XMR\",\"quote\":\"BTC\"}
-]
+{
+  \"ADABTC\":{
+    \"currency_kind\":\"Crypto\",
+    \"max_quote_investment\":\"0.04\",
+    \"target_profit_per_order\":\"0.001\"
+  },
+  \"XMRBTC\":{
+    \"currency_kind\":\"Crypto\",
+    \"max_quote_investment\":\"0.01\",
+    \"target_profit_per_order\":\"0.001\"
+  }
+}
 "
 export RECKLESS_TRADING_BOT_PROFIT="1%1000"
 export RECKLESS_TRADING_BOT_PRICE_TTL="300"

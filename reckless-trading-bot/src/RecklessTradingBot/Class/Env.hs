@@ -22,7 +22,7 @@ class (Storage m, KatipContext m) => Env m where
     (Bfx.Env -> a) ->
     (a -> ExceptT Bfx.Error m b) ->
     ExceptT Error m b
-  getPairs :: m [EnvData.TradingConf]
+  getPairs :: m [EnvData.TradeConf]
   getProfit :: m Bfx.ProfitRate
   orderExpired :: Order -> m Bool
   putCurrPrice :: Entity Price -> m ()
