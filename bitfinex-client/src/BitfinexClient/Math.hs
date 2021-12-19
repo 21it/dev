@@ -40,11 +40,13 @@ newCounterOrder ::
   QuotePerBase 'Buy ->
   FeeRate a b ->
   ProfitRate ->
-  ( MoneyBase 'Sell,
+  ( MoneyQuote 'Sell,
+    MoneyBase 'Sell,
     QuotePerBase 'Sell
   )
 newCounterOrder base0 rate0 fee0 prof0 =
-  ( MoneyAmt exitBaseLoss,
+  ( MoneyAmt exitQuoteGain,
+    MoneyAmt exitBaseLoss,
     QuotePerBase exitRate
   )
   where

@@ -73,6 +73,7 @@ ghc-options:
 - -Wno-safe # Don’t use Safe Haskell warnings
 - -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
 - -fenable-th-splice-warnings
+- -fprint-potential-instances
 
 library:
   source-dirs:

@@ -1,11 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Thread.Order (apply) where
 
 import qualified BitfinexClient as Bfx
+import qualified BitfinexClient.Data.CancelOrderMulti as BfxCancel
 import qualified BitfinexClient.Data.SubmitOrder as Bfx
+import qualified Data.Set as Set
 import RecklessTradingBot.Import
+import qualified RecklessTradingBot.Model.CounterOrder as CounterOrder
 import qualified RecklessTradingBot.Model.Order as Order
 import qualified RecklessTradingBot.Model.Price as Price
 
@@ -27,69 +31,106 @@ apply = do
 loop :: (Env m) => TradingConf -> m ()
 loop cfg = do
   priceEnt@(Entity _ price) <- rcvNextPrice sym
-  resolved <- mapM (resolveOngoing fee) =<< Order.getOngoing sym
-  when (getAll $ mconcat resolved) $ do
-    priceSeq <- Price.getSeq sym
-    when (goodPriceSeq priceSeq) $ do
-      amt <- readMVar $ tradingConfMinOrderAmt cfg
-      rowId <- entityKey <$> Order.create priceEnt
-      placeOrder rowId amt sym price fee
+  cancelUnexpected =<< Order.getByStatus sym [OrderNew]
+  --
+  -- TODO : get fee dynamically, maybe even in BfxClient
+  --
+  mapM_ (counterExecuted $ coerce fee)
+    =<< Order.getByStatus sym [OrderActive]
+  priceSeq <- Price.getSeq sym
+  when (goodPriceSeq priceSeq) $ do
+    amt <- readMVar $ tradingConfMinOrderAmt cfg
+    orderId <- entityKey <$> Order.create priceEnt
+    placeOrder orderId amt sym price fee
   loop cfg
   where
     sym = tradingConfPair cfg
     fee = tradingConfFee cfg
 
-resolveOngoing ::
-  ( Env m
-  ) =>
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
-  Entity Order ->
-  m All
-resolveOngoing fee order = do
-  res <- runExceptT $ resolveOngoingT fee order
+cancelUnexpected :: (Env m) => [Entity Order] -> m ()
+cancelUnexpected [] = pure ()
+cancelUnexpected xs = do
+  $(logTM) ErrorS $ logStr (show xs :: Text)
+  res <- runExceptT $ do
+    cids <-
+      mapM
+        ( \(Entity id0 x) -> do
+            id1 <- tryFromT id0
+            pure (id1, orderAt x)
+        )
+        xs
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderClientId $ Set.fromList cids)
   case res of
-    Left e -> do
-      $(logTM) ErrorS . logStr $
-        "Resolve ongoing failed " <> (show e :: Text)
-      pure $ All False
-    Right ss ->
-      pure . All $ finalStatus ss
+    Left e ->
+      $(logTM) ErrorS $ logStr (show e :: Text)
+    Right {} ->
+      --
+      -- TODO : better status handler for non-existent orders
+      --
+      Order.updateStatus OrderCancelled ids
+  where
+    ids = entityKey <$> xs
 
-resolveOngoingT ::
+counterExecuted ::
   ( Env m
   ) =>
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
+  Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote ->
   Entity Order ->
-  ExceptT Error m OrderStatus
-resolveOngoingT _ ent@(Entity rowId row) =
-  case orderExtRef row of
-    Just ref | ss == OrderActive -> do
-      $(logTM) DebugS . logStr $
-        "Updating " <> (show ent :: Text)
-      bfxOrder <- withBfxT Bfx.getOrder ($ from ref)
-      lift $ Order.updateBfx rowId bfxOrder
-    _ | ss == OrderNew -> do
-      $(logTM) ErrorS . logStr $
-        "Cancelling unexpected " <> (show ent :: Text)
-      cid <- tryFromT rowId
-      res <-
-        withBfxT
-          Bfx.cancelOrderByClientId
-          (\f -> f cid $ orderAt row)
+  m ()
+counterExecuted fee orderEnt@(Entity id0 order) = do
+  case orderExtRef order of
+    Nothing ->
+      cancelUnexpected [orderEnt]
+    Just bfxId -> do
+      prof <- getProfit
+      res <- runExceptT $ do
+        someOrderBfx <-
+          withBfxT Bfx.getOrder ($ from bfxId)
+        orderBfx <-
+          case someOrderBfx of
+            Bfx.SomeOrder Bfx.SBuy x ->
+              pure x
+            Bfx.SomeOrder Bfx.SSell _ ->
+              throwE $
+                ErrorBfx $
+                  Bfx.ErrorOrderState someOrderBfx
+        counterId <-
+          lift $
+            entityKey
+              <$> CounterOrder.create
+                id0
+                orderBfx
+                fee
+                prof
+        counterIdBfx <-
+          tryFromT counterId
+        --
+        -- TODO : cancel all other counters with same
+        -- order and group ids.
+        --
+        counterBfx <-
+          withBfxT
+            Bfx.submitCounterOrderMaker
+            ( \f ->
+                f (from bfxId) fee prof $
+                  Bfx.optsPostOnly
+                    { Bfx.clientId =
+                        Just counterIdBfx,
+                      Bfx.groupId =
+                        Just
+                          . via @Natural
+                          . Bfx.orderId
+                          $ orderBfx
+                    }
+            )
+        print counterBfx
       case res of
-        Just bfxOrder ->
-          lift $ Order.updateBfx rowId bfxOrder
-        Nothing -> do
-          $(logTM) ErrorS . logStr $
-            "Nonexistent " <> (show ent :: Text)
-          pure OrderCancelled
-    _ -> do
-      $(logTM) ErrorS . logStr $
-        "Ignoring unexpected " <> (show ent :: Text)
-      pure ss
-  where
-    ss :: OrderStatus
-    ss = from $ orderStatus row
+        Left e ->
+          $(logTM) ErrorS $ logStr (show e :: Text)
+        Right {} ->
+          pure ()
 
 placeOrder ::
   ( Env m

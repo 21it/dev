@@ -44,8 +44,11 @@ import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Import.External
+import BitfinexClient.Orphan ()
 import Data.Aeson (withObject, (.:))
 import qualified Data.Text as T
+import qualified Database.Persist as P
+import qualified Database.Persist.Sql as P
 import Language.Haskell.TH.Syntax as TH (Lift)
 import qualified Network.HTTP.Client as Web
 
@@ -114,6 +117,22 @@ newtype OrderGroupId
 instance From Natural OrderGroupId
 
 instance From OrderGroupId Natural
+
+instance
+  (P.ToBackendKey P.SqlBackend a) =>
+  TryFrom (P.Key a) OrderClientId
+  where
+  tryFrom =
+    from @Natural
+      `composeTryRhs` tryFrom
+
+instance
+  (P.ToBackendKey P.SqlBackend a) =>
+  TryFrom OrderClientId (P.Key a)
+  where
+  tryFrom =
+    tryFrom @Natural
+      `composeTryLhs` from
 
 data Order (act :: ExchangeAction) (loc :: Location) = Order
   { orderId :: OrderId,

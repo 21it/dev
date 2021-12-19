@@ -18,7 +18,6 @@ import qualified BitfinexClient as Bfx
 import Database.Persist.TH
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
-import RecklessTradingBot.Orphan ()
 
 --
 -- You can define all of your database entities in the entities file.
@@ -81,7 +80,3 @@ share
       deriving Eq Show
 
   |]
-
-instance TryFrom OrderId Bfx.OrderClientId where
-  tryFrom =
-    Bfx.OrderClientId `composeTryRhs` tryFrom

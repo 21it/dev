@@ -1,6 +1,5 @@
 module RecklessTradingBot.Import.Psql
   ( module X,
-    persistEq,
   )
 where
 
@@ -51,14 +50,12 @@ import Database.Esqueleto.Legacy as X
     (^.),
   )
 import Database.Esqueleto.PostgreSQL as X
-  ( now_,
-    upsertBy,
+  ( upsertBy,
   )
 import Database.Persist as X
   ( SelectOpt (..),
     selectList,
   )
-import qualified Database.Persist as P
 import Database.Persist.Class as X
   ( BackendKey,
   )
@@ -72,11 +69,3 @@ import Database.Persist.Sql as X
 import Database.Persist.TH as X
   ( derivePersistField,
   )
-
-persistEq ::
-  forall v typ.
-  P.PersistField typ =>
-  P.EntityField v typ ->
-  typ ->
-  P.Filter v
-persistEq = (P.==.)

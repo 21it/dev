@@ -7,7 +7,6 @@ module RecklessTradingBot.Data.Type
     Error (..),
     OrderExternalId (..),
     OrderStatus (..),
-    finalStatus,
     tryFromT,
   )
 where
@@ -64,7 +63,9 @@ data OrderStatus
   = OrderNew
   | OrderActive
   | OrderExecuted
-  | OrderCancelled
+  | -- | Final statuses
+    OrderCancelled
+  | OrderCountered
   deriving stock
     ( Eq,
       Ord,
@@ -91,21 +92,16 @@ instance From Bfx.OrderStatus OrderStatus where
 
 derivePersistField "OrderStatus"
 
-finalStatus :: OrderStatus -> Bool
-finalStatus =
-  flip
-    elem
-    ([OrderExecuted, OrderCancelled] :: [OrderStatus])
-
 tryFromT ::
+  forall source target m.
   ( Monad m,
-    TryFrom a b,
-    Show a,
-    Typeable a,
-    Typeable b
+    TryFrom source target,
+    Show source,
+    Typeable source,
+    Typeable target
   ) =>
-  a ->
-  ExceptT Error m b
+  source ->
+  ExceptT Error m target
 tryFromT =
   except
     . first (ErrorTryFrom . SomeException)

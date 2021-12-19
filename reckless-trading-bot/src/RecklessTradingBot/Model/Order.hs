@@ -3,8 +3,9 @@
 
 module RecklessTradingBot.Model.Order
   ( create,
+    updateStatus,
     updateBfx,
-    getOngoing,
+    getByStatus,
   )
 where
 
@@ -12,6 +13,7 @@ import qualified BitfinexClient as Bfx
 import qualified Database.Persist as P
 import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
+import qualified RecklessTradingBot.Import.Psql as Psql
 
 create ::
   ( Storage m
@@ -41,6 +43,19 @@ create (Entity priceId price) = do
           orderAt = ct
         }
 
+updateStatus ::
+  ( Storage m
+  ) =>
+  OrderStatus ->
+  [OrderId] ->
+  m ()
+updateStatus ss xs =
+  runSql $
+    Psql.update $ \row -> do
+      Psql.set row [OrderStatus Psql.=. Psql.val ss]
+      Psql.where_ $
+        row Psql.^. OrderId `Psql.in_` Psql.valList xs
+
 updateBfx ::
   ( Storage m
   ) =>
@@ -67,12 +82,13 @@ updateBfx rowId (Bfx.SomeOrder bfxS bfxOrder) = runSql $ do
     ss :: OrderStatus
     ss = from $ Bfx.orderStatus bfxOrder
 
-getOngoing ::
+getByStatus ::
   ( Storage m
   ) =>
   Bfx.CurrencyPair ->
+  [OrderStatus] ->
   m [Entity Order]
-getOngoing sym =
+getByStatus sym ss =
   runSql $
     P.selectList
       [ OrderBase
@@ -80,7 +96,7 @@ getOngoing sym =
         OrderQuote
           P.==. Bfx.currencyPairQuote sym,
         OrderStatus
-          P.<-. [OrderNew, OrderActive]
+          P.<-. ss
       ]
       [ P.LimitTo 100
       ]

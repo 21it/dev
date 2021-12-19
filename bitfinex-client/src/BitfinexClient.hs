@@ -354,7 +354,7 @@ submitCounterOrder' submit env id0 fee prof opts = do
   someRemOrd@(SomeOrder remSing remOrder) <- getOrder env id0
   case remSing of
     SBuy | orderStatus remOrder == Executed -> do
-      let (exitAmt, exitRate) =
+      let (_, exitAmt, exitRate) =
             Math.newCounterOrder
               (orderAmount remOrder)
               (orderRate remOrder)
