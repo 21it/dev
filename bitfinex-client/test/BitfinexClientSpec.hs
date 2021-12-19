@@ -71,6 +71,7 @@ spec = before newEnv $ do
       env
       (OrderId 0)
       [feeRateMakerBase| 0.001 |]
+      [feeRateMakerQuote| 0.001 |]
       [profitRate| 0.001 |]
       SubmitOrder.optsPostOnly
   itRight

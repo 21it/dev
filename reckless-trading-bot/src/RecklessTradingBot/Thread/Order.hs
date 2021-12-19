@@ -79,7 +79,7 @@ counterExecuted ::
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote ->
   Entity Order ->
   m ()
-counterExecuted fee orderEnt@(Entity id0 order) = do
+counterExecuted exitFee orderEnt@(Entity _ order) = do
   case orderExtRef order of
     Nothing ->
       cancelUnexpected [orderEnt]
@@ -100,9 +100,9 @@ counterExecuted fee orderEnt@(Entity id0 order) = do
           lift $
             entityKey
               <$> CounterOrder.create
-                id0
+                orderEnt
                 orderBfx
-                fee
+                exitFee
                 prof
         counterIdBfx <-
           tryFromT counterId
@@ -114,7 +114,7 @@ counterExecuted fee orderEnt@(Entity id0 order) = do
           withBfxT
             Bfx.submitCounterOrderMaker
             ( \f ->
-                f (from bfxId) fee prof $
+                f (from bfxId) (orderFee order) exitFee prof $
                   Bfx.optsPostOnly
                     { Bfx.clientId =
                         Just counterIdBfx,

@@ -310,12 +310,12 @@ cancelOrderByGroupId env gid = do
     Set.singleton gid
 
 submitCounterOrder ::
-  forall a b m.
   ( MonadIO m
   ) =>
   Env ->
   OrderId ->
-  FeeRate a b ->
+  FeeRate mrel0 'Base ->
+  FeeRate mrel1 'Quote ->
   ProfitRate ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Sell 'Remote)
@@ -327,6 +327,7 @@ submitCounterOrderMaker ::
   ) =>
   Env ->
   OrderId ->
+  FeeRate 'Maker 'Base ->
   FeeRate 'Maker 'Quote ->
   ProfitRate ->
   SubmitOrder.Options ->
@@ -346,11 +347,12 @@ submitCounterOrder' ::
   ) ->
   Env ->
   OrderId ->
-  FeeRate a b ->
+  FeeRate mrel0 'Base ->
+  FeeRate mrel1 'Quote ->
   ProfitRate ->
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Sell 'Remote)
-submitCounterOrder' submit env id0 fee prof opts = do
+submitCounterOrder' submit env id0 feeB feeQ prof opts = do
   someRemOrd@(SomeOrder remSing remOrder) <- getOrder env id0
   case remSing of
     SBuy | orderStatus remOrder == Executed -> do
@@ -358,7 +360,8 @@ submitCounterOrder' submit env id0 fee prof opts = do
             Math.newCounterOrder
               (orderAmount remOrder)
               (orderRate remOrder)
-              fee
+              feeB
+              feeQ
               prof
       submit env exitAmt (orderSymbol remOrder) exitRate opts
     _ ->

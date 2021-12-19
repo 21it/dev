@@ -15,12 +15,12 @@ import RecklessTradingBot.Import
 create ::
   ( Storage m
   ) =>
-  OrderId ->
+  Entity Order ->
   Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
   Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote ->
   Bfx.ProfitRate ->
   m (Entity CounterOrder)
-create orderId bfxOrder fee prof = do
+create orderEnt bfxOrder feeQ prof = do
   row <- liftIO $ newRow <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
@@ -29,16 +29,17 @@ create orderId bfxOrder fee prof = do
       BfxMath.newCounterOrder
         (Bfx.orderAmount bfxOrder)
         (Bfx.orderRate bfxOrder)
-        fee
+        (orderFee $ entityVal orderEnt)
+        feeQ
         prof
     newRow ct =
       CounterOrder
-        { counterOrderIntRef = orderId,
+        { counterOrderIntRef = entityKey orderEnt,
           counterOrderExtRef = Nothing,
           counterOrderPrice = exitRate,
           counterOrderGain = exitGain,
           counterOrderLoss = exitLoss,
-          counterOrderFee = fee,
+          counterOrderFee = feeQ,
           counterOrderStatus = OrderNew,
           counterOrderAt = ct
         }

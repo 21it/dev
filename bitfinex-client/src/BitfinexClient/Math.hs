@@ -38,21 +38,25 @@ tweakMakerRate (QuotePerBase rate) =
 newCounterOrder ::
   MoneyBase 'Buy ->
   QuotePerBase 'Buy ->
-  FeeRate a b ->
+  FeeRate mrel0 'Base ->
+  FeeRate mrel1 'Quote ->
   ProfitRate ->
   ( MoneyQuote 'Sell,
     MoneyBase 'Sell,
     QuotePerBase 'Sell
   )
-newCounterOrder base0 rate0 fee0 prof0 =
+newCounterOrder base0 rate0 feeB feeQ prof0 =
   ( MoneyAmt exitQuoteGain,
     MoneyAmt exitBaseLoss,
     QuotePerBase exitRate
   )
   where
-    fee :: Ratio Natural
-    fee =
-      from fee0
+    enterFee :: Ratio Natural
+    enterFee =
+      from feeB
+    exitFee :: Ratio Natural
+    exitFee =
+      from feeQ
     prof :: Ratio Natural
     prof =
       from prof0
@@ -61,13 +65,13 @@ newCounterOrder base0 rate0 fee0 prof0 =
       unMoneyAmt base0
     exitBaseLoss :: MoneyBase'
     exitBaseLoss =
-      enterBaseGain |* (1 - fee)
+      enterBaseGain |* (1 - enterFee)
     enterQuoteLoss :: MoneyQuote'
     enterQuoteLoss =
       enterBaseGain |*| unQuotePerBase rate0
     exitQuoteGain :: MoneyQuote'
     exitQuoteGain =
-      (enterQuoteLoss |* (1 + prof)) |/ (1 - fee)
+      (enterQuoteLoss |* (1 + prof)) |/ (1 - exitFee)
     exitRate :: QuotePerBase'
     exitRate =
       exitQuoteGain |/| exitBaseLoss
