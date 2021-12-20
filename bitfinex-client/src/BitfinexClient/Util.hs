@@ -5,7 +5,6 @@
 module BitfinexClient.Util
   ( absRat,
     showType,
-    bfxRoundRatio,
     eradicateNull,
     readVia,
     tryReadVia,
@@ -32,12 +31,6 @@ showType :: forall a b. (Typeable a, IsString b) => b
 showType =
   show . typeRep $ Proxy @a
 
-bfxRoundRatio :: (From a Rational) => a -> Rational
-bfxRoundRatio =
-  sdRound 5
-    . dpRound 8
-    . from
-
 eradicateNull :: A.Value -> A.Value
 eradicateNull = \case
   A.Object xs -> A.Object $ HS.mapMaybe devastateNull xs
@@ -58,7 +51,11 @@ readVia ::
   source ->
   Either (TryFromException source target) target
 readVia x0 =
-  case readMaybe . fromString $ toString x0 of
+  case readMaybe
+    . T.unpack
+    . T.strip
+    . fromString
+    $ toString x0 of
     Nothing -> Left $ TryFromException x0 Nothing
     Just x -> Right $ from @through x
 
@@ -71,7 +68,11 @@ tryReadVia ::
   source ->
   Either (TryFromException source target) target
 tryReadVia x0 =
-  case readMaybe . fromString $ toString x0 of
+  case readMaybe
+    . T.unpack
+    . T.strip
+    . fromString
+    $ toString x0 of
     Nothing -> Left $ TryFromException x0 Nothing
     Just x -> first (withSource x0) $ tryFrom @through x
 

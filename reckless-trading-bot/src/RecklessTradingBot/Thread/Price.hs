@@ -11,14 +11,15 @@ import qualified RecklessTradingBot.Model.Price as Price
 apply :: (Env m) => m ()
 apply = do
   $(logTM) InfoS "Spawned"
-  xs <- mapM (spawnLink . loop) . toList =<< getPairs
+  xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => TradeConf -> m ()
-loop cfg = do
-  sleepPriceTtl $ tradingConfPair cfg
+loop :: (Env m) => MVar TradeConf -> m ()
+loop mvCfg = do
+  cfg <- liftIO $ readMVar mvCfg
+  sleepPriceTtl $ tradeConfPair cfg
   createUpdate cfg
-  loop cfg
+  loop mvCfg
 
 createUpdate :: (Env m) => TradeConf -> m ()
 createUpdate cfg = do
@@ -37,15 +38,18 @@ createUpdate cfg = do
   where
     sym :: Bfx.CurrencyPair
     sym =
-      tradingConfPair cfg
+      tradeConfPair cfg
     getPrice ::
       forall (act :: Bfx.ExchangeAction) m.
       ( Env m,
+        SingI act,
         Bfx.ToRequestParam (Bfx.MoneyBase act)
       ) =>
       ExceptT Bfx.Error m (Bfx.QuotePerBase act)
     getPrice = do
-      amt <- liftIO . readMVar $ tradingConfMinOrderAmt cfg
       Bfx.marketAveragePrice
-        (coerce amt :: Bfx.MoneyBase act)
+        ( case sing :: Sing act of
+            Bfx.SBuy -> tradeConfMinBuyAmt cfg
+            Bfx.SSell -> tradeConfMinSellAmt cfg
+        )
         sym

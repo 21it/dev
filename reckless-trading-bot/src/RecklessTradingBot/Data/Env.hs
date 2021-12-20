@@ -53,16 +53,18 @@ instance FromJSON RawTradeConf where
         }
 
 data TradeConf = TradeConf
-  { tradingConfPair :: Bfx.CurrencyPair,
-    tradingConfFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
-    tradingConfMinOrderAmt :: MVar (Bfx.MoneyBase 'Bfx.Buy)
+  { tradeConfPair :: Bfx.CurrencyPair,
+    tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
+    tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
+    tradeConfMinBuyAmt :: Bfx.MoneyBase 'Bfx.Buy,
+    tradeConfMinSellAmt :: Bfx.MoneyBase 'Bfx.Sell
   }
   deriving stock (Eq)
 
 data Env = Env
   { -- app
     envBfx :: Bfx.Env,
-    envPairs :: [TradeConf],
+    envPairs :: [MVar TradeConf],
     envProfit :: Bfx.ProfitRate,
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
@@ -78,7 +80,7 @@ data Env = Env
 data RawConfig = RawConfig
   { -- app
     rawConfigBfx :: Bfx.Env,
-    rawConfigPairs :: Set Bfx.CurrencyPair,
+    rawConfigPairs :: Map Bfx.CurrencyPair RawTradeConf,
     rawConfigProfit :: Bfx.ProfitRate,
     rawConfigPriceTtl :: Seconds,
     rawConfigOrderTtl :: Seconds,
@@ -90,7 +92,7 @@ data RawConfig = RawConfig
     rawConfigLogVerbosity :: Verbosity
   }
 
-newRawConfig :: MonadUnliftIO m => m RawConfig
+newRawConfig :: (MonadUnliftIO m) => m RawConfig
 newRawConfig = liftIO $ do
   env <- Bfx.newEnv
   parse (header "RecklessTradingBot config") $
@@ -141,7 +143,7 @@ newRawConfig = liftIO $ do
     op = keep <> help ""
     json ::
       String ->
-      Either Env.Error (Set Bfx.CurrencyPair)
+      Either Env.Error (Map Bfx.CurrencyPair RawTradeConf)
     json =
       first
         UnreadError
@@ -192,7 +194,7 @@ withEnv this = do
       -- TODO : separate thread to update Bfx.symbolsDetails
       --
       cfg <-
-        newTradingConfSet bfx $
+        newTradeConfList bfx $
           rawConfigPairs rc
       this
         Env
@@ -216,12 +218,13 @@ withEnv this = do
     rmSqlPool :: Pool a -> m ()
     rmSqlPool = liftIO . destroyAllResources
 
-newTradingConfSet ::
-  MonadIO m =>
+newTradeConfList ::
+  ( MonadIO m
+  ) =>
   Bfx.Env ->
-  Set Bfx.CurrencyPair ->
-  m [TradeConf]
-newTradingConfSet bfx syms = do
+  Map Bfx.CurrencyPair RawTradeConf ->
+  m [MVar TradeConf]
+newTradeConfList bfx syms = do
   ex <-
     runExceptT $
       (,)
@@ -230,31 +233,39 @@ newTradingConfSet bfx syms = do
   case ex of
     Left e -> error $ show e
     Right (symDetails, feeDetails) ->
-      mapM (newTradingConf symDetails feeDetails) $
-        toList syms
+      mapM (newTradeConf symDetails feeDetails) $
+        Map.assocs syms
 
-newTradingConf ::
-  MonadIO m =>
+newTradeConf ::
+  ( MonadIO m
+  ) =>
   Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
   FeeSummary.Response ->
-  Bfx.CurrencyPair ->
-  m TradeConf
-newTradingConf symDetails feeDetails sym =
+  (Bfx.CurrencyPair, RawTradeConf) ->
+  m (MVar TradeConf)
+newTradeConf symDetails feeDetails (sym, raw) =
   case Map.lookup sym symDetails of
     Nothing -> error $ "Missing " <> show sym
     Just cfg -> do
-      let amtDef = Bfx.currencyPairMinOrderAmt cfg
-      let amtInclFee = Bfx.applyFee amtDef fee
-      when (amtInclFee <= from @(Ratio Natural) 0)
+      let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
+      when (amtNoFee <= from @(Ratio Natural) 0)
         . error
-        $ "Wrong min Order " <> show amtInclFee
-      amtVar <-
-        liftIO . newMVar $ from amtInclFee
-      pure $
+        $ "Wrong min Order " <> show amtNoFee
+      liftIO . newMVar $
         TradeConf
-          { tradingConfPair = sym,
-            tradingConfFee = fee,
-            tradingConfMinOrderAmt = amtVar
+          { tradeConfPair = sym,
+            tradeConfBaseFee = fee,
+            tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
+            tradeConfMinBuyAmt = Bfx.applyFee amtNoFee fee,
+            tradeConfMinSellAmt =
+              Bfx.coerceSellMoneyAmt amtNoFee
           }
   where
-    fee = FeeSummary.makerCrypto2CryptoFee feeDetails
+    fee =
+      case rawTradeConfCurrencyKind raw of
+        Bfx.Crypto ->
+          FeeSummary.makerCrypto2CryptoFee feeDetails
+        Bfx.Stable ->
+          FeeSummary.makerCrypto2StableFee feeDetails
+        Bfx.Fiat ->
+          FeeSummary.makerCrypto2FiatFee feeDetails

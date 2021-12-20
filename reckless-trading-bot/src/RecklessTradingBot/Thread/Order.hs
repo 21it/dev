@@ -23,29 +23,27 @@ import qualified RecklessTradingBot.Model.Price as Price
 apply :: (Env m) => m ()
 apply = do
   $(logTM) InfoS "Spawned"
-  xs <-
-    mapM (spawnLink . loop) . toList
-      =<< getPairs
+  xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => TradeConf -> m ()
-loop cfg = do
+loop :: (Env m) => MVar TradeConf -> m ()
+loop mvCfg = do
+  cfg <- liftIO $ readMVar mvCfg
+  let sym = tradeConfPair cfg
   priceEnt@(Entity _ price) <- rcvNextPrice sym
   cancelUnexpected =<< Order.getByStatus sym [OrderNew]
-  --
-  -- TODO : get fee dynamically, maybe even in BfxClient
-  --
-  mapM_ (counterExecuted $ coerce fee)
+  mapM_ (counterExecuted $ tradeConfQuoteFee cfg)
     =<< Order.getByStatus sym [OrderActive]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
-    amt <- readMVar $ tradingConfMinOrderAmt cfg
     orderId <- entityKey <$> Order.create priceEnt
-    placeOrder orderId amt sym price fee
-  loop cfg
-  where
-    sym = tradingConfPair cfg
-    fee = tradingConfFee cfg
+    placeOrder
+      orderId
+      (tradeConfMinBuyAmt cfg)
+      sym
+      price
+      (tradeConfBaseFee cfg)
+  loop mvCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
 cancelUnexpected [] = pure ()

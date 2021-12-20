@@ -19,6 +19,7 @@ module BitfinexClient.Data.Type
     -- * Trading
     -- $trading
     FeeRate (..),
+    coerceQuoteFeeRate,
     RebateRate (..),
     ProfitRate (..),
     CurrencyCode (..),
@@ -266,6 +267,9 @@ newtype
       TH.Lift
     )
 
+coerceQuoteFeeRate :: FeeRate mrel 'Base -> FeeRate mrel 'Quote
+coerceQuoteFeeRate = coerce
+
 instance From (FeeRate mrel crel) (Ratio Natural)
 
 instance TryFrom (Ratio Natural) (FeeRate mrel crel) where
@@ -419,6 +423,8 @@ instance FromJSON CurrencyPair where
       case newCurrencyPair x0 of
         Left x -> fail $ show x
         Right x -> pure x
+
+instance FromJSONKey CurrencyPair
 
 currencyPairCon ::
   CurrencyCode 'Base ->

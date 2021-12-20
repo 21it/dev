@@ -208,8 +208,8 @@ submitOrder ::
   SubmitOrder.Options ->
   ExceptT Error m (Order act 'Remote)
 submitOrder env amt sym rate opts = do
-  newAmt <- tryFromT $ bfxRoundRatio amt
-  newRate <- tryFromT $ bfxRoundRatio rate
+  newAmt <- tryErrorT $ bfxRound amt
+  newRate <- tryErrorT $ bfxRound rate
   let req =
         SubmitOrder.Request
           { SubmitOrder.amount = newAmt,

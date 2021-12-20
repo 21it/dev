@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       BitfinexClient
+      BitfinexClient.Class.BfxRound
       BitfinexClient.Class.FromRpc
       BitfinexClient.Class.ToBaseUrl
       BitfinexClient.Class.ToPathPieces
@@ -123,6 +124,7 @@ test-suite bitfinex-client-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      BitfinexClient.Class.BfxRoundSpec
       BitfinexClient.Data.CancelOrderMultiSpec
       BitfinexClient.Data.SubmitOrderSpec
       BitfinexClient.Data.TypeSpec

@@ -5,6 +5,7 @@
 
 module BitfinexClient.Data.Metro
   ( MoneyAmt (..),
+    coerceSellMoneyAmt,
     SomeMoneyAmt (..),
     MoneyBase,
     MoneyBase',
@@ -82,6 +83,9 @@ newtype MoneyAmt dim (act :: ExchangeAction) = MoneyAmt
     ( Eq,
       Ord
     )
+
+coerceSellMoneyAmt :: MoneyAmt dim 'Buy -> MoneyAmt dim 'Sell
+coerceSellMoneyAmt = coerce
 
 instance
   ( Show unit,
