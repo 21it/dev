@@ -2,6 +2,7 @@
 
 module BitfinexClient.Data.FeeSummary
   ( Response (..),
+    getFee,
   )
 where
 
@@ -25,3 +26,19 @@ data Response = Response
       Show,
       Generic
     )
+
+getFee ::
+  forall (mrel :: MarketRelation).
+  ( SingI mrel
+  ) =>
+  CurrencyKind ->
+  Response ->
+  FeeRate mrel 'Base
+getFee cck =
+  case (sing :: Sing mrel, cck) of
+    (SMaker, Crypto) -> makerCrypto2CryptoFee
+    (SMaker, Stable) -> makerCrypto2StableFee
+    (SMaker, Fiat) -> makerCrypto2FiatFee
+    (STaker, Crypto) -> takerCrypto2CryptoFee
+    (STaker, Stable) -> takerCrypto2StableFee
+    (STaker, Fiat) -> takerCrypto2FiatFee

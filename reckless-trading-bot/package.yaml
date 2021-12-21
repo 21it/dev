@@ -111,6 +111,7 @@ library:
   - units
   - singletons
   - template-haskell
+  - errors
 
 executables:
   reckless-trading-bot-exe:

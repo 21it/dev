@@ -22,6 +22,7 @@ data LogFormat
 data Error
   = ErrorBfx Bfx.Error
   | ErrorTryFrom SomeException
+  | ErrorRuntime Text
   deriving stock
     ( Show
     )

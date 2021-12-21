@@ -15,11 +15,11 @@ apply = do
   liftIO . void $ waitAnyCancel xs
 
 loop :: (Env m) => MVar TradeConf -> m ()
-loop mvCfg = do
-  cfg <- liftIO $ readMVar mvCfg
+loop varCfg = do
+  cfg <- liftIO $ readMVar varCfg
   sleepPriceTtl $ tradeConfPair cfg
   createUpdate cfg
-  loop mvCfg
+  loop varCfg
 
 createUpdate :: (Env m) => TradeConf -> m ()
 createUpdate cfg = do

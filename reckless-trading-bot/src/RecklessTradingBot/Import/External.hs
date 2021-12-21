@@ -15,6 +15,7 @@ import Control.Concurrent.STM.TChan as X
     writeTChan,
   )
 import Control.Concurrent.Thread.Delay as X (delay)
+import Control.Error.Safe as X (tryJust)
 import Control.Monad.Trans.Except as X
   ( except,
     throwE,

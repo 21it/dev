@@ -54,6 +54,7 @@ instance FromJSON RawTradeConf where
 
 data TradeConf = TradeConf
   { tradeConfPair :: Bfx.CurrencyPair,
+    tradeConfCurrencyKind :: Bfx.CurrencyKind,
     tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
     tradeConfMinBuyAmt :: Bfx.MoneyBase 'Bfx.Buy,
@@ -254,6 +255,7 @@ newTradeConf symDetails feeDetails (sym, raw) =
       liftIO . newMVar $
         TradeConf
           { tradeConfPair = sym,
+            tradeConfCurrencyKind = cck,
             tradeConfBaseFee = fee,
             tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
             tradeConfMinBuyAmt = Bfx.applyFee amtNoFee fee,
@@ -261,11 +263,5 @@ newTradeConf symDetails feeDetails (sym, raw) =
               Bfx.coerceSellMoneyAmt amtNoFee
           }
   where
-    fee =
-      case rawTradeConfCurrencyKind raw of
-        Bfx.Crypto ->
-          FeeSummary.makerCrypto2CryptoFee feeDetails
-        Bfx.Stable ->
-          FeeSummary.makerCrypto2StableFee feeDetails
-        Bfx.Fiat ->
-          FeeSummary.makerCrypto2FiatFee feeDetails
+    cck = rawTradeConfCurrencyKind raw
+    fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails

@@ -27,8 +27,8 @@ apply = do
   liftIO . void $ waitAnyCancel xs
 
 loop :: (Env m) => MVar TradeConf -> m ()
-loop mvCfg = do
-  cfg <- liftIO $ readMVar mvCfg
+loop varCfg = do
+  cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfPair cfg
   priceEnt@(Entity _ price) <- rcvNextPrice sym
   cancelUnexpected =<< Order.getByStatus sym [OrderNew]
@@ -43,7 +43,7 @@ loop mvCfg = do
       sym
       price
       (tradeConfBaseFee cfg)
-  loop mvCfg
+  loop varCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
 cancelUnexpected [] = pure ()
