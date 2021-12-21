@@ -53,8 +53,9 @@ instance FromJSON RawTradeConf where
         }
 
 data TradeConf = TradeConf
-  { tradeConfPair :: Bfx.CurrencyPair,
+  { tradeConfCurrencyPair :: Bfx.CurrencyPair,
     tradeConfCurrencyKind :: Bfx.CurrencyKind,
+    tradeConfProfitPerOrder :: Bfx.ProfitRate,
     tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
     tradeConfMinBuyAmt :: Bfx.MoneyBase 'Bfx.Buy,
@@ -254,11 +255,18 @@ newTradeConf symDetails feeDetails (sym, raw) =
         $ "Wrong min Order " <> show amtNoFee
       liftIO . newMVar $
         TradeConf
-          { tradeConfPair = sym,
-            tradeConfCurrencyKind = cck,
-            tradeConfBaseFee = fee,
-            tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
-            tradeConfMinBuyAmt = Bfx.applyFee amtNoFee fee,
+          { tradeConfCurrencyPair =
+              sym,
+            tradeConfCurrencyKind =
+              cck,
+            tradeConfProfitPerOrder =
+              rawTradeConfProfitPerOrder raw,
+            tradeConfBaseFee =
+              fee,
+            tradeConfQuoteFee =
+              Bfx.coerceQuoteFeeRate fee,
+            tradeConfMinBuyAmt =
+              Bfx.applyFee amtNoFee fee,
             tradeConfMinSellAmt =
               Bfx.coerceSellMoneyAmt amtNoFee
           }

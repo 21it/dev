@@ -7,6 +7,7 @@ import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Storage.Migration as Migration
 import qualified RecklessTradingBot.Thread.Order as ThreadOrder
 import qualified RecklessTradingBot.Thread.Price as ThreadPrice
+import qualified RecklessTradingBot.Thread.TradeConf as ThreadTradeConf
 
 apply :: Env m => m ()
 apply = do
@@ -15,7 +16,8 @@ apply = do
     mapM
       spawnLink
       [ ThreadPrice.apply,
-        ThreadOrder.apply
+        ThreadOrder.apply,
+        ThreadTradeConf.apply
       ]
   liftIO
     . void

@@ -41,6 +41,7 @@ library
       RecklessTradingBot.Orphan
       RecklessTradingBot.Storage
       RecklessTradingBot.Storage.Migration
+      RecklessTradingBot.Thread.CounterOrder
       RecklessTradingBot.Thread.Main
       RecklessTradingBot.Thread.Order
       RecklessTradingBot.Thread.Price

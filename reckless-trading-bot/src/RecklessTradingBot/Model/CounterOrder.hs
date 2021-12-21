@@ -3,35 +3,36 @@
 
 module RecklessTradingBot.Model.CounterOrder
   ( create,
+    bfxUpdate,
   )
 where
 
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Math as BfxMath
-import qualified Database.Persist as P
 import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
+import qualified RecklessTradingBot.Import.Psql as P
 
 create ::
   ( Storage m
   ) =>
   Entity Order ->
   Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote ->
-  Bfx.ProfitRate ->
+  TradeConf ->
   m (Entity CounterOrder)
-create orderEnt bfxOrder feeQ prof = do
+create orderEnt bfxOrder cfg = do
   row <- liftIO $ newRow <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
+    exitFee = tradeConfQuoteFee cfg
     (exitGain, exitLoss, exitRate) =
       BfxMath.newCounterOrder
         (Bfx.orderAmount bfxOrder)
         (Bfx.orderRate bfxOrder)
         (orderFee $ entityVal orderEnt)
-        feeQ
-        prof
+        exitFee
+        $ tradeConfProfitPerOrder cfg
     newRow ct =
       CounterOrder
         { counterOrderIntRef = entityKey orderEnt,
@@ -39,7 +40,29 @@ create orderEnt bfxOrder feeQ prof = do
           counterOrderPrice = exitRate,
           counterOrderGain = exitGain,
           counterOrderLoss = exitLoss,
-          counterOrderFee = feeQ,
+          counterOrderFee = exitFee,
           counterOrderStatus = OrderNew,
           counterOrderAt = ct
         }
+
+bfxUpdate ::
+  ( Storage m
+  ) =>
+  CounterOrderId ->
+  Bfx.Order 'Bfx.Sell 'Bfx.Remote ->
+  m ()
+bfxUpdate counterId bfxCounterOrder =
+  runSql $
+    P.update $ \row -> do
+      P.set
+        row
+        [ CounterOrderStatus
+            P.=. P.val
+              ( newOrderStatus $
+                  Bfx.orderStatus bfxCounterOrder
+              )
+        ]
+      P.where_
+        ( row P.^. CounterOrderId
+            P.==. P.val counterId
+        )

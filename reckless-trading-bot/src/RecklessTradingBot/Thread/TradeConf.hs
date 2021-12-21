@@ -17,7 +17,6 @@ apply = do
 
 loop :: (Env m) => m ()
 loop = do
-  sleep [seconds|600|]
   xs <- getPairs
   res <-
     runExceptT $ do
@@ -26,6 +25,7 @@ loop = do
       mapM_ (updateTradeConf syms fees) xs
   whenLeft res $
     $(logTM) ErrorS . show
+  sleep [seconds|600|]
   loop
 
 updateTradeConf ::
@@ -37,26 +37,27 @@ updateTradeConf ::
   ExceptT Error m ()
 updateTradeConf syms fees varCfg = do
   cfg <- lift $ readMVar varCfg
-  let sym = tradeConfPair cfg
+  let sym = tradeConfCurrencyPair cfg
   let cck = tradeConfCurrencyKind cfg
   let fee = BfxFeeSummary.getFee @'Bfx.Maker cck fees
   bfxCfg <-
     tryJust
       (ErrorRuntime $ "Missing CurrencyPair" <> show sym)
       $ Map.lookup sym syms
-  let amt = Bfx.currencyPairMinOrderAmt bfxCfg
-  when (amt <= from @(Ratio Natural) 0)
+  let minAmt = Bfx.currencyPairMinOrderAmt bfxCfg
+  when (minAmt <= from @(Ratio Natural) 0)
     . throwE
     . ErrorRuntime
-    $ "Wrong MoneyAmt " <> show amt
+    $ "Wrong MoneyAmt " <> show minAmt
   void
     . liftIO
     . swapMVar varCfg
     $ TradeConf
-      { tradeConfPair = sym,
+      { tradeConfCurrencyPair = sym,
         tradeConfCurrencyKind = cck,
+        tradeConfProfitPerOrder = tradeConfProfitPerOrder cfg,
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
-        tradeConfMinBuyAmt = BfxMath.applyFee amt fee,
-        tradeConfMinSellAmt = Bfx.coerceSellMoneyAmt amt
+        tradeConfMinBuyAmt = BfxMath.applyFee minAmt fee,
+        tradeConfMinSellAmt = Bfx.coerceSellMoneyAmt minAmt
       }

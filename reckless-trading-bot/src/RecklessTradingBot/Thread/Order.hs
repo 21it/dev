@@ -2,14 +2,18 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module RecklessTradingBot.Thread.Order (apply) where
+module RecklessTradingBot.Thread.Order
+  ( apply,
+    cancelUnexpected,
+    cancelUnexpectedT,
+  )
+where
 
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.CancelOrderMulti as BfxCancel
 import qualified BitfinexClient.Data.SubmitOrder as Bfx
 import qualified Data.Set as Set
 import RecklessTradingBot.Import
-import qualified RecklessTradingBot.Model.CounterOrder as CounterOrder
 import qualified RecklessTradingBot.Model.Order as Order
 import qualified RecklessTradingBot.Model.Price as Price
 
@@ -29,11 +33,9 @@ apply = do
 loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
-  let sym = tradeConfPair cfg
+  let sym = tradeConfCurrencyPair cfg
   priceEnt@(Entity _ price) <- rcvNextPrice sym
   cancelUnexpected =<< Order.getByStatus sym [OrderNew]
-  mapM_ (counterExecuted $ tradeConfQuoteFee cfg)
-    =<< Order.getByStatus sym [OrderActive]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
     orderId <- entityKey <$> Order.create priceEnt
@@ -47,88 +49,41 @@ loop varCfg = do
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
 cancelUnexpected [] = pure ()
-cancelUnexpected xs = do
-  $(logTM) ErrorS $ logStr (show xs :: Text)
-  res <- runExceptT $ do
-    cids <-
-      mapM
-        ( \(Entity id0 x) -> do
-            id1 <- tryFromT id0
-            pure (id1, orderAt x)
-        )
-        xs
+cancelUnexpected entities = do
+  res <-
+    runExceptT $
+      cancelUnexpectedT entities
+  whenLeft res $
+    $(logTM) ErrorS . show
+
+cancelUnexpectedT ::
+  ( Env m
+  ) =>
+  [Entity Order] ->
+  ExceptT Error m ()
+cancelUnexpectedT [] = pure ()
+cancelUnexpectedT entities = do
+  $(logTM) ErrorS $ show entities
+  cids <-
+    mapM
+      ( \(Entity id0 x) -> do
+          id1 <- tryFromT id0
+          pure (id1, orderAt x)
+      )
+      entities
+  gids <-
+    mapM tryFromT ids
+  void $
     withBfxT
       Bfx.cancelOrderMulti
       ($ BfxCancel.ByOrderClientId $ Set.fromList cids)
-  case res of
-    Left e ->
-      $(logTM) ErrorS $ logStr (show e :: Text)
-    Right {} ->
-      --
-      -- TODO : better status handler for non-existent orders
-      --
-      Order.updateStatus OrderCancelled ids
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderGroupId $ Set.fromList gids)
+  lift $ Order.updateStatus OrderUnexpected ids
   where
-    ids = entityKey <$> xs
-
-counterExecuted ::
-  ( Env m
-  ) =>
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote ->
-  Entity Order ->
-  m ()
-counterExecuted exitFee orderEnt@(Entity _ order) = do
-  case orderExtRef order of
-    Nothing ->
-      cancelUnexpected [orderEnt]
-    Just bfxId -> do
-      prof <- getProfit
-      res <- runExceptT $ do
-        someOrderBfx <-
-          withBfxT Bfx.getOrder ($ from bfxId)
-        orderBfx <-
-          case someOrderBfx of
-            Bfx.SomeOrder Bfx.SBuy x ->
-              pure x
-            Bfx.SomeOrder Bfx.SSell _ ->
-              throwE $
-                ErrorBfx $
-                  Bfx.ErrorOrderState someOrderBfx
-        counterId <-
-          lift $
-            entityKey
-              <$> CounterOrder.create
-                orderEnt
-                orderBfx
-                exitFee
-                prof
-        counterIdBfx <-
-          tryFromT counterId
-        --
-        -- TODO : cancel all other counters with same
-        -- order and group ids.
-        --
-        counterBfx <-
-          withBfxT
-            Bfx.submitCounterOrderMaker
-            ( \f ->
-                f (from bfxId) (orderFee order) exitFee prof $
-                  Bfx.optsPostOnly
-                    { Bfx.clientId =
-                        Just counterIdBfx,
-                      Bfx.groupId =
-                        Just
-                          . via @Natural
-                          . Bfx.orderId
-                          $ orderBfx
-                    }
-            )
-        print counterBfx
-      case res of
-        Left e ->
-          $(logTM) ErrorS $ logStr (show e :: Text)
-        Right {} ->
-          pure ()
+    ids = entityKey <$> entities
 
 placeOrder ::
   ( Env m

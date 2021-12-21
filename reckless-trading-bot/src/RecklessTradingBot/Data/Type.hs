@@ -7,6 +7,7 @@ module RecklessTradingBot.Data.Type
     Error (..),
     OrderExternalId (..),
     OrderStatus (..),
+    newOrderStatus,
     tryFromT,
   )
 where
@@ -67,6 +68,7 @@ data OrderStatus
   | -- | Final statuses
     OrderCancelled
   | OrderCountered
+  | OrderUnexpected
   deriving stock
     ( Eq,
       Ord,
@@ -77,19 +79,16 @@ data OrderStatus
       Generic
     )
 
-instance From Bfx.OrderStatus OrderStatus where
-  --
-  -- TODO : verify this
-  --
-  from = \case
-    Bfx.Active -> OrderActive
-    Bfx.Executed -> OrderExecuted
-    Bfx.PartiallyFilled -> OrderActive
-    Bfx.InsufficientMargin -> OrderActive
-    Bfx.Canceled -> OrderCancelled
-    Bfx.PostOnlyCanceled -> OrderCancelled
-    Bfx.RsnDust -> OrderActive
-    Bfx.RsnPause -> OrderActive
+newOrderStatus :: Bfx.OrderStatus -> OrderStatus
+newOrderStatus = \case
+  Bfx.Active -> OrderActive
+  Bfx.Executed -> OrderExecuted
+  Bfx.Canceled -> OrderCancelled
+  Bfx.PostOnlyCanceled -> OrderCancelled
+  Bfx.PartiallyFilled -> OrderUnexpected
+  Bfx.InsufficientMargin -> OrderUnexpected
+  Bfx.RsnDust -> OrderUnexpected
+  Bfx.RsnPause -> OrderUnexpected
 
 derivePersistField "OrderStatus"
 

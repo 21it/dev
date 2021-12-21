@@ -136,6 +136,22 @@ instance
     tryFrom @Natural
       `composeTryLhs` from
 
+instance
+  (P.ToBackendKey P.SqlBackend a) =>
+  TryFrom (P.Key a) OrderGroupId
+  where
+  tryFrom =
+    from @Natural
+      `composeTryRhs` tryFrom
+
+instance
+  (P.ToBackendKey P.SqlBackend a) =>
+  TryFrom OrderGroupId (P.Key a)
+  where
+  tryFrom =
+    tryFrom @Natural
+      `composeTryLhs` from
+
 data Order (act :: ExchangeAction) (loc :: Location) = Order
   { orderId :: OrderId,
     orderGroupId :: Maybe OrderGroupId,

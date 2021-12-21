@@ -80,7 +80,7 @@ updateBfx rowId (Bfx.SomeOrder bfxS bfxOrder) = runSql $ do
   pure ss
   where
     ss :: OrderStatus
-    ss = from $ Bfx.orderStatus bfxOrder
+    ss = newOrderStatus $ Bfx.orderStatus bfxOrder
 
 getByStatus ::
   ( Storage m

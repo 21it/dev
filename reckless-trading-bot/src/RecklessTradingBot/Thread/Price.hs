@@ -17,7 +17,7 @@ apply = do
 loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
-  sleepPriceTtl $ tradeConfPair cfg
+  sleepPriceTtl $ tradeConfCurrencyPair cfg
   createUpdate cfg
   loop varCfg
 
@@ -28,7 +28,7 @@ createUpdate cfg = do
       (,) <$> getPrice @'Bfx.Buy <*> getPrice @'Bfx.Sell
   case res of
     Left e -> do
-      $(logTM) ErrorS $ logStr (show e :: Text)
+      $(logTM) ErrorS $ show e
       sleep [seconds|60|]
     Right (buy, sell) -> do
       priceEnt@(Entity _ price) <-
@@ -38,7 +38,7 @@ createUpdate cfg = do
   where
     sym :: Bfx.CurrencyPair
     sym =
-      tradeConfPair cfg
+      tradeConfCurrencyPair cfg
     getPrice ::
       forall (act :: Bfx.ExchangeAction) m.
       ( Env m,
