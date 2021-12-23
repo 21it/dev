@@ -53,6 +53,7 @@ import qualified Database.Persist as P
 import qualified Database.Persist.Sql as P
 import Language.Haskell.TH.Syntax as TH (Lift)
 import qualified Network.HTTP.Client as Web
+import qualified Witch
 
 -- $orders
 -- Order data received from Bitfinex
@@ -558,7 +559,8 @@ tryFromE ::
   ( Show source,
     Typeable source,
     Typeable target,
-    TryFrom source target
+    TryFrom source target,
+    'False ~ (source == target)
   ) =>
   source ->
   Either Error target
@@ -571,7 +573,8 @@ tryFromT ::
     Typeable source,
     Typeable target,
     TryFrom source target,
-    Monad m
+    Monad m,
+    'False ~ (source == target)
   ) =>
   source ->
   ExceptT Error m target

@@ -98,7 +98,8 @@ tryFromT ::
     TryFrom source target,
     Show source,
     Typeable source,
-    Typeable target
+    Typeable target,
+    'False ~ (source == target)
   ) =>
   source ->
   ExceptT Error m target

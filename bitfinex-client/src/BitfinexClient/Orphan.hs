@@ -6,6 +6,7 @@ module BitfinexClient.Orphan () where
 import BitfinexClient.Import.External
 import qualified Database.Persist as P
 import qualified Database.Persist.Sql as P
+import qualified Witch
 
 instance
   (P.ToBackendKey P.SqlBackend a) =>

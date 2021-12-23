@@ -1,3 +1,6 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Import.External
@@ -5,6 +8,7 @@ module BitfinexClient.Import.External
   )
 where
 
+import BitfinexClient.Import.Witch as X
 import Control.Monad.Trans.Except as X (except, throwE)
 import Data.Aeson as X
   ( FromJSON (..),
@@ -41,6 +45,7 @@ import Data.Time.Clock as X
 import Data.Type.Equality as X
   ( TestEquality (..),
     (:~:) (..),
+    type (==),
   )
 import Database.Persist as X
   ( PersistField (..),
@@ -53,16 +58,3 @@ import Database.Persist.Sql as X
 import Network.HTTP.Client as X (HttpException (..))
 import Universum as X hiding (ByteString, catch)
 import UnliftIO as X (catch)
-import Witch as X
-  ( From (..),
-    TryFrom (..),
-    TryFromException (..),
-    composeTry,
-    composeTryLhs,
-    composeTryRhs,
-    into,
-    tryVia,
-    via,
-    withSource,
-    withTarget,
-  )

@@ -32,6 +32,7 @@ import Data.Metrology.Poly as Metro
 -- TODO : somehow remove unsafe
 --
 import qualified Data.Metrology.Unsafe as Unsafe
+import qualified Witch
 import qualified Prelude
 
 data MoneyBaseDim

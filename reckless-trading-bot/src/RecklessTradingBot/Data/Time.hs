@@ -15,6 +15,7 @@ import Language.Haskell.TH.Quote
 import qualified Language.Haskell.TH.Syntax as TH (Lift)
 import RecklessTradingBot.Import.External
 import RecklessTradingBot.Orphan ()
+import qualified Witch
 
 newtype Seconds = Seconds
   { unSeconds :: Pico

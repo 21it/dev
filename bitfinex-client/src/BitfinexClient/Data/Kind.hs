@@ -6,7 +6,7 @@
 
 module BitfinexClient.Data.Kind where
 
-import BitfinexClient.Import.External
+import BitfinexClient.Import.External hiding (type (==))
 import Data.Singletons.Base.TH
 
 $( singletons

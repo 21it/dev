@@ -47,6 +47,7 @@ library
       BitfinexClient.Import
       BitfinexClient.Import.External
       BitfinexClient.Import.Internal
+      BitfinexClient.Import.Witch
       BitfinexClient.Math
       BitfinexClient.Orphan
       BitfinexClient.Parser

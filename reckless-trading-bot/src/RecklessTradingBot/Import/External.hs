@@ -3,6 +3,7 @@
 module RecklessTradingBot.Import.External (module X) where
 
 import BitfinexClient.Data.QQ as X
+import BitfinexClient.Import.Witch as X
 import BitfinexClient.Util as X
 import Control.Concurrent.Async as X (waitAnyCancel)
 import Control.Concurrent.STM as X (atomically)
@@ -43,6 +44,11 @@ import Data.Time.Clock as X
     nominalDiffTimeToSeconds,
     secondsToDiffTime,
     secondsToNominalDiffTime,
+  )
+import Data.Type.Equality as X
+  ( TestEquality (..),
+    (:~:) (..),
+    type (==),
   )
 import Database.Esqueleto.Legacy as X
   ( Entity (..),
@@ -89,15 +95,3 @@ import Katip as X
   )
 import Universum as X hiding (atomically, bracket, on, set, (^.))
 import UnliftIO as X (MonadUnliftIO, bracket, withRunInIO)
-import Witch as X
-  ( From (..),
-    TryFrom (..),
-    TryFromException (..),
-    composeTry,
-    composeTryLhs,
-    composeTryRhs,
-    into,
-    tryInto,
-    tryVia,
-    via,
-  )

@@ -134,7 +134,7 @@ counterExecutedT ::
   ExceptT Error m ()
 counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
   bfxSomeOrder <-
-    withBfxT Bfx.getOrder ($ from bfxOrderId)
+    withBfxT Bfx.getOrder ($ bfxOrderId)
   bfxOrder <-
     case bfxSomeOrder of
       Bfx.SomeOrder Bfx.SBuy x ->
@@ -157,7 +157,7 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
       Bfx.submitCounterOrderMaker
       ( \cont ->
           cont
-            (from bfxOrderId)
+            bfxOrderId
             (orderFee order)
             (tradeConfQuoteFee cfg)
             (tradeConfProfitPerOrder cfg)

@@ -46,7 +46,9 @@ readVia ::
   forall through target source.
   ( Read through,
     From through target,
-    ToString source
+    ToString source,
+    'False ~ (source == through),
+    'False ~ (through == target)
   ) =>
   source ->
   Either (TryFromException source target) target
@@ -63,7 +65,9 @@ tryReadVia ::
   forall through target source.
   ( Read through,
     TryFrom through target,
-    ToString source
+    ToString source,
+    'False ~ (source == through),
+    'False ~ (through == target)
   ) =>
   source ->
   Either (TryFromException source target) target
@@ -80,7 +84,9 @@ readViaRatio ::
   forall through target source.
   ( Fractional through,
     From through target,
-    ToString source
+    ToString source,
+    'False ~ (source == through),
+    'False ~ (through == target)
   ) =>
   source ->
   Either (TryFromException source target) target
@@ -96,7 +102,9 @@ tryReadViaRatio ::
   forall through target source.
   ( Fractional through,
     TryFrom through target,
-    ToString source
+    ToString source,
+    'False ~ (source == through),
+    'False ~ (through == target)
   ) =>
   source ->
   Either (TryFromException source target) target

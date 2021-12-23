@@ -112,7 +112,7 @@ placeOrderT cfg orderId price = do
           cont
             (tradeConfMinBuyAmt cfg)
             (tradeConfCurrencyPair cfg)
-            (from $ priceBuy price :: Bfx.QuotePerBase 'Bfx.Buy)
+            (priceBuy price)
             Bfx.optsPostOnly
               { Bfx.clientId = Just cid,
                 Bfx.groupId = Just gid

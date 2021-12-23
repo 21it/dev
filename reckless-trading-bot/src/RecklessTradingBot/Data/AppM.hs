@@ -75,10 +75,10 @@ instance (MonadUnliftIO m) => Env (AppM m) where
         ent <- atomically $ readTChan chan
         let price = entityVal ent
         if ( priceBase price
-               == from (Bfx.currencyPairBase sym)
+               == Bfx.currencyPairBase sym
            )
           && ( priceQuote price
-                 == from (Bfx.currencyPairQuote sym)
+                 == Bfx.currencyPairQuote sym
              )
           then pure ent
           else waitForPrice chan

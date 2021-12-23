@@ -71,7 +71,9 @@ mkTryQQ ::
   ( Read through,
     TryFrom through target,
     TH.Lift target,
-    Typeable target
+    Typeable target,
+    'False ~ (String == through),
+    'False ~ (through == target)
   ) =>
   QuasiQuoter
 mkTryQQ =
@@ -84,7 +86,9 @@ mkTryRatQQ ::
     Fractional through,
     TryFrom through target,
     TH.Lift target,
-    Typeable target
+    Typeable target,
+    'False ~ (String == through),
+    'False ~ (through == target)
   ) =>
   QuasiQuoter
 mkTryRatQQ =
