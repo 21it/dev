@@ -20,17 +20,15 @@ create ::
   ) =>
   Entity Price ->
   m (Entity Order)
-create (Entity priceId price) = do
+create (Entity priceId _) = do
   row <- liftIO $ newOrder <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
     newOrder ct =
       Order
-        { orderPriceRef = priceId,
-          orderIntRef = Nothing,
+        { orderPrice = priceId,
           orderExtRef = Nothing,
-          orderPrice = priceBuy price,
           --
           -- TODO : !!!
           --
@@ -101,7 +99,7 @@ getByStatus sym ss =
     Psql.select $
       Psql.from $ \(order `Psql.InnerJoin` price) -> do
         Psql.on
-          ( order Psql.^. OrderPriceRef
+          ( order Psql.^. OrderPrice
               Psql.==. price Psql.^. PriceId
           )
         Psql.where_

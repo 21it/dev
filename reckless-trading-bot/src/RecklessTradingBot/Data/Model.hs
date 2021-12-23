@@ -45,15 +45,8 @@ share
       --
       -- Price which triggered the Order
       --
-      priceRef PriceId
-      --
-      -- Order might refer to another Order
-      -- as follow-up in some strategies,
-      -- for example Martingale.
-      --
-      intRef OrderId Maybe
+      price PriceId
       extRef (OrderExternalId 'Bfx.Buy) Maybe
-      price (Bfx.QuotePerBase 'Bfx.Buy)
       gain (Bfx.MoneyBase 'Bfx.Buy)
       loss (Bfx.MoneyQuote 'Bfx.Buy)
       fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Base)
