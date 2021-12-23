@@ -10,6 +10,7 @@ module RecklessTradingBot.Model.Order
 where
 
 import qualified BitfinexClient as Bfx
+import BitfinexClient.Import.External ((|*|))
 import qualified Database.Persist as P
 import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
@@ -18,23 +19,30 @@ import qualified RecklessTradingBot.Import.Psql as Psql
 create ::
   ( Storage m
   ) =>
+  TradeConf ->
   Entity Price ->
   m (Entity Order)
-create (Entity priceId _) = do
+create cfg (Entity priceId price) = do
   row <- liftIO $ newOrder <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
+    enterPrice@(Bfx.QuotePerBase enterPrice') = priceBuy price
+    enterGain@(Bfx.MoneyAmt enterGain') = tradeConfMinBuyAmt cfg
     newOrder ct =
       Order
-        { orderPrice = priceId,
+        { --
+          -- NOTE : every field should be updated
+          -- with real data pulled from Bitfinex
+          -- after order is placed on exchange orderbook
+          -- except 'orderPriceRef' and 'orderInsertedAt'.
+          --
+          orderPriceRef = priceId,
           orderExtRef = Nothing,
-          --
-          -- TODO : !!!
-          --
-          orderGain = from @(Ratio Natural) 0,
-          orderLoss = from @(Ratio Natural) 0,
-          orderFee = [Bfx.feeRateMakerBase| 0 |],
+          orderPrice = enterPrice,
+          orderGain = enterGain,
+          orderLoss = Bfx.MoneyAmt $ enterPrice' |*| enterGain',
+          orderFee = tradeConfBaseFee cfg,
           orderStatus = OrderNew,
           orderInsertedAt = ct,
           orderUpdatedAt = ct
@@ -99,7 +107,7 @@ getByStatus sym ss =
     Psql.select $
       Psql.from $ \(order `Psql.InnerJoin` price) -> do
         Psql.on
-          ( order Psql.^. OrderPrice
+          ( order Psql.^. OrderPriceRef
               Psql.==. price Psql.^. PriceId
           )
         Psql.where_

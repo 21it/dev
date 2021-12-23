@@ -42,7 +42,8 @@ create orderEnt bfxOrder cfg = do
           counterOrderLoss = exitLoss,
           counterOrderFee = exitFee,
           counterOrderStatus = OrderNew,
-          counterOrderAt = ct
+          counterOrderInsertedAt = ct,
+          counterOrderUpdatedAt = ct
         }
 
 bfxUpdate ::
@@ -51,7 +52,8 @@ bfxUpdate ::
   CounterOrderId ->
   Bfx.Order 'Bfx.Sell 'Bfx.Remote ->
   m ()
-bfxUpdate counterId bfxCounterOrder =
+bfxUpdate counterId bfxCounterOrder = do
+  ct <- liftIO getCurrentTime
   runSql $
     P.update $ \row -> do
       P.set
@@ -60,7 +62,9 @@ bfxUpdate counterId bfxCounterOrder =
             P.=. P.val
               ( newOrderStatus $
                   Bfx.orderStatus bfxCounterOrder
-              )
+              ),
+          CounterOrderUpdatedAt
+            P.=. P.val ct
         ]
       P.where_
         ( row P.^. CounterOrderId

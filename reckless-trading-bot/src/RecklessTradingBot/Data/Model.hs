@@ -42,11 +42,9 @@ share
       deriving Eq Show
 
     Order
-      --
-      -- Price which triggered the Order
-      --
-      price PriceId
+      priceRef PriceId
       extRef (OrderExternalId 'Bfx.Buy) Maybe
+      price (Bfx.QuotePerBase 'Bfx.Buy)
       gain (Bfx.MoneyBase 'Bfx.Buy)
       loss (Bfx.MoneyQuote 'Bfx.Buy)
       fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Base)
@@ -63,7 +61,8 @@ share
       loss (Bfx.MoneyBase 'Bfx.Sell)
       fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote)
       status OrderStatus
-      at UTCTime
+      insertedAt UTCTime
+      updatedAt UTCTime
       deriving Eq Show
 
   |]

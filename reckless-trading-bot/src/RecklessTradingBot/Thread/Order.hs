@@ -39,7 +39,7 @@ loop varCfg = do
     =<< Order.getByStatus sym [OrderNew]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
-    orderId <- entityKey <$> Order.create priceEnt
+    orderId <- entityKey <$> Order.create cfg priceEnt
     placeOrder cfg orderId price
   loop varCfg
 

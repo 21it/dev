@@ -68,7 +68,10 @@ import Database.Esqueleto.Legacy as X
     runSqlPool,
   )
 import Database.Persist as X (selectList)
-import Database.Persist.Postgresql as X (ConnectionString, createPostgresqlPool)
+import Database.Persist.Postgresql as X
+  ( ConnectionString,
+    createPostgresqlPool,
+  )
 import Database.Persist.TH as X (derivePersistField)
 import Katip as X
   ( ColorStrategy (..),
@@ -93,5 +96,15 @@ import Katip as X
     registerScribe,
     runKatipContextT,
   )
-import Universum as X hiding (atomically, bracket, on, set, (^.))
-import UnliftIO as X (MonadUnliftIO, bracket, withRunInIO)
+import Universum as X hiding
+  ( atomically,
+    bracket,
+    on,
+    set,
+    (^.),
+  )
+import UnliftIO as X
+  ( MonadUnliftIO,
+    bracket,
+    withRunInIO,
+  )
