@@ -47,13 +47,6 @@ share
       --
       priceRef PriceId
       --
-      -- Store CurrencyPair just in case
-      -- if Order will not correspond to
-      -- single price in the future
-      --
-      base (Bfx.CurrencyCode 'Bfx.Base)
-      quote (Bfx.CurrencyCode 'Bfx.Quote)
-      --
       -- Order might refer to another Order
       -- as follow-up in some strategies,
       -- for example Martingale.
@@ -65,7 +58,8 @@ share
       loss (Bfx.MoneyQuote 'Bfx.Buy)
       fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Base)
       status OrderStatus
-      at UTCTime
+      insertedAt UTCTime
+      updatedAt UTCTime
       deriving Eq Show
 
     CounterOrder

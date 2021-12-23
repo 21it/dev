@@ -32,9 +32,9 @@ loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
-  updateActive
+  updateActive . (fst <$>)
     =<< Order.getByStatus sym [OrderActive]
-  mapM_ (counterExecuted cfg)
+  mapM_ (counterExecuted cfg . fst)
     =<< Order.getByStatus sym [OrderExecuted]
   sleep [seconds|30|]
   loop varCfg

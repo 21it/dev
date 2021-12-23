@@ -5,6 +5,7 @@ where
 
 import Database.Esqueleto.Legacy as X
   ( Entity (..),
+    InnerJoin (..),
     Key,
     PersistField (..),
     PersistFieldSql (..),
@@ -24,6 +25,7 @@ import Database.Esqueleto.Legacy as X
     limit,
     max_,
     min_,
+    on,
     orderBy,
     putMany,
     rawExecute,

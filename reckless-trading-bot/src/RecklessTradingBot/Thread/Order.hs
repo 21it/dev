@@ -35,16 +35,12 @@ loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
   priceEnt@(Entity _ price) <- rcvNextPrice sym
-  cancelUnexpected =<< Order.getByStatus sym [OrderNew]
+  cancelUnexpected . (fst <$>)
+    =<< Order.getByStatus sym [OrderNew]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
     orderId <- entityKey <$> Order.create priceEnt
-    placeOrder
-      orderId
-      (tradeConfMinBuyAmt cfg)
-      sym
-      price
-      (tradeConfBaseFee cfg)
+    placeOrder cfg orderId price
   loop varCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
@@ -68,7 +64,7 @@ cancelUnexpectedT entities = do
     mapM
       ( \(Entity id0 x) -> do
           id1 <- tryFromT id0
-          pure (id1, orderAt x)
+          pure (id1, orderInsertedAt x)
       )
       entities
   gids <-
@@ -88,59 +84,42 @@ cancelUnexpectedT entities = do
 placeOrder ::
   ( Env m
   ) =>
+  TradeConf ->
   OrderId ->
-  Bfx.MoneyBase 'Bfx.Buy ->
-  Bfx.CurrencyPair ->
   Price ->
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
   m ()
-placeOrder rowId amt sym price fee = do
+placeOrder cfg orderId price = do
   res <-
-    runExceptT $ do
-      (bfxOrder, ss) <- placeOrderT rowId amt sym price fee
-      when (ss /= OrderActive) $
-        $(logTM) ErrorS . logStr $
-          "Unexpected status "
-            <> (show ss :: Text)
-            <> " of Bitfinex order "
-            <> show bfxOrder
-  whenLeft res $ \e ->
-    $(logTM) ErrorS . logStr $
-      "Order failed " <> (show e :: Text)
+    runExceptT $
+      placeOrderT cfg orderId price
+  whenLeft res $
+    $(logTM) ErrorS . show
 
 placeOrderT ::
   ( Env m
   ) =>
+  TradeConf ->
   OrderId ->
-  Bfx.MoneyBase 'Bfx.Buy ->
-  Bfx.CurrencyPair ->
   Price ->
-  Bfx.FeeRate 'Bfx.Maker 'Bfx.Base ->
-  ExceptT
-    Error
-    m
-    ( Bfx.Order 'Bfx.Buy 'Bfx.Remote,
-      OrderStatus
-    )
-placeOrderT rowId amt sym price _ = do
-  cid <- tryFromT rowId
+  ExceptT Error m ()
+placeOrderT cfg orderId price = do
+  cid <- tryFromT orderId
+  gid <- tryFromT orderId
   bfxOrder <-
     withBfxT
       Bfx.submitOrderMaker
-      ( \f -> do
-          f
-            (from amt)
-            sym
+      ( \cont -> do
+          cont
+            (tradeConfMinBuyAmt cfg)
+            (tradeConfCurrencyPair cfg)
             (from $ priceBuy price :: Bfx.QuotePerBase 'Bfx.Buy)
             Bfx.optsPostOnly
-              { Bfx.clientId = Just cid
+              { Bfx.clientId = Just cid,
+                Bfx.groupId = Just gid
               }
       )
-  ss <-
-    lift
-      . Order.updateBfx rowId
-      $ Bfx.SomeOrder sing bfxOrder
-  pure (bfxOrder, ss)
+  lift $
+    Order.bfxUpdate orderId bfxOrder
 
 --
 -- TODO : !!!

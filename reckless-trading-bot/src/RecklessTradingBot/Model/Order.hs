@@ -3,8 +3,8 @@
 
 module RecklessTradingBot.Model.Order
   ( create,
+    bfxUpdate,
     updateStatus,
-    updateBfx,
     getByStatus,
   )
 where
@@ -28,8 +28,6 @@ create (Entity priceId price) = do
     newOrder ct =
       Order
         { orderPriceRef = priceId,
-          orderBase = priceBase price,
-          orderQuote = priceQuote price,
           orderIntRef = Nothing,
           orderExtRef = Nothing,
           orderPrice = priceBuy price,
@@ -40,8 +38,39 @@ create (Entity priceId price) = do
           orderLoss = from @(Ratio Natural) 0,
           orderFee = [Bfx.feeRateMakerBase| 0 |],
           orderStatus = OrderNew,
-          orderAt = ct
+          orderInsertedAt = ct,
+          orderUpdatedAt = ct
         }
+
+bfxUpdate ::
+  ( Storage m
+  ) =>
+  OrderId ->
+  Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
+  m ()
+bfxUpdate orderId bfxOrder = do
+  ct <- liftIO getCurrentTime
+  runSql $
+    Psql.update $ \row -> do
+      Psql.set
+        row
+        [ OrderExtRef
+            Psql.=. Psql.val
+              ( Just . from $
+                  Bfx.orderId bfxOrder
+              ),
+          OrderStatus
+            Psql.=. Psql.val
+              ( newOrderStatus $
+                  Bfx.orderStatus bfxOrder
+              ),
+          OrderUpdatedAt
+            Psql.=. Psql.val ct
+        ]
+      Psql.where_
+        ( row Psql.^. OrderId
+            Psql.==. Psql.val orderId
+        )
 
 updateStatus ::
   ( Storage m
@@ -49,54 +78,53 @@ updateStatus ::
   OrderStatus ->
   [OrderId] ->
   m ()
-updateStatus ss xs =
+updateStatus ss xs = do
+  ct <- liftIO getCurrentTime
   runSql $
     Psql.update $ \row -> do
-      Psql.set row [OrderStatus Psql.=. Psql.val ss]
+      Psql.set
+        row
+        [ OrderStatus Psql.=. Psql.val ss,
+          OrderUpdatedAt Psql.=. Psql.val ct
+        ]
       Psql.where_ $
         row Psql.^. OrderId `Psql.in_` Psql.valList xs
-
-updateBfx ::
-  ( Storage m
-  ) =>
-  OrderId ->
-  Bfx.SomeOrder 'Bfx.Remote ->
-  m OrderStatus
-updateBfx rowId (Bfx.SomeOrder bfxS bfxOrder) = runSql $ do
-  P.update rowId $
-    --
-    -- TODO : FIXME !!!
-    --
-    case bfxS of
-      Bfx.SBuy ->
-        [ OrderExtRef P.=. Just (from $ Bfx.orderId bfxOrder),
-          OrderPrice P.=. Bfx.orderRate bfxOrder,
-          OrderStatus P.=. ss
-        ]
-      Bfx.SSell ->
-        [ OrderExtRef P.=. Just (from $ Bfx.orderId bfxOrder),
-          OrderStatus P.=. ss
-        ]
-  pure ss
-  where
-    ss :: OrderStatus
-    ss = newOrderStatus $ Bfx.orderStatus bfxOrder
 
 getByStatus ::
   ( Storage m
   ) =>
   Bfx.CurrencyPair ->
   [OrderStatus] ->
-  m [Entity Order]
+  m [(Entity Order, Entity Price)]
 getByStatus sym ss =
   runSql $
-    P.selectList
-      [ OrderBase
-          P.==. Bfx.currencyPairBase sym,
-        OrderQuote
-          P.==. Bfx.currencyPairQuote sym,
-        OrderStatus
-          P.<-. ss
-      ]
-      [ P.LimitTo 100
-      ]
+    Psql.select $
+      Psql.from $ \(order `Psql.InnerJoin` price) -> do
+        Psql.on
+          ( order Psql.^. OrderPriceRef
+              Psql.==. price Psql.^. PriceId
+          )
+        Psql.where_
+          ( ( order Psql.^. OrderStatus
+                `Psql.in_` Psql.valList ss
+            )
+              Psql.&&. ( price Psql.^. PriceBase
+                           Psql.==. Psql.val
+                             ( Bfx.currencyPairBase sym
+                             )
+                       )
+              Psql.&&. ( price Psql.^. PriceQuote
+                           Psql.==. Psql.val
+                             ( Bfx.currencyPairQuote sym
+                             )
+                       )
+          )
+        --
+        -- TODO : this limit might be a problem, in case where
+        -- are order which changed status already, but are out
+        -- of range of this limit. Might be useful to use
+        -- updatedAt field for ordering to not miss updated
+        -- data in long-term.
+        --
+        Psql.limit 1000
+        pure (order, price)
