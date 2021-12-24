@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -32,10 +33,17 @@ create cfg (Entity priceId price) = do
     newOrder ct =
       Order
         { --
-          -- NOTE : every field should be updated
+          -- NOTE : some fields should be updated
           -- with real data pulled from Bitfinex
           -- after order is placed on exchange orderbook
-          -- except 'orderPriceRef' and 'orderInsertedAt'.
+          -- including:
+          --
+          --   orderExtRef
+          --   orderPrice
+          --   orderGain
+          --   orderLoss
+          --   orderStatus
+          --   updatedAt
           --
           orderPriceRef = priceId,
           orderExtRef = Nothing,
@@ -65,6 +73,12 @@ bfxUpdate orderId bfxOrder = do
               ( Just . from $
                   Bfx.orderId bfxOrder
               ),
+          OrderPrice
+            Psql.=. Psql.val enterPrice,
+          OrderGain
+            Psql.=. Psql.val enterGain,
+          OrderLoss
+            Psql.=. Psql.val enterLoss,
           OrderStatus
             Psql.=. Psql.val
               ( newOrderStatus $
@@ -77,6 +91,13 @@ bfxUpdate orderId bfxOrder = do
         ( row Psql.^. OrderId
             Psql.==. Psql.val orderId
         )
+  where
+    enterPrice@(Bfx.QuotePerBase enterPrice') =
+      Bfx.orderRate bfxOrder
+    enterGain@(Bfx.MoneyAmt enterGain') =
+      Bfx.orderAmount bfxOrder
+    enterLoss =
+      Bfx.MoneyAmt $ enterGain' |*| enterPrice'
 
 updateStatus ::
   ( Storage m

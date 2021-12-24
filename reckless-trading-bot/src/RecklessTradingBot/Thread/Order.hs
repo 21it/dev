@@ -39,8 +39,8 @@ loop varCfg = do
     =<< Order.getByStatus sym [OrderNew]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
-    orderId <- entityKey <$> Order.create cfg priceEnt
-    placeOrder cfg orderId price
+    orderEnt <- Order.create cfg priceEnt
+    placeOrder cfg orderEnt price
   loop varCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
@@ -85,13 +85,13 @@ placeOrder ::
   ( Env m
   ) =>
   TradeConf ->
-  OrderId ->
+  Entity Order ->
   Price ->
   m ()
-placeOrder cfg orderId price = do
+placeOrder cfg orderEnt price = do
   res <-
     runExceptT $
-      placeOrderT cfg orderId price
+      placeOrderT cfg orderEnt price
   whenLeft res $
     $(logTM) ErrorS . show
 
@@ -99,10 +99,10 @@ placeOrderT ::
   ( Env m
   ) =>
   TradeConf ->
-  OrderId ->
+  Entity Order ->
   Price ->
   ExceptT Error m ()
-placeOrderT cfg orderId price = do
+placeOrderT cfg (Entity orderId order) price = do
   cid <- tryFromT orderId
   gid <- tryFromT orderId
   bfxOrder <-
@@ -110,7 +110,7 @@ placeOrderT cfg orderId price = do
       Bfx.submitOrderMaker
       ( \cont -> do
           cont
-            (tradeConfMinBuyAmt cfg)
+            (orderGain order)
             (tradeConfCurrencyPair cfg)
             (priceBuy price)
             Bfx.optsPostOnly
