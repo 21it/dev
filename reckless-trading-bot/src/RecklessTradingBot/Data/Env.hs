@@ -266,7 +266,7 @@ newTradeConf symDetails feeDetails (sym, raw) =
             tradeConfQuoteFee =
               Bfx.coerceQuoteFeeRate fee,
             tradeConfMinBuyAmt =
-              Bfx.applyFee amtNoFee fee,
+              Bfx.addFee amtNoFee fee,
             tradeConfMinSellAmt =
               Bfx.coerceSellMoneyAmt amtNoFee
           }

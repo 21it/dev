@@ -197,23 +197,27 @@ deriving stock instance Show (SomeMoneyAmt dim)
 instance
   ( Show (Lookup dim LCSU')
   ) =>
-  From Rational (SomeMoneyAmt dim)
+  TryFrom Rational (SomeMoneyAmt dim)
   where
-  from rat =
-    --
-    -- TODO : should it be TryFrom to exclude 0?
-    --
-    if rat >= 0
-      then
-        SomeMoneyAmt (sing :: Sing 'Buy)
-          . MoneyAmt
-          . Unsafe.Qu
-          $ absRat rat
-      else
-        SomeMoneyAmt (sing :: Sing 'Sell)
-          . MoneyAmt
-          . Unsafe.Qu
-          $ absRat rat
+  tryFrom =
+    \case
+      rat
+        | rat > 0 ->
+          Right
+            . SomeMoneyAmt (sing :: Sing 'Buy)
+            . MoneyAmt
+            . Unsafe.Qu
+            $ absRat rat
+      rat
+        | rat < 0 ->
+          Right
+            . SomeMoneyAmt (sing :: Sing 'Sell)
+            . MoneyAmt
+            . Unsafe.Qu
+            $ absRat rat
+      rat ->
+        Left $
+          TryFromException rat Nothing
 
 --
 -- QuotePerBase sugar
@@ -232,9 +236,6 @@ newtype QuotePerBase (act :: ExchangeAction) = QuotePerBase
 quotePerBaseAmt :: MoneyQuoteAmt :/ MoneyBaseAmt
 quotePerBaseAmt = MoneyQuoteAmt :/ MoneyBaseAmt
 
---
--- TODO : show act as well?
---
 instance (SingI act) => Prelude.Show (QuotePerBase act) where
   show x =
     show (unQuotePerBase x # quotePerBaseAmt)

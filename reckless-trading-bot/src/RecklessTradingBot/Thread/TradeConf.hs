@@ -58,6 +58,6 @@ updateTradeConf syms fees varCfg = do
         tradeConfProfitPerOrder = tradeConfProfitPerOrder cfg,
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
-        tradeConfMinBuyAmt = BfxMath.applyFee minAmt fee,
+        tradeConfMinBuyAmt = BfxMath.addFee minAmt fee,
         tradeConfMinSellAmt = Bfx.coerceSellMoneyAmt minAmt
       }

@@ -1,7 +1,7 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Math
-  ( applyFee,
+  ( addFee,
     tweakMakerRate,
     newCounterOrder,
   )
@@ -12,13 +12,13 @@ import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 
-applyFee ::
+addFee ::
   MoneyAmt dim act ->
-  FeeRate a b ->
+  FeeRate mrel crel ->
   MoneyAmt dim act
-applyFee amt fee =
+addFee amt fee =
   MoneyAmt $
-    unMoneyAmt amt |* unFeeRate fee
+    unMoneyAmt amt |/ (1 - unFeeRate fee)
 
 tweakMakerRate ::
   forall act.
