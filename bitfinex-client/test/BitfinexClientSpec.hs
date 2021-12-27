@@ -48,7 +48,7 @@ spec = before newEnv $ do
     amt <- bfxRoundT (testAmt :: MoneyBase 'Buy)
     let sym = [currencyPair|ADABTC|]
     let opts = SubmitOrder.optsPostOnly
-    rate <- bfxRoundT =<< Bitfinex.marketAveragePrice amt sym
+    rate <- Bitfinex.marketAveragePrice amt sym
     order <- Bitfinex.submitOrderMaker env amt sym rate opts
     Bitfinex.cancelOrderById env $ orderId order
   itRight "retrieveOrders succeeds" $ \env ->

@@ -52,7 +52,7 @@ marketAveragePrice ::
   ) =>
   Rounded (MoneyBase act) ->
   CurrencyPair ->
-  ExceptT Error m (QuotePerBase act)
+  ExceptT Error m (Rounded (QuotePerBase act))
 marketAveragePrice amt sym =
   Generic.pub
     @'MarketAveragePrice
@@ -369,8 +369,9 @@ submitCounterOrder' submit env id0 feeB feeQ prof opts = do
         marketAveragePrice exitAmt $
           orderSymbol remOrder
       exitRate <-
-        bfxRoundT $
-          max exitRate0 currentRate
+        bfxRoundT
+          . max exitRate0
+          $ from currentRate
       submit env exitAmt (orderSymbol remOrder) exitRate opts
     _ ->
       throwE $ ErrorOrderState someRemOrd
@@ -394,8 +395,7 @@ dumpIntoQuote' submit env sym opts = do
     bfxRoundT
       =<< spendableExchangeBalance env (currencyPairBase sym)
   rate <-
-    bfxRoundT
-      =<< marketAveragePrice amt sym
+    marketAveragePrice amt sym
   submit env amt sym rate opts
 
 dumpIntoQuote ::

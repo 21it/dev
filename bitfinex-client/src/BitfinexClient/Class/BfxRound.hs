@@ -14,9 +14,8 @@ import BitfinexClient.Data.Metro
 import BitfinexClient.Import.External
 import qualified Witch
 
-newtype Rounded a = Rounded
-  { bfxUnRound :: a
-  }
+newtype Rounded a
+  = Rounded a
   deriving stock
     ( Eq,
       Ord,
@@ -24,6 +23,7 @@ newtype Rounded a = Rounded
       Generic
     )
 
+-- | Trivial instances
 instance From (Rounded a) a
 
 instance
@@ -34,9 +34,10 @@ instance
   where
   tryFrom raw =
     case bfxRound raw of
-      Right x | bfxUnRound x == raw -> pure x
+      Right res@(Rounded x) | x == raw -> pure res
       _ -> Left $ TryFromException raw Nothing
 
+-- | 'Ratio Natural' instances
 instance
   ( From (Rounded a) a,
     From a (Ratio Natural),
@@ -48,6 +49,24 @@ instance
   from = via @a
 
 instance
+  TryFrom
+    (Ratio Natural)
+    (Rounded (MoneyAmt dim act))
+  where
+  tryFrom =
+    tryFrom @(MoneyAmt dim act)
+      `composeTryLhs` from
+
+instance
+  TryFrom
+    (Ratio Natural)
+    (Rounded (QuotePerBase act))
+  where
+  tryFrom =
+    tryVia @(QuotePerBase act)
+
+-- | 'Rational' instances
+instance
   ( From (Rounded a) a,
     From a Rational,
     'False ~ (Rounded a == a),
@@ -57,6 +76,18 @@ instance
   where
   from = via @a
 
+instance
+  ( TryFrom Rational a,
+    TryFrom a (Rounded a),
+    'False ~ (Rational == a),
+    'False ~ (a == Rounded a)
+  ) =>
+  TryFrom Rational (Rounded a)
+  where
+  tryFrom =
+    tryVia @a
+
+-- | Private class to allow polymorphism
 class
   ( From a Rational,
     TryFrom Rational a

@@ -7,6 +7,7 @@ module BitfinexClient.Class.FromRpc
   )
 where
 
+import BitfinexClient.Class.BfxRound
 import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
@@ -66,7 +67,11 @@ instance
       Nothing -> Left "Incorrect ExchangeAction"
       Just Refl -> pure order
 
-instance FromRpc 'MarketAveragePrice (QuotePerBase act) where
+instance
+  FromRpc
+    'MarketAveragePrice
+    (Rounded (QuotePerBase act))
+  where
   fromRpc (RawResponse raw) = do
     x <-
       maybeToRight
