@@ -38,9 +38,11 @@ module BitfinexClient.Data.Type
     tryErrorT,
     tryFromE,
     tryFromT,
+    bfxRoundT,
   )
 where
 
+import BitfinexClient.Class.BfxRound
 import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
@@ -580,3 +582,13 @@ tryFromT ::
   ExceptT Error m target
 tryFromT =
   except . tryFromE
+
+bfxRoundT ::
+  ( BfxRound a,
+    Typeable a,
+    Monad m
+  ) =>
+  a ->
+  ExceptT Error m (Rounded a)
+bfxRoundT =
+  tryErrorT . bfxRound

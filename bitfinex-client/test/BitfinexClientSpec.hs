@@ -32,27 +32,23 @@ spec = before newEnv $ do
             }
   itRight "marketAveragePrice succeeds" . const $ do
     let sym = [currencyPair|ADABTC|]
-    buy <-
-      Bitfinex.marketAveragePrice
-        (testAmt :: MoneyBase 'Buy)
-        sym
-    sell <-
-      Bitfinex.marketAveragePrice
-        (testAmt :: MoneyBase 'Sell)
-        sym
-    liftIO $ buy `shouldSatisfy` (> coerce sell)
+    buyAmt <- bfxRoundT (testAmt :: MoneyBase 'Buy)
+    buyRate <- Bitfinex.marketAveragePrice buyAmt sym
+    sellAmt <- bfxRoundT (testAmt :: MoneyBase 'Sell)
+    sellRate <- Bitfinex.marketAveragePrice sellAmt sym
+    liftIO $ buyRate `shouldSatisfy` (> coerce sellRate)
   itLeft "marketAveragePrice fails" . const $ do
-    let amt = MoneyAmt $ quOf 2 MoneyBaseAmt :: MoneyBase 'Buy
+    amt <- bfxRoundT (testAmt :: MoneyBase 'Buy)
     let sym = [currencyPair|BTCADA|]
     Bitfinex.marketAveragePrice amt sym
   itRight
     "feeSummary succeeds"
     Bitfinex.feeSummary
   itRight "submitOrderMaker and cancelOrderById succeeds" $ \env -> do
-    let amt = testAmt :: MoneyBase 'Buy
+    amt <- bfxRoundT (testAmt :: MoneyBase 'Buy)
     let sym = [currencyPair|ADABTC|]
     let opts = SubmitOrder.optsPostOnly
-    rate <- Bitfinex.marketAveragePrice amt sym
+    rate <- bfxRoundT =<< Bitfinex.marketAveragePrice amt sym
     order <- Bitfinex.submitOrderMaker env amt sym rate opts
     Bitfinex.cancelOrderById env $ orderId order
   itRight "retrieveOrders succeeds" $ \env ->
@@ -78,22 +74,23 @@ spec = before newEnv $ do
     "wallets succeeds"
     Bitfinex.wallets
 
---describe "End2End" $ do
---  itRight "submitOrderMaker" $ \env -> do
---    let amt = testAmt :: MoneyBase 'Buy
---    let sym = [currencyPair|ADABTC|]
---    let opts = SubmitOrder.optsPostOnly
---    rate <- Bitfinex.marketAveragePrice amt sym
---    Bitfinex.submitOrderMaker env amt sym rate opts
---  itRight "submitCounterOrderMaker" $ \env ->
---    Bitfinex.submitCounterOrderMaker
---      env
---      (OrderId 0)
---      [feeRateMakerBase| 0.001 |]
---      [profitRate| 0.001 |]
---      SubmitOrder.optsPostOnly
---  itRight "dumpIntoQuoteMaker" $ \env ->
---    Bitfinex.dumpIntoQuoteMaker
---      env
---      [currencyPair|ADABTC|]
---      SubmitOrder.optsPostOnly
+--  describe "End2End" $ do
+--    itRight "submitOrderMaker" $ \env -> do
+--      let amt = from @(Ratio Natural) 2.002002 :: MoneyBase 'Buy
+--      let sym = [currencyPair|ADABTC|]
+--      let opts = SubmitOrder.optsPostOnly
+--      rate <- Bitfinex.marketAveragePrice amt sym
+--      Bitfinex.submitOrderMaker env amt sym rate opts
+--    itRight "submitCounterOrderMaker" $ \env ->
+--      Bitfinex.submitCounterOrderMaker
+--        env
+--        (OrderId 82360208363)
+--        [feeRateMakerBase| 0.001 |]
+--        [feeRateMakerQuote| 0.001 |]
+--        [profitRate| 0.001 |]
+--        SubmitOrder.optsPostOnly
+--    itRight "dumpIntoQuoteMaker" $ \env ->
+--      Bitfinex.dumpIntoQuoteMaker
+--        env
+--        [currencyPair|ADABTC|]
+--        SubmitOrder.optsPostOnly

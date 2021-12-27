@@ -13,5 +13,5 @@ spec :: Spec
 spec = do
   describe "BfxRound" $ do
     it "MoneyAmt" $
-      eraseFirst (bfxRound testAmt)
+      eraseFirst (bfxUnRound <$> bfxRound testAmt)
         `shouldBe` Right (testAmt :: MoneyBase 'Buy)

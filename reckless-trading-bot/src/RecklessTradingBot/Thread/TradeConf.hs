@@ -45,6 +45,8 @@ updateTradeConf syms fees varCfg = do
       (ErrorRuntime $ "Missing CurrencyPair" <> show sym)
       $ Map.lookup sym syms
   let minAmt = Bfx.currencyPairMinOrderAmt bfxCfg
+  amtNoFee <- bfxRoundT minAmt
+  amtWithFee <- bfxRoundT $ BfxMath.addFee minAmt fee
   when (minAmt <= from @(Ratio Natural) 0)
     . throwE
     . ErrorRuntime
@@ -58,6 +60,6 @@ updateTradeConf syms fees varCfg = do
         tradeConfProfitPerOrder = tradeConfProfitPerOrder cfg,
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
-        tradeConfMinBuyAmt = BfxMath.addFee minAmt fee,
-        tradeConfMinSellAmt = Bfx.coerceSellMoneyAmt minAmt
+        tradeConfMinBuyAmt = amtWithFee,
+        tradeConfMinSellAmt = coerce amtNoFee
       }

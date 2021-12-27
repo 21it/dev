@@ -15,9 +15,9 @@ import qualified Data.Aeson as A
 -- TODO : quote and base type parameters
 --
 data Request (act :: ExchangeAction) = Request
-  { amount :: MoneyBase act,
+  { amount :: Rounded (MoneyBase act),
     symbol :: CurrencyPair,
-    rate :: QuotePerBase act,
+    rate :: Rounded (QuotePerBase act),
     options :: Options
   }
   deriving stock (Eq, Ord, Show)
@@ -46,7 +46,9 @@ optsPostOnly =
     }
 
 instance
-  (ToRequestParam (MoneyBase act)) =>
+  ( ToRequestParam (Rounded (MoneyBase act)),
+    SingI act
+  ) =>
   ToJSON (Request act)
   where
   toJSON req =

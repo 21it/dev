@@ -29,6 +29,9 @@ tweakMakerRate ::
 tweakMakerRate (QuotePerBase rate) =
   QuotePerBase $ rate |* tweak
   where
+    --
+    -- TODO : use pip
+    --
     tweak :: Ratio Natural
     tweak =
       case sing :: Sing act of

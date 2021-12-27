@@ -5,7 +5,6 @@
 
 module BitfinexClient.Data.Metro
   ( MoneyAmt (..),
-    coerceSellMoneyAmt,
     SomeMoneyAmt (..),
     MoneyBase,
     MoneyBase',
@@ -22,7 +21,6 @@ module BitfinexClient.Data.Metro
   )
 where
 
-import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
 import BitfinexClient.Import.External as Ext
 import BitfinexClient.Util
@@ -85,9 +83,6 @@ newtype MoneyAmt dim (act :: ExchangeAction) = MoneyAmt
       Ord
     )
 
-coerceSellMoneyAmt :: MoneyAmt dim 'Buy -> MoneyAmt dim 'Sell
-coerceSellMoneyAmt = coerce
-
 instance
   ( Show unit,
     Lookup dim LCSU' ~ unit
@@ -102,15 +97,6 @@ instance
 type MoneyBase = MoneyAmt MoneyBaseDim
 
 type MoneyQuote = MoneyAmt MoneyQuoteDim
-
-instance (SingI act) => ToRequestParam (MoneyBase act) where
-  toTextParam amt =
-    case sing :: Sing act of
-      SBuy -> toTextParam $ success amt
-      SSell -> toTextParam $ (-1) * success amt
-    where
-      success :: MoneyAmt dim act -> Rational
-      success = abs . from . unQu . unMoneyAmt
 
 instance From (Ratio Natural) (MoneyAmt dim act) where
   from =
@@ -243,11 +229,6 @@ instance (SingI act) => Prelude.Show (QuotePerBase act) where
       <> show quotePerBaseAmt
       <> " "
       <> show (fromSing (sing :: Sing act))
-
-instance ToRequestParam (QuotePerBase act) where
-  toTextParam =
-    toTextParam
-      . from @(QuotePerBase act) @(Ratio Natural)
 
 instance TryFrom (Ratio Natural) (QuotePerBase act) where
   tryFrom x

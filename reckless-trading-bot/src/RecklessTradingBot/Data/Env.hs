@@ -58,8 +58,8 @@ data TradeConf = TradeConf
     tradeConfProfitPerOrder :: Bfx.ProfitRate,
     tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
-    tradeConfMinBuyAmt :: Bfx.MoneyBase 'Bfx.Buy,
-    tradeConfMinSellAmt :: Bfx.MoneyBase 'Bfx.Sell
+    tradeConfMinBuyAmt :: Bfx.Rounded (Bfx.MoneyBase 'Bfx.Buy),
+    tradeConfMinSellAmt :: Bfx.Rounded (Bfx.MoneyBase 'Bfx.Sell)
   }
   deriving stock (Eq)
 
@@ -249,27 +249,34 @@ newTradeConf symDetails feeDetails (sym, raw) =
   case Map.lookup sym symDetails of
     Nothing -> error $ "Missing " <> show sym
     Just cfg -> do
-      let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
-      when (amtNoFee <= from @(Ratio Natural) 0)
-        . error
-        $ "Wrong min Order " <> show amtNoFee
-      liftIO . newMVar $
-        TradeConf
-          { tradeConfCurrencyPair =
-              sym,
-            tradeConfCurrencyKind =
-              cck,
-            tradeConfProfitPerOrder =
-              rawTradeConfProfitPerOrder raw,
-            tradeConfBaseFee =
-              fee,
-            tradeConfQuoteFee =
-              Bfx.coerceQuoteFeeRate fee,
-            tradeConfMinBuyAmt =
-              Bfx.addFee amtNoFee fee,
-            tradeConfMinSellAmt =
-              Bfx.coerceSellMoneyAmt amtNoFee
-          }
+      let amt0 = Bfx.currencyPairMinOrderAmt cfg
+      case (,)
+        <$> Bfx.bfxRound amt0
+        <*> Bfx.bfxRound (Bfx.addFee amt0 fee) of
+        Left e ->
+          error $
+            "Wrong min order "
+              <> show amt0
+              <> " with error "
+              <> show e
+        Right (amtNoFee, amtWithFee) ->
+          liftIO . newMVar $
+            TradeConf
+              { tradeConfCurrencyPair =
+                  sym,
+                tradeConfCurrencyKind =
+                  cck,
+                tradeConfProfitPerOrder =
+                  rawTradeConfProfitPerOrder raw,
+                tradeConfBaseFee =
+                  fee,
+                tradeConfQuoteFee =
+                  Bfx.coerceQuoteFeeRate fee,
+                tradeConfMinBuyAmt =
+                  amtWithFee,
+                tradeConfMinSellAmt =
+                  coerce amtNoFee
+              }
   where
     cck = rawTradeConfCurrencyKind raw
     fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails

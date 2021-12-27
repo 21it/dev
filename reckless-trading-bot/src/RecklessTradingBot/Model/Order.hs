@@ -28,8 +28,10 @@ create cfg (Entity priceId price) = do
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
-    enterPrice@(Bfx.QuotePerBase enterPrice') = priceBuy price
-    enterGain@(Bfx.MoneyAmt enterGain') = tradeConfMinBuyAmt cfg
+    enterPrice@(Bfx.QuotePerBase enterPrice') =
+      priceBuy price
+    enterGain@(Bfx.MoneyAmt enterGain') =
+      Bfx.bfxUnRound $ tradeConfMinBuyAmt cfg
     newOrder ct =
       Order
         { --

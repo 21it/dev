@@ -105,14 +105,16 @@ placeOrderT ::
 placeOrderT cfg (Entity orderId order) price = do
   cid <- tryFromT orderId
   gid <- tryFromT orderId
+  gain <- bfxRoundT $ orderGain order
+  rate <- bfxRoundT $ priceBuy price
   bfxOrder <-
     withBfxT
       Bfx.submitOrderMaker
       ( \cont -> do
           cont
-            (orderGain order)
+            gain
             (tradeConfCurrencyPair cfg)
-            (priceBuy price)
+            rate
             Bfx.optsPostOnly
               { Bfx.clientId = Just cid,
                 Bfx.groupId = Just gid
