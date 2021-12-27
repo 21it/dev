@@ -59,7 +59,7 @@ updateTradeConf syms fees varCfg = do
         tradeConfCurrencyKind = cck,
         tradeConfProfitPerOrder = tradeConfProfitPerOrder cfg,
         tradeConfBaseFee = fee,
-        tradeConfQuoteFee = Bfx.coerceQuoteFeeRate fee,
+        tradeConfQuoteFee = coerce fee,
         tradeConfMinBuyAmt = amtWithFee,
         tradeConfMinSellAmt = coerce amtNoFee
       }

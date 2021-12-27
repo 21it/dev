@@ -19,7 +19,6 @@ module BitfinexClient.Data.Type
     -- * Trading
     -- $trading
     FeeRate (..),
-    coerceQuoteFeeRate,
     RebateRate (..),
     ProfitRate (..),
     CurrencyCode (..),
@@ -285,9 +284,6 @@ newtype
     ( Generic,
       TH.Lift
     )
-
-coerceQuoteFeeRate :: FeeRate mrel 'Base -> FeeRate mrel 'Quote
-coerceQuoteFeeRate = coerce
 
 instance From (FeeRate mrel crel) (Ratio Natural)
 

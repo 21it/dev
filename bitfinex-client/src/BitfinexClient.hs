@@ -175,11 +175,11 @@ verifyOrder env id0 req = do
                   SubmitOrder.clientId opts
                     <|> orderClientId remOrd,
                 orderAmount =
-                  bfxUnRound $ SubmitOrder.amount req,
+                  from $ SubmitOrder.amount req,
                 orderSymbol =
                   SubmitOrder.symbol req,
                 orderRate =
-                  bfxUnRound $ SubmitOrder.rate req,
+                  from $ SubmitOrder.rate req,
                 orderStatus =
                   orderStatus remOrd
               }
@@ -256,7 +256,7 @@ submitOrderMaker env amt sym rate0 opts0 =
           newRate <-
             bfxRoundT
               . Math.tweakMakerRate
-              $ bfxUnRound rate
+              $ from rate
           this (attempt + 1) newRate
 
 cancelOrderMulti ::

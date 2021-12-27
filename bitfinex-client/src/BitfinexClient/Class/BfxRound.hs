@@ -5,7 +5,6 @@ module BitfinexClient.Class.BfxRound
   ( Rounded,
     BfxRound,
     bfxRound,
-    bfxUnRound,
   )
 where
 
@@ -13,6 +12,7 @@ import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Import.External
+import qualified Witch
 
 newtype Rounded a = Rounded
   { bfxUnRound :: a
@@ -23,6 +23,39 @@ newtype Rounded a = Rounded
       Show,
       Generic
     )
+
+instance From (Rounded a) a
+
+instance
+  ( BfxRound a,
+    Eq a
+  ) =>
+  TryFrom a (Rounded a)
+  where
+  tryFrom raw =
+    case bfxRound raw of
+      Right x | bfxUnRound x == raw -> pure x
+      _ -> Left $ TryFromException raw Nothing
+
+instance
+  ( From (Rounded a) a,
+    From a (Ratio Natural),
+    'False ~ (Rounded a == a),
+    'False ~ (a == Ratio Natural)
+  ) =>
+  From (Rounded a) (Ratio Natural)
+  where
+  from = via @a
+
+instance
+  ( From (Rounded a) a,
+    From a Rational,
+    'False ~ (Rounded a == a),
+    'False ~ (a == Rational)
+  ) =>
+  From (Rounded a) Rational
+  where
+  from = via @a
 
 class
   ( From a Rational,
@@ -62,10 +95,9 @@ instance
       SSell -> toTextParam $ (-1) * success amt
     where
       success :: Rounded (MoneyAmt dim act) -> Rational
-      success = abs . from . bfxUnRound
+      success = abs . from
 
 instance ToRequestParam (Rounded (QuotePerBase act)) where
   toTextParam =
     toTextParam
-      . from @(QuotePerBase act) @(Ratio Natural)
-      . bfxUnRound
+      . from @(Rounded (QuotePerBase act)) @(Ratio Natural)

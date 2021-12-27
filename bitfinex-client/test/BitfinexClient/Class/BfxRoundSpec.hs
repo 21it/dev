@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Class.BfxRoundSpec
@@ -13,5 +14,8 @@ spec :: Spec
 spec = do
   describe "BfxRound" $ do
     it "MoneyAmt" $
-      eraseFirst (bfxUnRound <$> bfxRound testAmt)
+      eraseFirst
+        ( from @(Rounded (MoneyBase 'Buy))
+            <$> bfxRound testAmt
+        )
         `shouldBe` Right (testAmt :: MoneyBase 'Buy)
