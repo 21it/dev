@@ -13,9 +13,9 @@ import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 
 addFee ::
-  MoneyAmt dim act ->
+  MoneyAmt crel act ->
   FeeRate mrel crel ->
-  MoneyAmt dim act
+  MoneyAmt crel act
 addFee amt fee =
   MoneyAmt $
     unMoneyAmt amt |/ (1 - unFeeRate fee)

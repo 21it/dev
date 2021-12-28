@@ -2,8 +2,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# OPTIONS_GHC -Wno-deprecations #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Metro
@@ -45,15 +43,17 @@ import qualified Language.Haskell.TH.Syntax as TH
 import qualified Witch
 import qualified Prelude
 
-instance Dimension (Proxy 'Base)
+data MoneyDim (crel :: CurrencyRelation)
 
-instance Dimension (Proxy 'Quote)
+instance Dimension (MoneyDim 'Base)
+
+instance Dimension (MoneyDim 'Quote)
 
 data MoneyBaseAmt = MoneyBaseAmt
 
 instance Unit MoneyBaseAmt where
   type BaseUnit MoneyBaseAmt = Canonical
-  type DimOfUnit MoneyBaseAmt = Proxy 'Base
+  type DimOfUnit MoneyBaseAmt = MoneyDim 'Base
 
 instance Show MoneyBaseAmt where
   show = const "MoneyBaseAmt"
@@ -62,29 +62,33 @@ data MoneyQuoteAmt = MoneyQuoteAmt
 
 instance Unit MoneyQuoteAmt where
   type BaseUnit MoneyQuoteAmt = Canonical
-  type DimOfUnit MoneyQuoteAmt = Proxy 'Quote
+  type DimOfUnit MoneyQuoteAmt = MoneyDim 'Quote
 
 instance Show MoneyQuoteAmt where
   show = const "MoneyQuoteAmt"
 
 type LCSU' =
   MkLCSU
-    '[ (Proxy 'Base, MoneyBaseAmt),
-       (Proxy 'Quote, MoneyQuoteAmt)
+    '[ (MoneyDim 'Base, MoneyBaseAmt),
+       (MoneyDim 'Quote, MoneyQuoteAmt)
      ]
 
 type MoneyBase' =
-  MkQu_DLN (Proxy 'Base) LCSU' (Ratio Natural)
+  MkQu_DLN (MoneyDim 'Base) LCSU' (Ratio Natural)
 
 type MoneyQuote' =
-  MkQu_DLN (Proxy 'Quote) LCSU' (Ratio Natural)
+  MkQu_DLN (MoneyDim 'Quote) LCSU' (Ratio Natural)
 
 --
 -- MoneyAmt sugar
 --
 
-newtype MoneyAmt dim (act :: ExchangeAction) = MoneyAmt
-  { unMoneyAmt :: MkQu_DLN dim LCSU' (Ratio Natural)
+newtype
+  MoneyAmt
+    (crel :: CurrencyRelation)
+    (act :: ExchangeAction) = MoneyAmt
+  { unMoneyAmt ::
+      MkQu_DLN (MoneyDim crel) LCSU' (Ratio Natural)
   }
   deriving stock
     ( Eq,
@@ -93,49 +97,52 @@ newtype MoneyAmt dim (act :: ExchangeAction) = MoneyAmt
 
 instance
   ( Show unit,
-    Lookup dim LCSU' ~ unit
+    Typeable unit,
+    Lookup (MoneyDim crel) LCSU' ~ unit
   ) =>
-  Prelude.Show (MoneyAmt dim act)
+  Prelude.Show (MoneyAmt crel act)
   where
   show x =
     show (unQu $ unMoneyAmt x)
       <> " "
-      <> show (undefined :: unit)
+      <> showType @unit
 
-type MoneyBase = MoneyAmt (Proxy 'Base)
+type MoneyBase = MoneyAmt 'Base
 
-type MoneyQuote = MoneyAmt (Proxy 'Quote)
+type MoneyQuote = MoneyAmt 'Quote
 
-instance TryFrom (Ratio Natural) (MoneyAmt dim act) where
+instance TryFrom (Ratio Natural) (MoneyAmt crel act) where
   tryFrom =
     tryFrom @Rational `composeTryLhs` from
 
-instance From (MoneyAmt dim act) (Ratio Natural) where
+instance From (MoneyAmt crel act) (Ratio Natural) where
   from =
     unQu . unMoneyAmt
 
-instance TryFrom Rational (MoneyAmt dim act) where
+instance TryFrom Rational (MoneyAmt crel act) where
   tryFrom raw = do
     amt <- roundMoneyAmt raw
     if from amt == raw
       then pure amt
       else Left $ TryFromException raw Nothing
 
-instance From (MoneyAmt dim act) Rational where
+instance From (MoneyAmt crel act) Rational where
   from =
     via @(Ratio Natural)
 
 deriving via
   Rational
   instance
-    ( SingI act
+    ( Typeable crel,
+      Typeable act
     ) =>
-    PersistFieldSql (MoneyAmt dim act)
+    PersistFieldSql (MoneyAmt crel act)
 
 instance
-  ( SingI act
+  ( Typeable crel,
+    Typeable act
   ) =>
-  PersistField (MoneyAmt dim act)
+  PersistField (MoneyAmt crel act)
   where
   toPersistValue =
     PersistRational . from
@@ -147,19 +154,18 @@ instance
         Left failure
     where
       failure =
-        "MoneyAmt "
-          <> show (fromSing (sing :: Sing act))
+        showType @(MoneyAmt crel act)
           <> " PersistValue is invalid "
           <> show raw
 
 instance
-  ( Typeable dim,
+  ( Typeable crel,
     Typeable act
   ) =>
-  FromJSON (MoneyAmt dim act)
+  FromJSON (MoneyAmt crel act)
   where
   parseJSON = A.withText
-    (showType @(MoneyAmt dim act))
+    (showType @(MoneyAmt crel act))
     $ \x0 -> do
       case tryReadViaRatio @(Ratio Natural) x0 of
         Left x -> fail $ show x
@@ -169,31 +175,33 @@ instance
 -- SomeMoneyAmt sugar
 --
 
-data SomeMoneyAmt dim
+data SomeMoneyAmt crel
   = forall act.
-    ( Show (MoneyAmt dim act),
+    ( Show (MoneyAmt crel act),
       SingI act
     ) =>
     SomeMoneyAmt
       (Sing act)
-      (MoneyAmt dim act)
+      (MoneyAmt crel act)
 
-type SomeMoneyBase = SomeMoneyAmt (Proxy 'Base)
+type SomeMoneyBase = SomeMoneyAmt 'Base
 
-type SomeMoneyQuote = SomeMoneyAmt (Proxy 'Quote)
+type SomeMoneyQuote = SomeMoneyAmt 'Quote
 
-instance Eq (SomeMoneyAmt dim) where
+instance Eq (SomeMoneyAmt crel) where
   (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
     case testEquality sx sy of
       Just Refl -> x == y
       Nothing -> False
 
-deriving stock instance Show (SomeMoneyAmt dim)
+deriving stock instance Show (SomeMoneyAmt crel)
 
 instance
-  ( Show (Lookup dim LCSU')
+  ( Show unit,
+    Typeable unit,
+    Lookup (MoneyDim crel) LCSU' ~ unit
   ) =>
-  TryFrom Rational (SomeMoneyAmt dim)
+  TryFrom Rational (SomeMoneyAmt crel)
   where
   tryFrom raw
     | raw > 0 && rounded > 0 =
@@ -299,16 +307,16 @@ unQu :: Qu a lcsu n -> n
 unQu (Unsafe.Qu x) = x
 
 roundMoneyAmt ::
-  forall dim act.
+  forall crel act.
   Rational ->
   Either
-    (TryFromException Rational (MoneyAmt dim act))
-    (MoneyAmt dim act)
+    (TryFromException Rational (MoneyAmt crel act))
+    (MoneyAmt crel act)
 roundMoneyAmt raw =
   if raw >= 0 && rounded >= 0
     then
       bimap
-        ( withTarget @(MoneyAmt dim act)
+        ( withTarget @(MoneyAmt crel act)
             . withSource raw
         )
         ( MoneyAmt
@@ -361,7 +369,7 @@ instance (SingI act) => ToRequestParam (MoneyBase act) where
       SBuy -> toTextParam $ success amt
       SSell -> toTextParam $ (-1) * success amt
     where
-      success :: MoneyAmt dim act -> Rational
+      success :: MoneyAmt crel act -> Rational
       success = abs . from . unQu . unMoneyAmt
 
 instance ToRequestParam (QuotePerBase act) where
@@ -386,12 +394,11 @@ moneyQuoteSell =
   moneyQQ @'Quote @'Sell
 
 moneyQQ ::
-  forall (crel :: CurrencyRelation) (act :: ExchangeAction) dim.
+  forall (crel :: CurrencyRelation) (act :: ExchangeAction).
   ( SingI crel,
     SingI act,
     Typeable crel,
-    Typeable act,
-    dim ~ Proxy crel
+    Typeable act
   ) =>
   QuasiQuoter
 moneyQQ =
@@ -403,7 +410,7 @@ moneyQQ =
         \raw ->
           case tryReadViaRatio
             @Rational
-            @(MoneyAmt dim act)
+            @(MoneyAmt crel act)
             raw of
             Left e -> fail $ show e
             Right (MoneyAmt x) -> do
@@ -418,22 +425,22 @@ moneyQQ =
               case (sing :: Sing crel, sing :: Sing act) of
                 (SBase, SBuy) -> do
                   TH.SigE exp
-                    <$> [t|MoneyAmt (Proxy 'Base) 'Buy|]
+                    <$> [t|MoneyAmt 'Base 'Buy|]
                 (SBase, SSell) -> do
                   TH.SigE exp
-                    <$> [t|MoneyAmt (Proxy 'Base) 'Sell|]
+                    <$> [t|MoneyAmt 'Base 'Sell|]
                 (SQuote, SBuy) -> do
                   TH.SigE exp
-                    <$> [t|MoneyAmt (Proxy 'Quote) 'Buy|]
+                    <$> [t|MoneyAmt 'Quote 'Buy|]
                 (SQuote, SSell) -> do
                   TH.SigE exp
-                    <$> [t|MoneyAmt (Proxy 'Quote) 'Sell|]
+                    <$> [t|MoneyAmt 'Quote 'Sell|]
     }
   where
     failure :: Text -> a
     failure field =
       error $
-        showType @(MoneyAmt dim act)
+        showType @(MoneyAmt crel act)
           <> " "
           <> field
           <> " is not implemented"
