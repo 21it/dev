@@ -32,7 +32,7 @@ where
 
 import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
-import BitfinexClient.Import.External hiding ((%))
+import BitfinexClient.Import.External hiding (exp, (%))
 import BitfinexClient.Util
 import qualified Data.Aeson as A
 import Data.Metrology.Poly as Metro
@@ -387,7 +387,9 @@ moneyQuoteSell =
 
 moneyQQ ::
   forall (crel :: CurrencyRelation) (act :: ExchangeAction) dim.
-  ( Typeable crel,
+  ( SingI crel,
+    SingI act,
+    Typeable crel,
     Typeable act,
     dim ~ Proxy crel
   ) =>
@@ -404,11 +406,28 @@ moneyQQ =
             @(MoneyAmt dim act)
             raw of
             Left e -> fail $ show e
-            Right (MoneyAmt x) ->
-              [e|
-                MoneyAmt $
-                  Unsafe.Qu $(TH.lift $ unQu x)
-                |]
+            Right (MoneyAmt x) -> do
+              --
+              -- TODO : remove unsafe, use corresponding units
+              --
+              exp <-
+                [e|
+                  MoneyAmt $
+                    Unsafe.Qu $(TH.lift $ unQu x)
+                  |]
+              case (sing :: Sing crel, sing :: Sing act) of
+                (SBase, SBuy) -> do
+                  TH.SigE exp
+                    <$> [t|MoneyAmt (Proxy 'Base) 'Buy|]
+                (SBase, SSell) -> do
+                  TH.SigE exp
+                    <$> [t|MoneyAmt (Proxy 'Base) 'Sell|]
+                (SQuote, SBuy) -> do
+                  TH.SigE exp
+                    <$> [t|MoneyAmt (Proxy 'Quote) 'Buy|]
+                (SQuote, SSell) -> do
+                  TH.SigE exp
+                    <$> [t|MoneyAmt (Proxy 'Quote) 'Sell|]
     }
   where
     failure :: Text -> a
