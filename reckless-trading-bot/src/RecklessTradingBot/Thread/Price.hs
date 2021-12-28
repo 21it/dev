@@ -32,7 +32,7 @@ createUpdate cfg = do
       sleep [seconds|60|]
     Right (buy, sell) -> do
       priceEnt@(Entity _ price) <-
-        Price.createUpdate sym (from buy) (from sell)
+        Price.createUpdate sym buy sell
       when (priceUpdatedAt price == priceInsertedAt price) $
         putCurrPrice priceEnt
   where
@@ -43,9 +43,9 @@ createUpdate cfg = do
       forall (act :: Bfx.ExchangeAction) m.
       ( Env m,
         SingI act,
-        Bfx.ToRequestParam (Bfx.Rounded (Bfx.MoneyBase act))
+        Bfx.ToRequestParam (Bfx.MoneyBase act)
       ) =>
-      ExceptT Bfx.Error m (Bfx.Rounded (Bfx.QuotePerBase act))
+      ExceptT Bfx.Error m (Bfx.QuotePerBase act)
     getPrice = do
       Bfx.marketAveragePrice
         ( case sing :: Sing act of

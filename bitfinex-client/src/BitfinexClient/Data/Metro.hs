@@ -18,11 +18,14 @@ module BitfinexClient.Data.Metro
     QuotePerBase',
     SomeQuotePerBase (..),
     quotePerBaseAmt,
+    roundMoneyAmt,
+    roundQuotePerBase,
   )
 where
 
+import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
-import BitfinexClient.Import.External as Ext
+import BitfinexClient.Import.External hiding ((%))
 import BitfinexClient.Util
 import qualified Data.Aeson as A
 import Data.Metrology.Poly as Metro
@@ -98,17 +101,20 @@ type MoneyBase = MoneyAmt MoneyBaseDim
 
 type MoneyQuote = MoneyAmt MoneyQuoteDim
 
-instance From (Ratio Natural) (MoneyAmt dim act) where
-  from =
-    MoneyAmt . Unsafe.Qu
+instance TryFrom (Ratio Natural) (MoneyAmt dim act) where
+  tryFrom =
+    tryFrom @Rational `composeTryLhs` from
 
 instance From (MoneyAmt dim act) (Ratio Natural) where
   from =
     unQu . unMoneyAmt
 
 instance TryFrom Rational (MoneyAmt dim act) where
-  tryFrom =
-    from @(Ratio Natural) `composeTryRhs` tryFrom
+  tryFrom raw = do
+    amt <- roundMoneyAmt raw
+    if from amt == raw
+      then pure amt
+      else Left $ TryFromException raw Nothing
 
 instance From (MoneyAmt dim act) Rational where
   from =
@@ -127,12 +133,11 @@ instance
   PersistField (MoneyAmt dim act)
   where
   toPersistValue =
-    PersistRational . via @(Ratio Natural)
+    PersistRational . from
   fromPersistValue raw =
     case raw of
       PersistRational x ->
-        first (const failure) $
-          from @(Ratio Natural) `composeTryRhs` tryFrom $ x
+        first (const failure) $ tryFrom x
       _ ->
         Left failure
     where
@@ -151,7 +156,7 @@ instance
   parseJSON = A.withText
     (showType @(MoneyAmt dim act))
     $ \x0 -> do
-      case readViaRatio @(Ratio Natural) x0 of
+      case tryReadViaRatio @(Ratio Natural) x0 of
         Left x -> fail $ show x
         Right x -> pure x
 
@@ -185,25 +190,24 @@ instance
   ) =>
   TryFrom Rational (SomeMoneyAmt dim)
   where
-  tryFrom =
-    \case
-      rat
-        | rat > 0 ->
-          Right
-            . SomeMoneyAmt (sing :: Sing 'Buy)
-            . MoneyAmt
-            . Unsafe.Qu
-            $ absRat rat
-      rat
-        | rat < 0 ->
-          Right
-            . SomeMoneyAmt (sing :: Sing 'Sell)
-            . MoneyAmt
-            . Unsafe.Qu
-            $ absRat rat
-      rat ->
-        Left $
-          TryFromException rat Nothing
+  tryFrom raw
+    | raw > 0 && rounded > 0 =
+      Right
+        . SomeMoneyAmt (sing :: Sing 'Buy)
+        . MoneyAmt
+        . Unsafe.Qu
+        $ absRat raw
+    | raw < 0 && rounded < 0 =
+      Right
+        . SomeMoneyAmt (sing :: Sing 'Sell)
+        . MoneyAmt
+        . Unsafe.Qu
+        $ absRat raw
+    | otherwise =
+      Left $
+        TryFromException raw Nothing
+    where
+      rounded = roundMoneyAmt' raw
 
 --
 -- QuotePerBase sugar
@@ -240,8 +244,11 @@ instance From (QuotePerBase act) (Ratio Natural) where
     (# quotePerBaseAmt) . unQuotePerBase
 
 instance TryFrom Rational (QuotePerBase act) where
-  tryFrom =
-    tryVia @(Ratio Natural)
+  tryFrom raw = do
+    rate <- roundQuotePerBase raw
+    if from rate == raw
+      then pure rate
+      else Left $ TryFromException raw Nothing
 
 instance From (QuotePerBase act) Rational where
   from =
@@ -285,3 +292,74 @@ deriving stock instance Show SomeQuotePerBase
 
 unQu :: Qu a lcsu n -> n
 unQu (Unsafe.Qu x) = x
+
+roundMoneyAmt ::
+  forall dim act.
+  Rational ->
+  Either
+    (TryFromException Rational (MoneyAmt dim act))
+    (MoneyAmt dim act)
+roundMoneyAmt raw =
+  if raw >= 0 && rounded >= 0
+    then
+      bimap
+        ( withTarget @(MoneyAmt dim act)
+            . withSource raw
+        )
+        ( MoneyAmt
+            . Unsafe.Qu
+        )
+        $ tryFrom @Rational @(Ratio Natural) rounded
+    else
+      Left $
+        TryFromException raw Nothing
+  where
+    rounded =
+      roundMoneyAmt' raw
+
+roundQuotePerBase ::
+  forall act.
+  Rational ->
+  Either
+    (TryFromException Rational (QuotePerBase act))
+    (QuotePerBase act)
+roundQuotePerBase raw =
+  if raw > 0 && rounded > 0
+    then
+      bimap
+        ( withTarget @(QuotePerBase act)
+            . withSource raw
+        )
+        ( QuotePerBase
+            . (% quotePerBaseAmt)
+        )
+        $ tryFrom @Rational @(Ratio Natural) rounded
+    else
+      Left $
+        TryFromException raw Nothing
+  where
+    rounded =
+      roundQuotePerBase' raw
+
+roundMoneyAmt' :: Rational -> Rational
+roundMoneyAmt' =
+  dpRound 8
+
+roundQuotePerBase' :: Rational -> Rational
+roundQuotePerBase' =
+  sdRound 5
+    . dpRound 8
+
+instance (SingI act) => ToRequestParam (MoneyBase act) where
+  toTextParam amt =
+    case sing :: Sing act of
+      SBuy -> toTextParam $ success amt
+      SSell -> toTextParam $ (-1) * success amt
+    where
+      success :: MoneyAmt dim act -> Rational
+      success = abs . from . unQu . unMoneyAmt
+
+instance ToRequestParam (QuotePerBase act) where
+  toTextParam =
+    toTextParam
+      . from @(QuotePerBase act) @(Ratio Natural)

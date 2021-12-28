@@ -31,7 +31,7 @@ create cfg (Entity priceId price) = do
     enterPrice@(Bfx.QuotePerBase enterPrice') =
       priceBuy price
     enterGain@(Bfx.MoneyAmt enterGain') =
-      from $ tradeConfMinBuyAmt cfg
+      tradeConfMinBuyAmt cfg
     newOrder ct =
       Order
         { --

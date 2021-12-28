@@ -16,13 +16,12 @@ spec :: Spec
 spec = before newEnv $
   describe "ToJSON" $
     itRight "Request" . const $ do
-      amt <- bfxRoundT testAmt
-      rate <- bfxRoundT =<< tryFromT @(Ratio Natural) (1 % 1234)
+      rate <- tryFromT @(Ratio Natural) (1 % 1234)
       let req =
             SubmitOrder.Request
-              amt
+              testAmt
               [currencyPair|ADABTC|]
-              (rate :: Rounded (QuotePerBase 'Buy))
+              (rate :: QuotePerBase 'Buy)
               SubmitOrder.optsPostOnly
       liftIO $
         A.encode req

@@ -48,11 +48,11 @@ symbolsDetails =
 
 marketAveragePrice ::
   ( MonadIO m,
-    ToRequestParam (Rounded (MoneyBase act))
+    ToRequestParam (MoneyBase act)
   ) =>
-  Rounded (MoneyBase act) ->
+  MoneyBase act ->
   CurrencyPair ->
-  ExceptT Error m (Rounded (QuotePerBase act))
+  ExceptT Error m (QuotePerBase act)
 marketAveragePrice amt sym =
   Generic.pub
     @'MarketAveragePrice
@@ -101,11 +101,12 @@ spendableExchangeBalance ::
   Env ->
   CurrencyCode 'Base ->
   ExceptT Error m (MoneyBase 'Sell)
-spendableExchangeBalance env cc =
+spendableExchangeBalance env cc = do
   --
   -- TODO : implement QQ for Money amounts
   --
-  maybe (from @(Ratio Natural) 0) Wallets.availableBalance
+  noMoney <- tryFromT @(Ratio Natural) 0
+  maybe noMoney Wallets.availableBalance
     . Map.lookup Wallets.Exchange
     . Map.findWithDefault mempty cc
     <$> wallets env
@@ -175,11 +176,11 @@ verifyOrder env id0 req = do
                   SubmitOrder.clientId opts
                     <|> orderClientId remOrd,
                 orderAmount =
-                  from $ SubmitOrder.amount req,
+                  SubmitOrder.amount req,
                 orderSymbol =
                   SubmitOrder.symbol req,
                 orderRate =
-                  from $ SubmitOrder.rate req,
+                  SubmitOrder.rate req,
                 orderStatus =
                   orderStatus remOrd
               }
@@ -197,13 +198,14 @@ verifyOrder env id0 req = do
 submitOrder ::
   forall act m.
   ( MonadIO m,
-    ToRequestParam (Rounded (MoneyBase act)),
+    ToRequestParam (MoneyBase act),
+    ToRequestParam (QuotePerBase act),
     SingI act
   ) =>
   Env ->
-  Rounded (MoneyBase act) ->
+  MoneyBase act ->
   CurrencyPair ->
-  Rounded (QuotePerBase act) ->
+  QuotePerBase act ->
   SubmitOrder.Options ->
   ExceptT Error m (Order act 'Remote)
 submitOrder env amt sym rate opts = do
@@ -221,14 +223,14 @@ submitOrder env amt sym rate opts = do
 submitOrderMaker ::
   forall act m.
   ( MonadIO m,
-    ToRequestParam (Rounded (MoneyBase act)),
-    SingI act,
-    Typeable act
+    ToRequestParam (MoneyBase act),
+    ToRequestParam (QuotePerBase act),
+    SingI act
   ) =>
   Env ->
-  Rounded (MoneyBase act) ->
+  MoneyBase act ->
   CurrencyPair ->
-  Rounded (QuotePerBase act) ->
+  QuotePerBase act ->
   SubmitOrder.Options ->
   ExceptT Error m (Order act 'Remote)
 submitOrderMaker env amt sym rate0 opts0 =
@@ -242,7 +244,7 @@ submitOrderMaker env amt sym rate0 opts0 =
         }
     this ::
       Int ->
-      Rounded (QuotePerBase act) ->
+      QuotePerBase act ->
       ExceptT Error m (Order act 'Remote)
     this attempt rate = do
       order <- submitOrder env amt sym rate opts
@@ -253,11 +255,7 @@ submitOrderMaker env amt sym rate0 opts0 =
             . throwE
             . ErrorOrderState
             $ SomeOrder sing order
-          newRate <-
-            bfxRoundT
-              . Math.tweakMakerRate
-              $ from rate
-          this (attempt + 1) newRate
+          this (attempt + 1) $ Math.tweakMakerRate rate
 
 cancelOrderMulti ::
   ( MonadIO m
@@ -339,9 +337,9 @@ submitCounterOrder' ::
   ( MonadIO m
   ) =>
   ( Env ->
-    Rounded (MoneyBase 'Sell) ->
+    MoneyBase 'Sell ->
     CurrencyPair ->
-    Rounded (QuotePerBase 'Sell) ->
+    QuotePerBase 'Sell ->
     SubmitOrder.Options ->
     ExceptT Error m (Order 'Sell 'Remote)
   ) ->
@@ -356,33 +354,33 @@ submitCounterOrder' submit env id0 feeB feeQ prof opts = do
   someRemOrd@(SomeOrder remSing remOrder) <- getOrder env id0
   case remSing of
     SBuy | orderStatus remOrder == Executed -> do
-      let (_, exitAmt0, exitRate0) =
+      let (_, exitAmt, exitRate) =
             Math.newCounterOrder
               (orderAmount remOrder)
               (orderRate remOrder)
               feeB
               feeQ
               prof
-      exitAmt <-
-        bfxRoundT exitAmt0
       currentRate <-
         marketAveragePrice exitAmt $
           orderSymbol remOrder
-      exitRate <-
-        bfxRoundT
-          . max exitRate0
-          $ from currentRate
-      submit env exitAmt (orderSymbol remOrder) exitRate opts
+      submit
+        env
+        exitAmt
+        (orderSymbol remOrder)
+        (max exitRate currentRate)
+        opts
     _ ->
-      throwE $ ErrorOrderState someRemOrd
+      throwE $
+        ErrorOrderState someRemOrd
 
 dumpIntoQuote' ::
   ( MonadIO m
   ) =>
   ( Env ->
-    Rounded (MoneyBase 'Sell) ->
+    MoneyBase 'Sell ->
     CurrencyPair ->
-    Rounded (QuotePerBase 'Sell) ->
+    QuotePerBase 'Sell ->
     SubmitOrder.Options ->
     ExceptT Error m (Order 'Sell 'Remote)
   ) ->
@@ -391,11 +389,8 @@ dumpIntoQuote' ::
   SubmitOrder.Options ->
   ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuote' submit env sym opts = do
-  amt <-
-    bfxRoundT
-      =<< spendableExchangeBalance env (currencyPairBase sym)
-  rate <-
-    marketAveragePrice amt sym
+  amt <- spendableExchangeBalance env (currencyPairBase sym)
+  rate <- marketAveragePrice amt sym
   submit env amt sym rate opts
 
 dumpIntoQuote ::

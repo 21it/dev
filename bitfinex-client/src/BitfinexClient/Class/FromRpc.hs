@@ -7,7 +7,6 @@ module BitfinexClient.Class.FromRpc
   )
 where
 
-import BitfinexClient.Class.BfxRound
 import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
@@ -67,11 +66,7 @@ instance
       Nothing -> Left "Incorrect ExchangeAction"
       Just Refl -> pure order
 
-instance
-  FromRpc
-    'MarketAveragePrice
-    (Rounded (QuotePerBase act))
-  where
+instance FromRpc 'MarketAveragePrice (QuotePerBase act) where
   fromRpc (RawResponse raw) = do
     x <-
       maybeToRight
@@ -167,7 +162,7 @@ instance
             ( const $
                 "Max Order Size is invalid " <> show maxOrderAmt0
             )
-            $ readViaRatio @(Ratio Natural) maxOrderAmt0
+            $ tryReadViaRatio @(Ratio Natural) maxOrderAmt0
         minOrderAmt0 <-
           maybeToRight "Min Order Size is missing" $
             x ^? key "minimum_order_size" . _String
@@ -176,7 +171,7 @@ instance
             ( const $
                 "Min Order Size is invalid " <> show minOrderAmt0
             )
-            $ readViaRatio @(Ratio Natural) minOrderAmt0
+            $ tryReadViaRatio @(Ratio Natural) minOrderAmt0
         pure
           ( sym,
             CurrencyPairConf

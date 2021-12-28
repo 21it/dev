@@ -18,8 +18,8 @@ eraseFirst =
 
 testAmt :: MoneyBase act
 testAmt =
-  from @(Ratio Natural) $
-    200200201 % 100000000
+  MoneyAmt $
+    quOf (200200201 % 100000000) MoneyBaseAmt
 
 itRight ::
   ( Show a

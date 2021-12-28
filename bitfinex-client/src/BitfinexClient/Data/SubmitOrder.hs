@@ -11,13 +11,10 @@ where
 import BitfinexClient.Import
 import qualified Data.Aeson as A
 
---
--- TODO : quote and base type parameters
---
 data Request (act :: ExchangeAction) = Request
-  { amount :: Rounded (MoneyBase act),
+  { amount :: MoneyBase act,
     symbol :: CurrencyPair,
-    rate :: Rounded (QuotePerBase act),
+    rate :: QuotePerBase act,
     options :: Options
   }
   deriving stock (Eq, Ord, Show)
@@ -46,7 +43,8 @@ optsPostOnly =
     }
 
 instance
-  ( ToRequestParam (Rounded (MoneyBase act)),
+  ( ToRequestParam (MoneyBase act),
+    ToRequestParam (QuotePerBase act),
     SingI act
   ) =>
   ToJSON (Request act)

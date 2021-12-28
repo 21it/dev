@@ -9,7 +9,6 @@ module RecklessTradingBot.Data.Type
     OrderStatus (..),
     newOrderStatus,
     tryFromT,
-    bfxRoundT,
   )
 where
 
@@ -108,14 +107,3 @@ tryFromT =
   except
     . first (ErrorTryFrom . SomeException)
     . tryFrom
-
-bfxRoundT ::
-  ( Bfx.BfxRound a,
-    Typeable a,
-    Monad m
-  ) =>
-  a ->
-  ExceptT Error m (Bfx.Rounded a)
-bfxRoundT =
-  withExceptT ErrorBfx
-    . Bfx.bfxRoundT
