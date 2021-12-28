@@ -101,12 +101,8 @@ spendableExchangeBalance ::
   Env ->
   CurrencyCode 'Base ->
   ExceptT Error m (MoneyBase 'Sell)
-spendableExchangeBalance env cc = do
-  --
-  -- TODO : implement QQ for Money amounts
-  --
-  noMoney <- tryFromT @(Ratio Natural) 0
-  maybe noMoney Wallets.availableBalance
+spendableExchangeBalance env cc =
+  maybe [moneyBaseSell|0|] Wallets.availableBalance
     . Map.lookup Wallets.Exchange
     . Map.findWithDefault mempty cc
     <$> wallets env

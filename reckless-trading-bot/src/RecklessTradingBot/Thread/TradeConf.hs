@@ -45,8 +45,7 @@ updateTradeConf syms fees varCfg = do
       (ErrorRuntime $ "Missing CurrencyPair" <> show sym)
       $ Map.lookup sym syms
   let amtNoFee = Bfx.currencyPairMinOrderAmt bfxCfg
-  noMoney <- tryFromT @(Ratio Natural) 0
-  when (amtNoFee <= noMoney)
+  when (amtNoFee <= [moneyBaseBuy|0|])
     . throwE
     . ErrorRuntime
     $ "Wrong MoneyAmt " <> show amtNoFee

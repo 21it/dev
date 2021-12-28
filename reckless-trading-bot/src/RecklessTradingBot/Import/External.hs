@@ -2,6 +2,12 @@
 
 module RecklessTradingBot.Import.External (module X) where
 
+import BitfinexClient.Data.Metro as X
+  ( moneyBaseBuy,
+    moneyBaseSell,
+    moneyQuoteBuy,
+    moneyQuoteSell,
+  )
 import BitfinexClient.Data.QQ as X
 import BitfinexClient.Import.Witch as X
 import BitfinexClient.Util as X

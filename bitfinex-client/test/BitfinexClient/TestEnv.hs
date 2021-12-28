@@ -12,14 +12,18 @@ where
 import BitfinexClient.Import
 import qualified Test.Hspec as HS
 
-eraseFirst :: Bifunctor f => f a b -> f () b
+eraseFirst :: (Bifunctor f) => f a b -> f () b
 eraseFirst =
   first $ const ()
 
-testAmt :: MoneyBase act
+testAmt ::
+  forall act.
+  (SingI act) =>
+  MoneyBase act
 testAmt =
-  MoneyAmt $
-    quOf (200200201 % 100000000) MoneyBaseAmt
+  case sing :: Sing act of
+    SBuy -> [moneyBaseBuy|2.002002|]
+    SSell -> [moneyBaseSell|2.002002|]
 
 itRight ::
   ( Show a

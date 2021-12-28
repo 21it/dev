@@ -1,6 +1,9 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-deprecations #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Metro
@@ -20,6 +23,10 @@ module BitfinexClient.Data.Metro
     quotePerBaseAmt,
     roundMoneyAmt,
     roundQuotePerBase,
+    moneyBaseBuy,
+    moneyBaseSell,
+    moneyQuoteBuy,
+    moneyQuoteSell,
   )
 where
 
@@ -33,22 +40,20 @@ import Data.Metrology.Poly as Metro
 -- TODO : somehow remove unsafe
 --
 import qualified Data.Metrology.Unsafe as Unsafe
+import Language.Haskell.TH.Quote
+import qualified Language.Haskell.TH.Syntax as TH
 import qualified Witch
 import qualified Prelude
 
-data MoneyBaseDim
+instance Dimension (Proxy 'Base)
 
-instance Dimension MoneyBaseDim
-
-data MoneyQuoteDim
-
-instance Dimension MoneyQuoteDim
+instance Dimension (Proxy 'Quote)
 
 data MoneyBaseAmt = MoneyBaseAmt
 
 instance Unit MoneyBaseAmt where
   type BaseUnit MoneyBaseAmt = Canonical
-  type DimOfUnit MoneyBaseAmt = MoneyBaseDim
+  type DimOfUnit MoneyBaseAmt = Proxy 'Base
 
 instance Show MoneyBaseAmt where
   show = const "MoneyBaseAmt"
@@ -57,22 +62,22 @@ data MoneyQuoteAmt = MoneyQuoteAmt
 
 instance Unit MoneyQuoteAmt where
   type BaseUnit MoneyQuoteAmt = Canonical
-  type DimOfUnit MoneyQuoteAmt = MoneyQuoteDim
+  type DimOfUnit MoneyQuoteAmt = Proxy 'Quote
 
 instance Show MoneyQuoteAmt where
   show = const "MoneyQuoteAmt"
 
 type LCSU' =
   MkLCSU
-    '[ (MoneyBaseDim, MoneyBaseAmt),
-       (MoneyQuoteDim, MoneyQuoteAmt)
+    '[ (Proxy 'Base, MoneyBaseAmt),
+       (Proxy 'Quote, MoneyQuoteAmt)
      ]
 
 type MoneyBase' =
-  MkQu_DLN MoneyBaseDim LCSU' (Ratio Natural)
+  MkQu_DLN (Proxy 'Base) LCSU' (Ratio Natural)
 
 type MoneyQuote' =
-  MkQu_DLN MoneyQuoteDim LCSU' (Ratio Natural)
+  MkQu_DLN (Proxy 'Quote) LCSU' (Ratio Natural)
 
 --
 -- MoneyAmt sugar
@@ -97,9 +102,9 @@ instance
       <> " "
       <> show (undefined :: unit)
 
-type MoneyBase = MoneyAmt MoneyBaseDim
+type MoneyBase = MoneyAmt (Proxy 'Base)
 
-type MoneyQuote = MoneyAmt MoneyQuoteDim
+type MoneyQuote = MoneyAmt (Proxy 'Quote)
 
 instance TryFrom (Ratio Natural) (MoneyAmt dim act) where
   tryFrom =
@@ -173,9 +178,9 @@ data SomeMoneyAmt dim
       (Sing act)
       (MoneyAmt dim act)
 
-type SomeMoneyBase = SomeMoneyAmt MoneyBaseDim
+type SomeMoneyBase = SomeMoneyAmt (Proxy 'Base)
 
-type SomeMoneyQuote = SomeMoneyAmt MoneyQuoteDim
+type SomeMoneyQuote = SomeMoneyAmt (Proxy 'Quote)
 
 instance Eq (SomeMoneyAmt dim) where
   (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
@@ -363,3 +368,53 @@ instance ToRequestParam (QuotePerBase act) where
   toTextParam =
     toTextParam
       . from @(QuotePerBase act) @(Ratio Natural)
+
+moneyBaseBuy :: QuasiQuoter
+moneyBaseBuy =
+  moneyQQ @'Base @'Buy
+
+moneyBaseSell :: QuasiQuoter
+moneyBaseSell =
+  moneyQQ @'Base @'Sell
+
+moneyQuoteBuy :: QuasiQuoter
+moneyQuoteBuy =
+  moneyQQ @'Quote @'Buy
+
+moneyQuoteSell :: QuasiQuoter
+moneyQuoteSell =
+  moneyQQ @'Quote @'Sell
+
+moneyQQ ::
+  forall (crel :: CurrencyRelation) (act :: ExchangeAction) dim.
+  ( Typeable crel,
+    Typeable act,
+    dim ~ Proxy crel
+  ) =>
+  QuasiQuoter
+moneyQQ =
+  QuasiQuoter
+    { quoteDec = failure "quoteDec",
+      quoteType = failure "quoteType",
+      quotePat = failure "quotePat",
+      quoteExp =
+        \raw ->
+          case tryReadViaRatio
+            @Rational
+            @(MoneyAmt dim act)
+            raw of
+            Left e -> fail $ show e
+            Right (MoneyAmt x) ->
+              [e|
+                MoneyAmt $
+                  Unsafe.Qu $(TH.lift $ unQu x)
+                |]
+    }
+  where
+    failure :: Text -> a
+    failure field =
+      error $
+        showType @(MoneyAmt dim act)
+          <> " "
+          <> field
+          <> " is not implemented"
