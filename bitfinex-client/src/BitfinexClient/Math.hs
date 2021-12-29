@@ -11,6 +11,7 @@ import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
+import Data.Metrology.Poly ((#))
 
 addFee ::
   Money crel act ->
@@ -25,9 +26,11 @@ tweakMakerRate ::
   ( SingI act
   ) =>
   QuotePerBase act ->
-  QuotePerBase act
-tweakMakerRate (QuotePerBase rate) =
-  QuotePerBase $ rate |* tweak
+  Either
+    (TryFromException Rational (QuotePerBase act))
+    (QuotePerBase act)
+tweakMakerRate rate@(QuotePerBase rate') =
+  tweakMakerRateRec rate rate' tweak
   where
     --
     -- TODO : use pip
@@ -37,6 +40,23 @@ tweakMakerRate (QuotePerBase rate) =
       case sing :: Sing act of
         SBuy -> 999 % 1000
         SSell -> 1001 % 1000
+
+tweakMakerRateRec ::
+  QuotePerBase act ->
+  QuotePerBase' ->
+  Ratio Natural ->
+  Either
+    (TryFromException Rational (QuotePerBase act))
+    (QuotePerBase act)
+tweakMakerRateRec rate rate' tweak =
+  case roundQuotePerBase
+    . from
+    $ newRate' # quotePerBaseAmt of
+    Left e -> Left e
+    Right x | x /= rate -> Right x
+    Right {} -> tweakMakerRateRec rate newRate' tweak
+  where
+    newRate' = rate' |* tweak
 
 newCounterOrder ::
   Money 'Base 'Buy ->

@@ -88,7 +88,7 @@ spec = before newEnv $ do
 --    itRight "submitCounterOrderMaker" $ \env ->
 --      Bitfinex.submitCounterOrderMaker
 --        env
---        (OrderId 82360208363)
+--        (OrderId 0)
 --        [feeRateMakerBase| 0.001 |]
 --        [feeRateMakerQuote| 0.001 |]
 --        [profitRate| 0.001 |]

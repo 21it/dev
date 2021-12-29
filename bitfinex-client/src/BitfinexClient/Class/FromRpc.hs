@@ -223,17 +223,17 @@ instance
               "CurrencyCode is missing"
               (x ^? nth 1 . _String)
         balance <-
-          first show . tryFrom @Rational
+          first show . roundMoney
             =<< maybeToRight
               "Balance is missing"
               (toRational <$> x ^? nth 2 . _Number)
         unsettledInterest <-
-          first show . tryFrom @Rational
+          first show . roundMoney
             =<< maybeToRight
               "UnsettledBalance is missing"
               (toRational <$> x ^? nth 3 . _Number)
         availableBalance <-
-          first show . tryFrom @Rational
+          first show . roundMoney
             =<< maybeToRight
               "AvailableBalance is missing"
               (toRational <$> x ^? nth 4 . _Number)

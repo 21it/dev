@@ -221,7 +221,8 @@ submitOrderMaker ::
   ( MonadIO m,
     ToRequestParam (Money 'Base act),
     ToRequestParam (QuotePerBase act),
-    SingI act
+    SingI act,
+    Typeable act
   ) =>
   Env ->
   Money 'Base act ->
@@ -251,7 +252,9 @@ submitOrderMaker env amt sym rate0 opts0 =
             . throwE
             . ErrorOrderState
             $ SomeOrder sing order
-          this (attempt + 1) $ Math.tweakMakerRate rate
+          newRate <-
+            tryErrorT $ Math.tweakMakerRate rate
+          this (attempt + 1) newRate
 
 cancelOrderMulti ::
   ( MonadIO m
