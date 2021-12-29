@@ -48,9 +48,9 @@ symbolsDetails =
 
 marketAveragePrice ::
   ( MonadIO m,
-    ToRequestParam (MoneyAmt 'Base act)
+    ToRequestParam (Money 'Base act)
   ) =>
-  MoneyAmt 'Base act ->
+  Money 'Base act ->
   CurrencyPair ->
   ExceptT Error m (QuotePerBase act)
 marketAveragePrice amt sym =
@@ -100,7 +100,7 @@ spendableExchangeBalance ::
   ) =>
   Env ->
   CurrencyCode 'Base ->
-  ExceptT Error m (MoneyAmt 'Base 'Sell)
+  ExceptT Error m (Money 'Base 'Sell)
 spendableExchangeBalance env cc =
   maybe [moneyBaseSell|0|] Wallets.availableBalance
     . Map.lookup Wallets.Exchange
@@ -194,12 +194,12 @@ verifyOrder env id0 req = do
 submitOrder ::
   forall act m.
   ( MonadIO m,
-    ToRequestParam (MoneyAmt 'Base act),
+    ToRequestParam (Money 'Base act),
     ToRequestParam (QuotePerBase act),
     SingI act
   ) =>
   Env ->
-  MoneyAmt 'Base act ->
+  Money 'Base act ->
   CurrencyPair ->
   QuotePerBase act ->
   SubmitOrder.Options ->
@@ -219,12 +219,12 @@ submitOrder env amt sym rate opts = do
 submitOrderMaker ::
   forall act m.
   ( MonadIO m,
-    ToRequestParam (MoneyAmt 'Base act),
+    ToRequestParam (Money 'Base act),
     ToRequestParam (QuotePerBase act),
     SingI act
   ) =>
   Env ->
-  MoneyAmt 'Base act ->
+  Money 'Base act ->
   CurrencyPair ->
   QuotePerBase act ->
   SubmitOrder.Options ->
@@ -333,7 +333,7 @@ submitCounterOrder' ::
   ( MonadIO m
   ) =>
   ( Env ->
-    MoneyAmt 'Base 'Sell ->
+    Money 'Base 'Sell ->
     CurrencyPair ->
     QuotePerBase 'Sell ->
     SubmitOrder.Options ->
@@ -374,7 +374,7 @@ dumpIntoQuote' ::
   ( MonadIO m
   ) =>
   ( Env ->
-    MoneyAmt 'Base 'Sell ->
+    Money 'Base 'Sell ->
     CurrencyPair ->
     QuotePerBase 'Sell ->
     SubmitOrder.Options ->

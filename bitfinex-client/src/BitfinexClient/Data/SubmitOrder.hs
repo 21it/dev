@@ -12,7 +12,7 @@ import BitfinexClient.Import
 import qualified Data.Aeson as A
 
 data Request (act :: ExchangeAction) = Request
-  { amount :: MoneyAmt 'Base act,
+  { amount :: Money 'Base act,
     symbol :: CurrencyPair,
     rate :: QuotePerBase act,
     options :: Options
@@ -43,7 +43,7 @@ optsPostOnly =
     }
 
 instance
-  ( ToRequestParam (MoneyAmt 'Base act),
+  ( ToRequestParam (Money 'Base act),
     ToRequestParam (QuotePerBase act),
     SingI act
   ) =>

@@ -13,11 +13,11 @@ import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
 
 addFee ::
-  MoneyAmt crel act ->
+  Money crel act ->
   FeeRate mrel crel ->
-  MoneyAmt crel act
+  Money crel act
 addFee amt fee =
-  MoneyAmt $
+  Money $
     unMoneyAmt amt |/ (1 - unFeeRate fee)
 
 tweakMakerRate ::
@@ -39,18 +39,18 @@ tweakMakerRate (QuotePerBase rate) =
         SSell -> 1001 % 1000
 
 newCounterOrder ::
-  MoneyAmt 'Base 'Buy ->
+  Money 'Base 'Buy ->
   QuotePerBase 'Buy ->
   FeeRate mrel0 'Base ->
   FeeRate mrel1 'Quote ->
   ProfitRate ->
-  ( MoneyAmt 'Quote 'Sell,
-    MoneyAmt 'Base 'Sell,
+  ( Money 'Quote 'Sell,
+    Money 'Base 'Sell,
     QuotePerBase 'Sell
   )
 newCounterOrder base0 rate0 feeB feeQ prof0 =
-  ( MoneyAmt exitQuoteGain,
-    MoneyAmt exitBaseLoss,
+  ( Money exitQuoteGain,
+    Money exitBaseLoss,
     QuotePerBase exitRate
   )
   where

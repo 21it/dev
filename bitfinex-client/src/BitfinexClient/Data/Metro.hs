@@ -5,15 +5,15 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Metro
-  ( MoneyAmt (..),
+  ( Money (..),
     SomeMoneyAmt (..),
     MoneyBase',
     MoneyBaseAmt (..),
     MoneyQuote',
     MoneyQuoteAmt (..),
     QuotePerBase (..),
-    QuotePerBase',
     SomeQuotePerBase (..),
+    QuotePerBase',
     quotePerBaseAmt,
     roundMoneyAmt,
     roundQuotePerBase,
@@ -26,10 +26,10 @@ where
 
 import BitfinexClient.Class.ToRequestParam
 import BitfinexClient.Data.Kind
-import BitfinexClient.Import.External hiding (exp, (%))
+import BitfinexClient.Import.External hiding ((%))
 import BitfinexClient.Util
 import qualified Data.Aeson as A
-import Data.Metrology.Poly as Metro
+import Data.Metrology.Poly
 import Language.Haskell.TH.Quote
 import qualified Language.Haskell.TH.Syntax as TH
 import qualified Witch
@@ -72,13 +72,13 @@ type MoneyQuote' =
   MkQu_DLN (MoneyDim 'Quote) LCSU' (Ratio Natural)
 
 --
--- MoneyAmt sugar
+-- Money sugar
 --
 
 newtype
-  MoneyAmt
+  Money
     (crel :: CurrencyRelation)
-    (act :: ExchangeAction) = MoneyAmt
+    (act :: ExchangeAction) = Money
   { unMoneyAmt ::
       MkQu_DLN (MoneyDim crel) LCSU' (Ratio Natural)
   }
@@ -95,9 +95,9 @@ instance
     Typeable unit,
     Lookup (MoneyDim crel) LCSU' ~ unit
   ) =>
-  Prelude.Show (MoneyAmt crel act)
+  Prelude.Show (Money crel act)
   where
-  show (MoneyAmt x) =
+  show (Money x) =
     ( case sing :: Sing crel of
         SBase -> showIn x MoneyBaseAmt
         SQuote -> showIn x MoneyQuoteAmt
@@ -108,7 +108,7 @@ instance
 instance
   ( SingI crel
   ) =>
-  TryFrom (Ratio Natural) (MoneyAmt crel act)
+  TryFrom (Ratio Natural) (Money crel act)
   where
   tryFrom =
     tryFrom @Rational `composeTryLhs` from
@@ -116,7 +116,7 @@ instance
 instance
   ( SingI crel
   ) =>
-  From (MoneyAmt crel act) (Ratio Natural)
+  From (Money crel act) (Ratio Natural)
   where
   from =
     unMkMoneyAmt
@@ -124,7 +124,7 @@ instance
 instance
   ( SingI crel
   ) =>
-  TryFrom Rational (MoneyAmt crel act)
+  TryFrom Rational (Money crel act)
   where
   tryFrom raw = do
     amt <- roundMoneyAmt raw
@@ -135,7 +135,7 @@ instance
 instance
   ( SingI crel
   ) =>
-  From (MoneyAmt crel act) Rational
+  From (Money crel act) Rational
   where
   from =
     via @(Ratio Natural)
@@ -147,14 +147,14 @@ deriving via
       Typeable crel,
       Typeable act
     ) =>
-    PersistFieldSql (MoneyAmt crel act)
+    PersistFieldSql (Money crel act)
 
 instance
   ( SingI crel,
     Typeable crel,
     Typeable act
   ) =>
-  PersistField (MoneyAmt crel act)
+  PersistField (Money crel act)
   where
   toPersistValue =
     PersistRational . from
@@ -166,7 +166,7 @@ instance
         Left failure
     where
       failure =
-        showType @(MoneyAmt crel act)
+        showType @(Money crel act)
           <> " PersistValue is invalid "
           <> show raw
 
@@ -175,10 +175,10 @@ instance
     Typeable crel,
     Typeable act
   ) =>
-  FromJSON (MoneyAmt crel act)
+  FromJSON (Money crel act)
   where
   parseJSON = A.withText
-    (showType @(MoneyAmt crel act))
+    (showType @(Money crel act))
     $ \x0 -> do
       case tryReadViaRatio @(Ratio Natural) x0 of
         Left x -> fail $ show x
@@ -191,11 +191,11 @@ instance
 data SomeMoneyAmt crel
   = forall act.
     ( SingI act,
-      Show (MoneyAmt crel act)
+      Show (Money crel act)
     ) =>
     SomeMoneyAmt
       (Sing act)
-      (MoneyAmt crel act)
+      (Money crel act)
 
 instance Eq (SomeMoneyAmt crel) where
   (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
@@ -234,19 +234,19 @@ mkMoneyAmt ::
   ( SingI crel
   ) =>
   Ratio Natural ->
-  MoneyAmt crel act
+  Money crel act
 mkMoneyAmt x =
   case sing :: Sing crel of
-    SBase -> MoneyAmt $ quOf x MoneyBaseAmt
-    SQuote -> MoneyAmt $ quOf x MoneyQuoteAmt
+    SBase -> Money $ quOf x MoneyBaseAmt
+    SQuote -> Money $ quOf x MoneyQuoteAmt
 
 unMkMoneyAmt ::
   forall crel act.
   ( SingI crel
   ) =>
-  MoneyAmt crel act ->
+  Money crel act ->
   Ratio Natural
-unMkMoneyAmt (MoneyAmt x) =
+unMkMoneyAmt (Money x) =
   case sing :: Sing crel of
     SBase -> x # MoneyBaseAmt
     SQuote -> x # MoneyQuoteAmt
@@ -276,7 +276,7 @@ instance (SingI act) => Prelude.Show (QuotePerBase act) where
 
 instance TryFrom (Ratio Natural) (QuotePerBase act) where
   tryFrom x
-    | x > 0 = Right . QuotePerBase $ x Metro.% quotePerBaseAmt
+    | x > 0 = Right . QuotePerBase $ x % quotePerBaseAmt
     | otherwise = Left $ TryFromException x Nothing
 
 instance From (QuotePerBase act) (Ratio Natural) where
@@ -336,13 +336,13 @@ roundMoneyAmt ::
   ) =>
   Rational ->
   Either
-    (TryFromException Rational (MoneyAmt crel act))
-    (MoneyAmt crel act)
+    (TryFromException Rational (Money crel act))
+    (Money crel act)
 roundMoneyAmt raw =
   if raw >= 0 && rounded >= 0
     then
       bimap
-        ( withTarget @(MoneyAmt crel act)
+        ( withTarget @(Money crel act)
             . withSource raw
         )
         mkMoneyAmt
@@ -390,14 +390,14 @@ roundQuotePerBase' =
 instance
   ( SingI act
   ) =>
-  ToRequestParam (MoneyAmt 'Base act)
+  ToRequestParam (Money 'Base act)
   where
   toTextParam amt =
     case sing :: Sing act of
       SBuy -> toTextParam $ success amt
       SSell -> toTextParam $ (-1) * success amt
     where
-      success :: MoneyAmt 'Base act -> Rational
+      success :: Money 'Base act -> Rational
       success = abs . from . unMkMoneyAmt
 
 instance ToRequestParam (QuotePerBase act) where
@@ -438,34 +438,34 @@ moneyQQ =
         \raw ->
           case tryReadViaRatio
             @Rational
-            @(MoneyAmt crel act)
+            @(Money crel act)
             raw of
             Left e -> fail $ show e
             Right x -> do
-              exp <-
+              expr <-
                 [e|
                   mkMoneyAmt
                     $(TH.lift $ unMkMoneyAmt x)
                   |]
               case (sing :: Sing crel, sing :: Sing act) of
                 (SBase, SBuy) -> do
-                  TH.SigE exp
-                    <$> [t|MoneyAmt 'Base 'Buy|]
+                  TH.SigE expr
+                    <$> [t|Money 'Base 'Buy|]
                 (SBase, SSell) -> do
-                  TH.SigE exp
-                    <$> [t|MoneyAmt 'Base 'Sell|]
+                  TH.SigE expr
+                    <$> [t|Money 'Base 'Sell|]
                 (SQuote, SBuy) -> do
-                  TH.SigE exp
-                    <$> [t|MoneyAmt 'Quote 'Buy|]
+                  TH.SigE expr
+                    <$> [t|Money 'Quote 'Buy|]
                 (SQuote, SSell) -> do
-                  TH.SigE exp
-                    <$> [t|MoneyAmt 'Quote 'Sell|]
+                  TH.SigE expr
+                    <$> [t|Money 'Quote 'Sell|]
     }
   where
     failure :: Text -> a
     failure field =
       error $
-        showType @(MoneyAmt crel act)
+        showType @(Money crel act)
           <> " "
           <> field
           <> " is not implemented"

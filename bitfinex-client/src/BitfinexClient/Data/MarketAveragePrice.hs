@@ -8,7 +8,7 @@ where
 import BitfinexClient.Import
 
 data Request (act :: ExchangeAction) = Request
-  { amount :: MoneyAmt 'Base act,
+  { amount :: Money 'Base act,
     symbol :: CurrencyPair
   }
   deriving stock

@@ -19,7 +19,7 @@ eraseFirst =
 testAmt ::
   forall act.
   (SingI act) =>
-  MoneyAmt 'Base act
+  Money 'Base act
 testAmt =
   case sing :: Sing act of
     SBuy -> [moneyBaseBuy|2.002002|]
