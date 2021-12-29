@@ -33,7 +33,13 @@ tweakMakerRate rate@(QuotePerBase rate') =
   tweakMakerRateRec rate rate' tweak
   where
     --
-    -- TODO : use pip
+    -- TODO : use pip when 'units' bug with
+    -- arithmetic underflow will be fixed.
+    -- This implementation is wrong for
+    -- non-negative types:
+    --
+    -- (|-|) :: (d1 @~ d2, Num n) => Qu d1 l n -> Qu d2 l n -> Qu d1 l n
+    -- a |-| b = a |+| qNegate b
     --
     tweak :: Ratio Natural
     tweak =

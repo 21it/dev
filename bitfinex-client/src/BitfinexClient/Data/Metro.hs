@@ -15,12 +15,16 @@ module BitfinexClient.Data.Metro
     SomeQuotePerBase (..),
     QuotePerBase',
     quotePerBaseAmt,
+    -- | Lossy constructors
     roundMoney,
     roundQuotePerBase,
+    -- | QuasiQuoters for literals in code
     moneyBaseBuy,
     moneyBaseSell,
     moneyQuoteBuy,
     moneyQuoteSell,
+    quotePerBaseBuy,
+    quotePerBaseSell,
   )
 where
 
@@ -160,10 +164,8 @@ instance
     PersistRational . from
   fromPersistValue raw =
     case raw of
-      PersistRational x ->
-        first (const failure) $ tryFrom x
-      _ ->
-        Left failure
+      PersistRational x -> first (const failure) $ tryFrom x
+      _ -> Left failure
     where
       failure =
         showType @(Money crel act)
@@ -297,9 +299,15 @@ instance From (QuotePerBase act) Rational where
 deriving via
   Rational
   instance
+    ( Typeable act
+    ) =>
     PersistFieldSql (QuotePerBase act)
 
-instance PersistField (QuotePerBase act) where
+instance
+  ( Typeable act
+  ) =>
+  PersistField (QuotePerBase act)
+  where
   toPersistValue =
     PersistRational . from
   fromPersistValue raw =
@@ -308,7 +316,9 @@ instance PersistField (QuotePerBase act) where
       _ -> Left failure
     where
       failure =
-        "QuotePerBase PersistValue is invalid " <> show raw
+        showType @(QuotePerBase act)
+          <> " PersistValue is invalid "
+          <> show raw
 
 --
 -- SomeQuotePerBase sugar
@@ -462,6 +472,56 @@ moneyQQ =
     failure field =
       error $
         showType @(Money crel act)
+          <> " "
+          <> field
+          <> " is not implemented"
+
+quotePerBaseBuy :: QuasiQuoter
+quotePerBaseBuy =
+  quotePerBaseQQ @'Buy
+
+quotePerBaseSell :: QuasiQuoter
+quotePerBaseSell =
+  quotePerBaseQQ @'Sell
+
+quotePerBaseQQ ::
+  forall (act :: ExchangeAction).
+  ( SingI act,
+    Typeable act
+  ) =>
+  QuasiQuoter
+quotePerBaseQQ =
+  QuasiQuoter
+    { quoteDec = failure "quoteDec",
+      quoteType = failure "quoteType",
+      quotePat = failure "quotePat",
+      quoteExp =
+        \raw ->
+          case tryReadViaRatio
+            @Rational
+            @(QuotePerBase act)
+            raw of
+            Left e -> fail $ show e
+            Right (QuotePerBase x) -> do
+              expr <-
+                [e|
+                  QuotePerBase $
+                    $(TH.lift $ x # quotePerBaseAmt)
+                      % quotePerBaseAmt
+                  |]
+              case sing :: Sing act of
+                SBuy -> do
+                  TH.SigE expr
+                    <$> [t|QuotePerBase 'Buy|]
+                SSell -> do
+                  TH.SigE expr
+                    <$> [t|QuotePerBase 'Sell|]
+    }
+  where
+    failure :: Text -> a
+    failure field =
+      error $
+        showType @(QuotePerBase act)
           <> " "
           <> field
           <> " is not implemented"

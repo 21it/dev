@@ -70,9 +70,9 @@ spec = before newEnv $ do
     Bitfinex.submitCounterOrderMaker
       env
       (OrderId 0)
-      [feeRateMakerBase| 0.001 |]
-      [feeRateMakerQuote| 0.001 |]
-      [profitRate| 0.001 |]
+      [feeRateMakerBase|0.001|]
+      [feeRateMakerQuote|0.001|]
+      [profitRate|0.001|]
       SubmitOrder.optsPostOnly
   itRight
     "wallets succeeds"
