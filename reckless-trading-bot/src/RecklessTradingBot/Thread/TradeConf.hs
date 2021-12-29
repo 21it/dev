@@ -48,7 +48,7 @@ updateTradeConf syms fees varCfg = do
   when (amtNoFee <= [moneyBaseBuy|0|])
     . throwE
     . ErrorRuntime
-    $ "Wrong MoneyAmt " <> show amtNoFee
+    $ "Wrong Money " <> show amtNoFee
   void
     . liftIO
     . swapMVar varCfg

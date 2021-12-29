@@ -6,7 +6,7 @@
 
 module BitfinexClient.Data.Metro
   ( Money (..),
-    SomeMoneyAmt (..),
+    SomeMoney (..),
     MoneyBase',
     MoneyBaseAmt (..),
     MoneyQuote',
@@ -15,7 +15,7 @@ module BitfinexClient.Data.Metro
     SomeQuotePerBase (..),
     QuotePerBase',
     quotePerBaseAmt,
-    roundMoneyAmt,
+    roundMoney,
     roundQuotePerBase,
     moneyBaseBuy,
     moneyBaseSell,
@@ -79,7 +79,7 @@ newtype
   Money
     (crel :: CurrencyRelation)
     (act :: ExchangeAction) = Money
-  { unMoneyAmt ::
+  { unMoney ::
       MkQu_DLN (MoneyDim crel) LCSU' (Ratio Natural)
   }
   deriving stock
@@ -119,7 +119,7 @@ instance
   From (Money crel act) (Ratio Natural)
   where
   from =
-    unMkMoneyAmt
+    unMkMoney
 
 instance
   ( SingI crel
@@ -127,7 +127,7 @@ instance
   TryFrom Rational (Money crel act)
   where
   tryFrom raw = do
-    amt <- roundMoneyAmt raw
+    amt <- roundMoney raw
     if from amt == raw
       then pure amt
       else Left $ TryFromException raw Nothing
@@ -185,25 +185,25 @@ instance
         Right x -> pure x
 
 --
--- SomeMoneyAmt sugar
+-- SomeMoney sugar
 --
 
-data SomeMoneyAmt crel
+data SomeMoney crel
   = forall act.
     ( SingI act,
       Show (Money crel act)
     ) =>
-    SomeMoneyAmt
+    SomeMoney
       (Sing act)
       (Money crel act)
 
-instance Eq (SomeMoneyAmt crel) where
-  (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
+instance Eq (SomeMoney crel) where
+  (SomeMoney sx x) == (SomeMoney sy y) =
     case testEquality sx sy of
       Just Refl -> x == y
       Nothing -> False
 
-deriving stock instance Show (SomeMoneyAmt crel)
+deriving stock instance Show (SomeMoney crel)
 
 instance
   ( SingI crel,
@@ -211,42 +211,42 @@ instance
     Typeable unit,
     Lookup (MoneyDim crel) LCSU' ~ unit
   ) =>
-  TryFrom Rational (SomeMoneyAmt crel)
+  TryFrom Rational (SomeMoney crel)
   where
   tryFrom raw
     | raw > 0 && rounded == raw =
       Right $
-        SomeMoneyAmt (sing :: Sing 'Buy) $
-          mkMoneyAmt absolute
+        SomeMoney (sing :: Sing 'Buy) $
+          mkMoney absolute
     | raw < 0 && rounded == raw =
       Right $
-        SomeMoneyAmt (sing :: Sing 'Sell) $
-          mkMoneyAmt absolute
+        SomeMoney (sing :: Sing 'Sell) $
+          mkMoney absolute
     | otherwise =
       Left $
         TryFromException raw Nothing
     where
-      rounded = roundMoneyAmt' raw
+      rounded = roundMoney' raw
       absolute = absRat raw
 
-mkMoneyAmt ::
+mkMoney ::
   forall crel act.
   ( SingI crel
   ) =>
   Ratio Natural ->
   Money crel act
-mkMoneyAmt x =
+mkMoney x =
   case sing :: Sing crel of
     SBase -> Money $ quOf x MoneyBaseAmt
     SQuote -> Money $ quOf x MoneyQuoteAmt
 
-unMkMoneyAmt ::
+unMkMoney ::
   forall crel act.
   ( SingI crel
   ) =>
   Money crel act ->
   Ratio Natural
-unMkMoneyAmt (Money x) =
+unMkMoney (Money x) =
   case sing :: Sing crel of
     SBase -> x # MoneyBaseAmt
     SQuote -> x # MoneyQuoteAmt
@@ -330,7 +330,7 @@ instance Eq SomeQuotePerBase where
 
 deriving stock instance Show SomeQuotePerBase
 
-roundMoneyAmt ::
+roundMoney ::
   forall crel act.
   ( SingI crel
   ) =>
@@ -338,21 +338,21 @@ roundMoneyAmt ::
   Either
     (TryFromException Rational (Money crel act))
     (Money crel act)
-roundMoneyAmt raw =
+roundMoney raw =
   if raw >= 0 && rounded >= 0
     then
       bimap
         ( withTarget @(Money crel act)
             . withSource raw
         )
-        mkMoneyAmt
+        mkMoney
         $ tryFrom @Rational @(Ratio Natural) rounded
     else
       Left $
         TryFromException raw Nothing
   where
     rounded =
-      roundMoneyAmt' raw
+      roundMoney' raw
 
 roundQuotePerBase ::
   forall act.
@@ -378,8 +378,8 @@ roundQuotePerBase raw =
     rounded =
       roundQuotePerBase' raw
 
-roundMoneyAmt' :: Rational -> Rational
-roundMoneyAmt' =
+roundMoney' :: Rational -> Rational
+roundMoney' =
   dpRound 8
 
 roundQuotePerBase' :: Rational -> Rational
@@ -398,7 +398,7 @@ instance
       SSell -> toTextParam $ (-1) * success amt
     where
       success :: Money 'Base act -> Rational
-      success = abs . from . unMkMoneyAmt
+      success = abs . from . unMkMoney
 
 instance ToRequestParam (QuotePerBase act) where
   toTextParam =
@@ -442,11 +442,7 @@ moneyQQ =
             raw of
             Left e -> fail $ show e
             Right x -> do
-              expr <-
-                [e|
-                  mkMoneyAmt
-                    $(TH.lift $ unMkMoneyAmt x)
-                  |]
+              expr <- [e|mkMoney $(TH.lift $ unMkMoney x)|]
               case (sing :: Sing crel, sing :: Sing act) of
                 (SBase, SBuy) -> do
                   TH.SigE expr

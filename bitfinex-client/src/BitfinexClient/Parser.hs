@@ -41,7 +41,7 @@ parseOrder x = do
   amt0 <-
     maybeToRight "OrderAmount is missing" $
       toRational <$> x ^? nth 7 . _Number
-  SomeMoneyAmt sAct amt <-
+  SomeMoney sAct amt <-
     first (("OrderAmount is invalid " <>) . show) $
       tryFrom amt0
   ss0 <-

@@ -18,7 +18,7 @@ addFee ::
   Money crel act
 addFee amt fee =
   Money $
-    unMoneyAmt amt |/ (1 - unFeeRate fee)
+    unMoney amt |/ (1 - unFeeRate fee)
 
 tweakMakerRate ::
   forall act.
@@ -65,7 +65,7 @@ newCounterOrder base0 rate0 feeB feeQ prof0 =
       from prof0
     enterBaseGain :: MoneyBase'
     enterBaseGain =
-      unMoneyAmt base0
+      unMoney base0
     exitBaseLoss :: MoneyBase'
     exitBaseLoss =
       enterBaseGain |* (1 - enterFee)
