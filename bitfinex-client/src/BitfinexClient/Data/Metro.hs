@@ -34,10 +34,6 @@ import BitfinexClient.Import.External hiding (exp, (%))
 import BitfinexClient.Util
 import qualified Data.Aeson as A
 import Data.Metrology.Poly as Metro
---
--- TODO : somehow remove unsafe
---
-import qualified Data.Metrology.Unsafe as Unsafe
 import Language.Haskell.TH.Quote
 import qualified Language.Haskell.TH.Syntax as TH
 import qualified Witch
@@ -96,50 +92,74 @@ newtype
     )
 
 instance
-  ( Show unit,
+  forall crel act unit.
+  ( SingI crel,
+    SingI act,
+    Show unit,
     Typeable unit,
     Lookup (MoneyDim crel) LCSU' ~ unit
   ) =>
   Prelude.Show (MoneyAmt crel act)
   where
-  show x =
-    show (unQu $ unMoneyAmt x)
+  show (MoneyAmt x) =
+    ( case sing :: Sing crel of
+        SBase -> showIn x MoneyBaseAmt
+        SQuote -> showIn x MoneyQuoteAmt
+    )
       <> " "
-      <> showType @unit
+      <> show (fromSing (sing :: Sing act))
 
 type MoneyBase = MoneyAmt 'Base
 
 type MoneyQuote = MoneyAmt 'Quote
 
-instance TryFrom (Ratio Natural) (MoneyAmt crel act) where
+instance
+  ( SingI crel
+  ) =>
+  TryFrom (Ratio Natural) (MoneyAmt crel act)
+  where
   tryFrom =
     tryFrom @Rational `composeTryLhs` from
 
-instance From (MoneyAmt crel act) (Ratio Natural) where
+instance
+  ( SingI crel
+  ) =>
+  From (MoneyAmt crel act) (Ratio Natural)
+  where
   from =
-    unQu . unMoneyAmt
+    unMkMoneyAmt
 
-instance TryFrom Rational (MoneyAmt crel act) where
+instance
+  ( SingI crel
+  ) =>
+  TryFrom Rational (MoneyAmt crel act)
+  where
   tryFrom raw = do
     amt <- roundMoneyAmt raw
     if from amt == raw
       then pure amt
       else Left $ TryFromException raw Nothing
 
-instance From (MoneyAmt crel act) Rational where
+instance
+  ( SingI crel
+  ) =>
+  From (MoneyAmt crel act) Rational
+  where
   from =
     via @(Ratio Natural)
 
 deriving via
   Rational
   instance
-    ( Typeable crel,
+    ( SingI crel,
+      Typeable crel,
       Typeable act
     ) =>
     PersistFieldSql (MoneyAmt crel act)
 
 instance
-  ( Typeable crel,
+  ( SingI crel,
+    Typeable crel,
     Typeable act
   ) =>
   PersistField (MoneyAmt crel act)
@@ -159,7 +179,8 @@ instance
           <> show raw
 
 instance
-  ( Typeable crel,
+  ( SingI crel,
+    Typeable crel,
     Typeable act
   ) =>
   FromJSON (MoneyAmt crel act)
@@ -177,8 +198,8 @@ instance
 
 data SomeMoneyAmt crel
   = forall act.
-    ( Show (MoneyAmt crel act),
-      SingI act
+    ( SingI act,
+      Show (MoneyAmt crel act)
     ) =>
     SomeMoneyAmt
       (Sing act)
@@ -197,30 +218,50 @@ instance Eq (SomeMoneyAmt crel) where
 deriving stock instance Show (SomeMoneyAmt crel)
 
 instance
-  ( Show unit,
+  ( SingI crel,
+    Show unit,
     Typeable unit,
     Lookup (MoneyDim crel) LCSU' ~ unit
   ) =>
   TryFrom Rational (SomeMoneyAmt crel)
   where
   tryFrom raw
-    | raw > 0 && rounded > 0 =
-      Right
-        . SomeMoneyAmt (sing :: Sing 'Buy)
-        . MoneyAmt
-        . Unsafe.Qu
-        $ absRat raw
-    | raw < 0 && rounded < 0 =
-      Right
-        . SomeMoneyAmt (sing :: Sing 'Sell)
-        . MoneyAmt
-        . Unsafe.Qu
-        $ absRat raw
+    | raw > 0 && rounded == raw =
+      Right $
+        SomeMoneyAmt (sing :: Sing 'Buy) $
+          mkMoneyAmt absolute
+    | raw < 0 && rounded == raw =
+      Right $
+        SomeMoneyAmt (sing :: Sing 'Sell) $
+          mkMoneyAmt absolute
     | otherwise =
       Left $
         TryFromException raw Nothing
     where
       rounded = roundMoneyAmt' raw
+      absolute = absRat raw
+
+mkMoneyAmt ::
+  forall crel act.
+  ( SingI crel
+  ) =>
+  Ratio Natural ->
+  MoneyAmt crel act
+mkMoneyAmt x =
+  case sing :: Sing crel of
+    SBase -> MoneyAmt $ quOf x MoneyBaseAmt
+    SQuote -> MoneyAmt $ quOf x MoneyQuoteAmt
+
+unMkMoneyAmt ::
+  forall crel act.
+  ( SingI crel
+  ) =>
+  MoneyAmt crel act ->
+  Ratio Natural
+unMkMoneyAmt (MoneyAmt x) =
+  case sing :: Sing crel of
+    SBase -> x # MoneyBaseAmt
+    SQuote -> x # MoneyQuoteAmt
 
 --
 -- QuotePerBase sugar
@@ -240,10 +281,8 @@ quotePerBaseAmt :: MoneyQuoteAmt :/ MoneyBaseAmt
 quotePerBaseAmt = MoneyQuoteAmt :/ MoneyBaseAmt
 
 instance (SingI act) => Prelude.Show (QuotePerBase act) where
-  show x =
-    show (unQuotePerBase x # quotePerBaseAmt)
-      <> " "
-      <> show quotePerBaseAmt
+  show (QuotePerBase x) =
+    showIn x quotePerBaseAmt
       <> " "
       <> show (fromSing (sing :: Sing act))
 
@@ -303,11 +342,10 @@ instance Eq SomeQuotePerBase where
 
 deriving stock instance Show SomeQuotePerBase
 
-unQu :: Qu a lcsu n -> n
-unQu (Unsafe.Qu x) = x
-
 roundMoneyAmt ::
   forall crel act.
+  ( SingI crel
+  ) =>
   Rational ->
   Either
     (TryFromException Rational (MoneyAmt crel act))
@@ -319,9 +357,7 @@ roundMoneyAmt raw =
         ( withTarget @(MoneyAmt crel act)
             . withSource raw
         )
-        ( MoneyAmt
-            . Unsafe.Qu
-        )
+        mkMoneyAmt
         $ tryFrom @Rational @(Ratio Natural) rounded
     else
       Left $
@@ -369,8 +405,8 @@ instance (SingI act) => ToRequestParam (MoneyBase act) where
       SBuy -> toTextParam $ success amt
       SSell -> toTextParam $ (-1) * success amt
     where
-      success :: MoneyAmt crel act -> Rational
-      success = abs . from . unQu . unMoneyAmt
+      success :: MoneyAmt 'Base act -> Rational
+      success = abs . from . unMkMoneyAmt
 
 instance ToRequestParam (QuotePerBase act) where
   toTextParam =
@@ -413,14 +449,11 @@ moneyQQ =
             @(MoneyAmt crel act)
             raw of
             Left e -> fail $ show e
-            Right (MoneyAmt x) -> do
-              --
-              -- TODO : remove unsafe, use corresponding units
-              --
+            Right x -> do
               exp <-
                 [e|
-                  MoneyAmt $
-                    Unsafe.Qu $(TH.lift $ unQu x)
+                  mkMoneyAmt
+                    $(TH.lift $ unMkMoneyAmt x)
                   |]
               case (sing :: Sing crel, sing :: Sing act) of
                 (SBase, SBuy) -> do
