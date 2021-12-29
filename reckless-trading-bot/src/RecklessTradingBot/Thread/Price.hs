@@ -43,7 +43,7 @@ createUpdate cfg = do
       forall (act :: Bfx.ExchangeAction) m.
       ( Env m,
         SingI act,
-        Bfx.ToRequestParam (Bfx.MoneyBase act)
+        Bfx.ToRequestParam (Bfx.MoneyAmt 'Bfx.Base act)
       ) =>
       ExceptT Bfx.Error m (Bfx.QuotePerBase act)
     getPrice = do

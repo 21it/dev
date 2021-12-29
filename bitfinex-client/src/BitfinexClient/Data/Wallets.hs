@@ -34,9 +34,9 @@ newWalletType = \case
   x -> Left $ TryFromException x Nothing
 
 data Response = Response
-  { balance :: MoneyBase 'Sell,
-    unsettledInterest :: MoneyBase 'Sell,
-    availableBalance :: MoneyBase 'Sell,
+  { balance :: MoneyAmt 'Base 'Sell,
+    unsettledInterest :: MoneyAmt 'Base 'Sell,
+    availableBalance :: MoneyAmt 'Base 'Sell,
     lastChange :: Maybe Text
   }
   deriving stock

@@ -7,14 +7,10 @@
 module BitfinexClient.Data.Metro
   ( MoneyAmt (..),
     SomeMoneyAmt (..),
-    MoneyBase,
     MoneyBase',
     MoneyBaseAmt (..),
-    SomeMoneyBase,
-    MoneyQuote,
     MoneyQuote',
     MoneyQuoteAmt (..),
-    SomeMoneyQuote,
     QuotePerBase (..),
     QuotePerBase',
     SomeQuotePerBase (..),
@@ -109,10 +105,6 @@ instance
       <> " "
       <> show (fromSing (sing :: Sing act))
 
-type MoneyBase = MoneyAmt 'Base
-
-type MoneyQuote = MoneyAmt 'Quote
-
 instance
   ( SingI crel
   ) =>
@@ -204,10 +196,6 @@ data SomeMoneyAmt crel
     SomeMoneyAmt
       (Sing act)
       (MoneyAmt crel act)
-
-type SomeMoneyBase = SomeMoneyAmt 'Base
-
-type SomeMoneyQuote = SomeMoneyAmt 'Quote
 
 instance Eq (SomeMoneyAmt crel) where
   (SomeMoneyAmt sx x) == (SomeMoneyAmt sy y) =
@@ -399,7 +387,11 @@ roundQuotePerBase' =
   sdRound 5
     . dpRound 8
 
-instance (SingI act) => ToRequestParam (MoneyBase act) where
+instance
+  ( SingI act
+  ) =>
+  ToRequestParam (MoneyAmt 'Base act)
+  where
   toTextParam amt =
     case sing :: Sing act of
       SBuy -> toTextParam $ success amt

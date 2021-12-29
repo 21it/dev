@@ -39,13 +39,13 @@ tweakMakerRate (QuotePerBase rate) =
         SSell -> 1001 % 1000
 
 newCounterOrder ::
-  MoneyBase 'Buy ->
+  MoneyAmt 'Base 'Buy ->
   QuotePerBase 'Buy ->
   FeeRate mrel0 'Base ->
   FeeRate mrel1 'Quote ->
   ProfitRate ->
-  ( MoneyQuote 'Sell,
-    MoneyBase 'Sell,
+  ( MoneyAmt 'Quote 'Sell,
+    MoneyAmt 'Base 'Sell,
     QuotePerBase 'Sell
   )
 newCounterOrder base0 rate0 feeB feeQ prof0 =

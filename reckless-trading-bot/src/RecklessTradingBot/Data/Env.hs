@@ -36,7 +36,7 @@ import RecklessTradingBot.Import.External
 data RawTradeConf = RawTradeConf
   { rawTradeConfCurrencyKind :: Bfx.CurrencyKind,
     rawTradeConfProfitPerOrder :: Bfx.ProfitRate,
-    rawTradeConfMaxQuoteInvestment :: Bfx.MoneyQuote 'Bfx.Sell
+    rawTradeConfMaxQuoteInvestment :: Bfx.MoneyAmt 'Bfx.Quote 'Bfx.Sell
   }
   deriving stock
     ( Eq,
@@ -58,8 +58,8 @@ data TradeConf = TradeConf
     tradeConfProfitPerOrder :: Bfx.ProfitRate,
     tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
-    tradeConfMinBuyAmt :: Bfx.MoneyBase 'Bfx.Buy,
-    tradeConfMinSellAmt :: Bfx.MoneyBase 'Bfx.Sell
+    tradeConfMinBuyAmt :: Bfx.MoneyAmt 'Bfx.Base 'Bfx.Buy,
+    tradeConfMinSellAmt :: Bfx.MoneyAmt 'Bfx.Base 'Bfx.Sell
   }
   deriving stock (Eq)
 

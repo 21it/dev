@@ -34,22 +34,22 @@ spec = before newEnv $ do
     let sym = [currencyPair|ADABTC|]
     buyRate <-
       Bitfinex.marketAveragePrice
-        (testAmt :: MoneyBase 'Buy)
+        (testAmt :: MoneyAmt 'Base 'Buy)
         sym
     sellRate <-
       Bitfinex.marketAveragePrice
-        (testAmt :: MoneyBase 'Sell)
+        (testAmt :: MoneyAmt 'Base 'Sell)
         sym
     liftIO $ buyRate `shouldSatisfy` (> coerce sellRate)
   itLeft "marketAveragePrice fails" . const $ do
-    let amt = testAmt :: MoneyBase 'Buy
+    let amt = testAmt :: MoneyAmt 'Base 'Buy
     let sym = [currencyPair|BTCADA|]
     Bitfinex.marketAveragePrice amt sym
   itRight
     "feeSummary succeeds"
     Bitfinex.feeSummary
   itRight "submitOrderMaker and cancelOrderById succeeds" $ \env -> do
-    let amt = testAmt :: MoneyBase 'Buy
+    let amt = testAmt :: MoneyAmt 'Base 'Buy
     let sym = [currencyPair|ADABTC|]
     let opts = SubmitOrder.optsPostOnly
     rate <- Bitfinex.marketAveragePrice amt sym
@@ -80,7 +80,7 @@ spec = before newEnv $ do
 
 --  describe "End2End" $ do
 --    itRight "submitOrderMaker" $ \env -> do
---      let amt = from @(Ratio Natural) 2.002002 :: MoneyBase 'Buy
+--      let amt = from @(Ratio Natural) 2.002002 :: MoneyAmt 'Base 'Buy
 --      let sym = [currencyPair|ADABTC|]
 --      let opts = SubmitOrder.optsPostOnly
 --      rate <- Bitfinex.marketAveragePrice amt sym
