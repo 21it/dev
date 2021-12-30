@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Math
@@ -14,11 +15,16 @@ import BitfinexClient.Import.External
 import Data.Metrology.Poly ((#))
 
 addFee ::
+  forall crel act mrel.
+  ( SingI crel
+  ) =>
   Money crel act ->
   FeeRate mrel crel ->
-  Money crel act
+  Either
+    (TryFromException Rational (Money crel act))
+    (Money crel act)
 addFee amt fee =
-  Money $
+  roundMoney' @crel $
     unMoney amt |/ (1 - unFeeRate fee)
 
 tweakMakerRate ::
@@ -68,15 +74,16 @@ newCounterOrder ::
   FeeRate mrel0 'Base ->
   FeeRate mrel1 'Quote ->
   ProfitRate ->
-  ( Money 'Quote 'Sell,
-    Money 'Base 'Sell,
-    QuotePerBase 'Sell
-  )
-newCounterOrder base0 rate0 feeB feeQ prof0 =
-  ( Money exitQuoteGain,
-    Money exitBaseLoss,
-    QuotePerBase exitRate
-  )
+  Either
+    Error
+    ( Money 'Quote 'Sell,
+      Money 'Base 'Sell,
+      QuotePerBase 'Sell
+    )
+newCounterOrder base0 rate0 feeB feeQ prof0 = do
+  exitQuote <- tryErrorE $ roundMoney' exitQuoteGain
+  exitBase <- tryErrorE $ roundMoney' exitBaseLoss
+  pure (exitQuote, exitBase, QuotePerBase exitRate)
   where
     enterFee :: Rational
     enterFee =

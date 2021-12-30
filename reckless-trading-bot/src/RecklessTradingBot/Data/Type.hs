@@ -8,6 +8,9 @@ module RecklessTradingBot.Data.Type
     OrderExternalId (..),
     OrderStatus (..),
     newOrderStatus,
+    tryErrorE,
+    tryErrorT,
+    tryFromE,
     tryFromT,
   )
 where
@@ -92,18 +95,53 @@ newOrderStatus = \case
 
 derivePersistField "OrderStatus"
 
-tryFromT ::
+tryErrorE ::
+  forall source target.
+  ( Show source,
+    Typeable source,
+    Typeable target
+  ) =>
+  Either (TryFromException source target) target ->
+  Either Error target
+tryErrorE =
+  first $
+    ErrorTryFrom . SomeException
+
+tryErrorT ::
   forall source target m.
-  ( Monad m,
-    TryFrom source target,
-    Show source,
+  ( Show source,
     Typeable source,
     Typeable target,
+    Monad m
+  ) =>
+  Either (TryFromException source target) target ->
+  ExceptT Error m target
+tryErrorT =
+  except . tryErrorE
+
+tryFromE ::
+  forall source target.
+  ( Show source,
+    Typeable source,
+    Typeable target,
+    TryFrom source target,
+    'False ~ (source == target)
+  ) =>
+  source ->
+  Either Error target
+tryFromE =
+  tryErrorE . tryFrom
+
+tryFromT ::
+  forall source target m.
+  ( Show source,
+    Typeable source,
+    Typeable target,
+    TryFrom source target,
+    Monad m,
     'False ~ (source == target)
   ) =>
   source ->
   ExceptT Error m target
 tryFromT =
-  except
-    . first (ErrorTryFrom . SomeException)
-    . tryFrom
+  except . tryFromE

@@ -250,6 +250,10 @@ newTradeConf symDetails feeDetails (sym, raw) =
     Nothing -> error $ "Missing " <> show sym
     Just cfg -> do
       let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
+      let amtWithFee =
+            case Bfx.addFee amtNoFee fee of
+              Left e -> error $ show e
+              Right x -> x
       liftIO . newMVar $
         TradeConf
           { tradeConfCurrencyPair =
@@ -263,7 +267,7 @@ newTradeConf symDetails feeDetails (sym, raw) =
             tradeConfQuoteFee =
               coerce fee,
             tradeConfMinBuyAmt =
-              Bfx.addFee amtNoFee fee,
+              amtWithFee,
             tradeConfMinSellAmt =
               coerce amtNoFee
           }

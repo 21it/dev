@@ -5,7 +5,8 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Metro
-  ( Money (..),
+  ( Money,
+    unMoney,
     SomeMoney (..),
     MoneyBase',
     MoneyBaseAmt (..),
@@ -17,6 +18,7 @@ module BitfinexClient.Data.Metro
     quotePerBaseAmt,
     -- | Lossy constructors
     roundMoney,
+    roundMoney',
     roundQuotePerBase,
     -- | QuasiQuoters for literals in code
     moneyBaseBuy,
@@ -90,6 +92,17 @@ newtype
     ( Eq,
       Ord
     )
+
+unMoney' ::
+  forall crel.
+  ( SingI crel
+  ) =>
+  MkQu_DLN (MoneyDim crel) LCSU' Rational ->
+  Rational
+unMoney' =
+  case sing :: Sing crel of
+    SBase -> (# MoneyBaseAmt)
+    SQuote -> (# MoneyQuoteAmt)
 
 instance
   forall crel act unit.
@@ -212,7 +225,8 @@ instance
       Left $
         TryFromException raw Nothing
     where
-      rounded = roundMoney' raw
+      rounded =
+        roundMoneyRat raw
 
 -- | This dumb constructor is lossy, unsafe
 -- and should not be exposed.
@@ -236,10 +250,9 @@ unMkMoney ::
   ) =>
   Money crel act ->
   Rational
-unMkMoney (Money x) =
-  case sing :: Sing crel of
-    SBase -> x # MoneyBaseAmt
-    SQuote -> x # MoneyQuoteAmt
+unMkMoney =
+  unMoney' @crel
+    . unMoney
 
 --
 -- QuotePerBase sugar
@@ -333,7 +346,19 @@ roundMoney raw =
     else Left $ TryFromException raw Nothing
   where
     rounded =
-      roundMoney' raw
+      roundMoneyRat raw
+
+roundMoney' ::
+  forall crel act.
+  ( SingI crel
+  ) =>
+  MkQu_DLN (MoneyDim crel) LCSU' Rational ->
+  Either
+    (TryFromException Rational (Money crel act))
+    (Money crel act)
+roundMoney' =
+  roundMoney
+    . unMoney' @crel
 
 roundQuotePerBase ::
   forall act.
@@ -347,14 +372,14 @@ roundQuotePerBase raw =
     else Left $ TryFromException raw Nothing
   where
     rounded =
-      roundQuotePerBase' raw
+      roundQuotePerBaseRat raw
 
-roundMoney' :: Rational -> Rational
-roundMoney' =
+roundMoneyRat :: Rational -> Rational
+roundMoneyRat =
   dpRound 8
 
-roundQuotePerBase' :: Rational -> Rational
-roundQuotePerBase' =
+roundQuotePerBaseRat :: Rational -> Rational
+roundQuotePerBaseRat =
   sdRound 5
     . dpRound 8
 

@@ -25,10 +25,8 @@ spec = before newEnv $ do
             { currencyPairPrecision = 5,
               currencyPairInitMargin = 30 % 1,
               currencyPairMinMargin = 15,
-              currencyPairMaxOrderAmt =
-                Money $ quOf 250000 MoneyBaseAmt,
-              currencyPairMinOrderAmt =
-                Money $ quOf 2 MoneyBaseAmt
+              currencyPairMaxOrderAmt = [moneyBaseBuy|250000|],
+              currencyPairMinOrderAmt = [moneyBaseBuy|2|]
             }
   itRight "marketAveragePrice succeeds" . const $ do
     let sym = [currencyPair|ADABTC|]

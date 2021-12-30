@@ -30,8 +30,13 @@ create cfg (Entity priceId price) = do
   where
     enterPrice@(Bfx.QuotePerBase enterPrice') =
       priceBuy price
-    enterGain@(Bfx.Money enterGain') =
+    enterGain =
       tradeConfMinBuyAmt cfg
+    enterLoss =
+      case Bfx.roundMoney' $
+        enterPrice' |*| Bfx.unMoney enterGain of
+        Left e -> error $ show e
+        Right x -> x
     newOrder ct =
       Order
         { --
@@ -51,7 +56,7 @@ create cfg (Entity priceId price) = do
           orderExtRef = Nothing,
           orderPrice = enterPrice,
           orderGain = enterGain,
-          orderLoss = Bfx.Money $ enterPrice' |*| enterGain',
+          orderLoss = enterLoss,
           orderFee = tradeConfBaseFee cfg,
           orderStatus = OrderNew,
           orderInsertedAt = ct,
@@ -96,10 +101,13 @@ bfxUpdate orderId bfxOrder = do
   where
     enterPrice@(Bfx.QuotePerBase enterPrice') =
       Bfx.orderRate bfxOrder
-    enterGain@(Bfx.Money enterGain') =
+    enterGain =
       Bfx.orderAmount bfxOrder
     enterLoss =
-      Bfx.Money $ enterGain' |*| enterPrice'
+      case Bfx.roundMoney' $
+        enterPrice' |*| Bfx.unMoney enterGain of
+        Left e -> error $ show e
+        Right x -> x
 
 updateStatus ::
   ( Storage m

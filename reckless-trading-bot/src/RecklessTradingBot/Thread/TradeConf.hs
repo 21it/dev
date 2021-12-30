@@ -49,6 +49,9 @@ updateTradeConf syms fees varCfg = do
     . throwE
     . ErrorRuntime
     $ "Wrong Money " <> show amtNoFee
+  amtWithFee <-
+    tryErrorT $
+      BfxMath.addFee amtNoFee fee
   void
     . liftIO
     . swapMVar varCfg
@@ -58,6 +61,6 @@ updateTradeConf syms fees varCfg = do
         tradeConfProfitPerOrder = tradeConfProfitPerOrder cfg,
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = coerce fee,
-        tradeConfMinBuyAmt = BfxMath.addFee amtNoFee fee,
+        tradeConfMinBuyAmt = amtWithFee,
         tradeConfMinSellAmt = coerce amtNoFee
       }

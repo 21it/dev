@@ -27,12 +27,14 @@ create orderEnt bfxOrder cfg = do
   where
     exitFee = tradeConfQuoteFee cfg
     (exitGain, exitLoss, exitRate) =
-      BfxMath.newCounterOrder
+      case BfxMath.newCounterOrder
         (Bfx.orderAmount bfxOrder)
         (Bfx.orderRate bfxOrder)
         (orderFee $ entityVal orderEnt)
         exitFee
-        $ tradeConfProfitPerOrder cfg
+        $ tradeConfProfitPerOrder cfg of
+        Left e -> error $ show e
+        Right x -> x
     newRow ct =
       CounterOrder
         { counterOrderIntRef = entityKey orderEnt,
