@@ -3,8 +3,7 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Util
-  ( absRat,
-    showType,
+  ( showType,
     eradicateNull,
     readVia,
     tryReadVia,
@@ -20,12 +19,6 @@ import qualified Data.Text as T
 import qualified Data.Text.Read as T
 import Data.Typeable (typeRep)
 import qualified Data.Vector as V
-import GHC.Natural (naturalFromInteger)
-
-absRat :: Rational -> Ratio Natural
-absRat x =
-  (naturalFromInteger . abs $ numerator x)
-    % (naturalFromInteger . abs $ denominator x)
 
 showType :: forall a b. (Typeable a, IsString b) => b
 showType =

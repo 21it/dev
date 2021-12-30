@@ -144,7 +144,10 @@ instance
             ( const $
                 "Init Margin is invalid " <> show initMargin0
             )
-            $ tryReadViaRatio @Rational initMargin0
+            --
+            -- TODO : remove redundant Ratio Natural
+            --
+            $ readViaRatio @(Ratio Natural) initMargin0
         minMargin0 <-
           maybeToRight "Min Margin is missing" $
             x ^? key "minimum_margin" . _String
@@ -153,7 +156,7 @@ instance
             ( const $
                 "Min Margin is invalid " <> show minMargin0
             )
-            $ tryReadViaRatio @Rational minMargin0
+            $ readViaRatio @(Ratio Natural) minMargin0
         maxOrderAmt0 <-
           maybeToRight "Max Order Size is missing" $
             x ^? key "maximum_order_size" . _String
@@ -162,7 +165,7 @@ instance
             ( const $
                 "Max Order Size is invalid " <> show maxOrderAmt0
             )
-            $ tryReadViaRatio @(Ratio Natural) maxOrderAmt0
+            $ tryReadViaRatio @Rational maxOrderAmt0
         minOrderAmt0 <-
           maybeToRight "Min Order Size is missing" $
             x ^? key "minimum_order_size" . _String
@@ -171,7 +174,7 @@ instance
             ( const $
                 "Min Order Size is invalid " <> show minOrderAmt0
             )
-            $ tryReadViaRatio @(Ratio Natural) minOrderAmt0
+            $ tryReadViaRatio @Rational minOrderAmt0
         pure
           ( sym,
             CurrencyPairConf

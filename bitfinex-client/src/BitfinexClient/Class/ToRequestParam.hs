@@ -38,7 +38,3 @@ instance ToRequestParam Rational where
   toTextParam x =
     T.pack $
       showFixed True (fromRational x :: Fixed E8)
-
-instance ToRequestParam (Ratio Natural) where
-  toTextParam =
-    toTextParam . from @(Ratio Natural) @Rational

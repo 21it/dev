@@ -104,7 +104,7 @@ newRawConfig = liftIO $ do
         "RECKLESS_TRADING_BOT_PAIRS"
         op
       <*> var
-        ( err . tryFrom @(Ratio Natural)
+        ( err . tryFrom @Rational
             <=< auto
             <=< nonempty
         )

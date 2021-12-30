@@ -70,10 +70,10 @@ type LCSU' =
      ]
 
 type MoneyBase' =
-  MkQu_DLN (MoneyDim 'Base) LCSU' (Ratio Natural)
+  MkQu_DLN (MoneyDim 'Base) LCSU' Rational
 
 type MoneyQuote' =
-  MkQu_DLN (MoneyDim 'Quote) LCSU' (Ratio Natural)
+  MkQu_DLN (MoneyDim 'Quote) LCSU' Rational
 
 --
 -- Money sugar
@@ -84,7 +84,7 @@ newtype
     (crel :: CurrencyRelation)
     (act :: ExchangeAction) = Money
   { unMoney ::
-      MkQu_DLN (MoneyDim crel) LCSU' (Ratio Natural)
+      MkQu_DLN (MoneyDim crel) LCSU' Rational
   }
   deriving stock
     ( Eq,
@@ -112,22 +112,6 @@ instance
 instance
   ( SingI crel
   ) =>
-  TryFrom (Ratio Natural) (Money crel act)
-  where
-  tryFrom =
-    tryFrom @Rational `composeTryLhs` from
-
-instance
-  ( SingI crel
-  ) =>
-  From (Money crel act) (Ratio Natural)
-  where
-  from =
-    unMkMoney
-
-instance
-  ( SingI crel
-  ) =>
   TryFrom Rational (Money crel act)
   where
   tryFrom raw = do
@@ -142,7 +126,7 @@ instance
   From (Money crel act) Rational
   where
   from =
-    via @(Ratio Natural)
+    unMkMoney
 
 deriving via
   Rational
@@ -181,8 +165,8 @@ instance
   where
   parseJSON = A.withText
     (showType @(Money crel act))
-    $ \x0 -> do
-      case tryReadViaRatio @(Ratio Natural) x0 of
+    $ \raw -> do
+      case tryReadViaRatio @Rational raw of
         Left x -> fail $ show x
         Right x -> pure x
 
@@ -219,35 +203,39 @@ instance
     | raw > 0 && rounded == raw =
       Right $
         SomeMoney (sing :: Sing 'Buy) $
-          mkMoney absolute
+          mkMoney raw
     | raw < 0 && rounded == raw =
       Right $
         SomeMoney (sing :: Sing 'Sell) $
-          mkMoney absolute
+          mkMoney raw
     | otherwise =
       Left $
         TryFromException raw Nothing
     where
       rounded = roundMoney' raw
-      absolute = absRat raw
 
+-- | This dumb constructor is lossy, unsafe
+-- and should not be exposed.
 mkMoney ::
   forall crel act.
   ( SingI crel
   ) =>
-  Ratio Natural ->
+  Rational ->
   Money crel act
 mkMoney x =
   case sing :: Sing crel of
-    SBase -> Money $ quOf x MoneyBaseAmt
-    SQuote -> Money $ quOf x MoneyQuoteAmt
+    SBase -> Money $ quOf (abs x) MoneyBaseAmt
+    SQuote -> Money $ quOf (abs x) MoneyQuoteAmt
 
+-- | This accessor is safe, but should not be exposed
+-- because there is 'From' instance which is doing
+-- the same thing.
 unMkMoney ::
   forall crel act.
   ( SingI crel
   ) =>
   Money crel act ->
-  Ratio Natural
+  Rational
 unMkMoney (Money x) =
   case sing :: Sing crel of
     SBase -> x # MoneyBaseAmt
@@ -276,15 +264,6 @@ instance (SingI act) => Prelude.Show (QuotePerBase act) where
       <> " "
       <> show (fromSing (sing :: Sing act))
 
-instance TryFrom (Ratio Natural) (QuotePerBase act) where
-  tryFrom x
-    | x > 0 = Right . QuotePerBase $ x % quotePerBaseAmt
-    | otherwise = Left $ TryFromException x Nothing
-
-instance From (QuotePerBase act) (Ratio Natural) where
-  from =
-    (# quotePerBaseAmt) . unQuotePerBase
-
 instance TryFrom Rational (QuotePerBase act) where
   tryFrom raw = do
     rate <- roundQuotePerBase raw
@@ -294,7 +273,7 @@ instance TryFrom Rational (QuotePerBase act) where
 
 instance From (QuotePerBase act) Rational where
   from =
-    via @(Ratio Natural)
+    (# quotePerBaseAmt) . unQuotePerBase
 
 deriving via
   Rational
@@ -350,16 +329,8 @@ roundMoney ::
     (Money crel act)
 roundMoney raw =
   if raw >= 0 && rounded >= 0
-    then
-      bimap
-        ( withTarget @(Money crel act)
-            . withSource raw
-        )
-        mkMoney
-        $ tryFrom @Rational @(Ratio Natural) rounded
-    else
-      Left $
-        TryFromException raw Nothing
+    then Right $ mkMoney rounded
+    else Left $ TryFromException raw Nothing
   where
     rounded =
       roundMoney' raw
@@ -372,18 +343,8 @@ roundQuotePerBase ::
     (QuotePerBase act)
 roundQuotePerBase raw =
   if raw > 0 && rounded > 0
-    then
-      bimap
-        ( withTarget @(QuotePerBase act)
-            . withSource raw
-        )
-        ( QuotePerBase
-            . (% quotePerBaseAmt)
-        )
-        $ tryFrom @Rational @(Ratio Natural) rounded
-    else
-      Left $
-        TryFromException raw Nothing
+    then Right . QuotePerBase $ quOf rounded quotePerBaseAmt
+    else Left $ TryFromException raw Nothing
   where
     rounded =
       roundQuotePerBase' raw
@@ -408,12 +369,12 @@ instance
       SSell -> toTextParam $ (-1) * success amt
     where
       success :: Money 'Base act -> Rational
-      success = abs . from . unMkMoney
+      success = abs . unMkMoney
 
 instance ToRequestParam (QuotePerBase act) where
   toTextParam =
     toTextParam
-      . from @(QuotePerBase act) @(Ratio Natural)
+      . from @(QuotePerBase act) @Rational
 
 moneyBaseBuy :: QuasiQuoter
 moneyBaseBuy =

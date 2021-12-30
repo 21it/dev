@@ -41,7 +41,7 @@ tweakMakerRate rate@(QuotePerBase rate') =
     -- (|-|) :: (d1 @~ d2, Num n) => Qu d1 l n -> Qu d2 l n -> Qu d1 l n
     -- a |-| b = a |+| qNegate b
     --
-    tweak :: Ratio Natural
+    tweak :: Rational
     tweak =
       case sing :: Sing act of
         SBuy -> 999 % 1000
@@ -50,14 +50,12 @@ tweakMakerRate rate@(QuotePerBase rate') =
 tweakMakerRateRec ::
   QuotePerBase act ->
   QuotePerBase' ->
-  Ratio Natural ->
+  Rational ->
   Either
     (TryFromException Rational (QuotePerBase act))
     (QuotePerBase act)
 tweakMakerRateRec rate rate' tweak =
-  case roundQuotePerBase
-    . from
-    $ newRate' # quotePerBaseAmt of
+  case roundQuotePerBase $ newRate' # quotePerBaseAmt of
     Left e -> Left e
     Right x | x /= rate -> Right x
     Right {} -> tweakMakerRateRec rate newRate' tweak
@@ -80,13 +78,13 @@ newCounterOrder base0 rate0 feeB feeQ prof0 =
     QuotePerBase exitRate
   )
   where
-    enterFee :: Ratio Natural
+    enterFee :: Rational
     enterFee =
       from feeB
-    exitFee :: Ratio Natural
+    exitFee :: Rational
     exitFee =
       from feeQ
-    prof :: Ratio Natural
+    prof :: Rational
     prof =
       from prof0
     enterBaseGain :: MoneyBase'

@@ -271,7 +271,7 @@ newtype
   FeeRate
     (mrel :: MarketRelation)
     (crel :: CurrencyRelation) = FeeRate
-  { unFeeRate :: Ratio Natural
+  { unFeeRate :: Rational
   }
   deriving newtype
     ( Eq,
@@ -283,25 +283,27 @@ newtype
       TH.Lift
     )
 
-instance From (FeeRate mrel crel) (Ratio Natural)
-
-instance TryFrom (Ratio Natural) (FeeRate mrel crel) where
-  tryFrom x
-    | x < 1 = Right $ FeeRate x
-    | otherwise = Left $ TryFromException x Nothing
-
-instance From (FeeRate mrel crel) Rational where
-  from = via @(Ratio Natural)
+instance From (FeeRate mrel crel) Rational
 
 instance TryFrom Rational (FeeRate mrel crel) where
-  tryFrom = tryVia @(Ratio Natural)
+  tryFrom x
+    | x >= 0 && x < 1 = Right $ FeeRate x
+    | otherwise = Left $ TryFromException x Nothing
 
 deriving via
   Rational
   instance
+    ( Typeable mrel,
+      Typeable crel
+    ) =>
     PersistFieldSql (FeeRate mrel crel)
 
-instance PersistField (FeeRate mrel crel) where
+instance
+  ( Typeable mrel,
+    Typeable crel
+  ) =>
+  PersistField (FeeRate mrel crel)
+  where
   toPersistValue =
     PersistRational . from
   fromPersistValue raw =
@@ -312,7 +314,9 @@ instance PersistField (FeeRate mrel crel) where
         Left failure
     where
       failure =
-        "FeeRate PersistValue is invalid " <> show raw
+        showType @(FeeRate mrel crel)
+          <> " PersistValue is invalid "
+          <> show raw
 
 newtype RebateRate (mrel :: MarketRelation)
   = RebateRate Rational
@@ -331,7 +335,7 @@ instance From (RebateRate mrel) Rational
 instance From Rational (RebateRate mrel)
 
 newtype ProfitRate = ProfitRate
-  { unProfitRate :: Ratio Natural
+  { unProfitRate :: Rational
   }
   deriving newtype
     ( Eq,
@@ -343,26 +347,18 @@ newtype ProfitRate = ProfitRate
       TH.Lift
     )
 
-instance TryFrom (Ratio Natural) ProfitRate where
+instance TryFrom Rational ProfitRate where
   tryFrom x
     | x > 0 = Right $ ProfitRate x
     | otherwise = Left $ TryFromException x Nothing
 
-instance From ProfitRate (Ratio Natural)
-
-instance TryFrom Rational ProfitRate where
-  tryFrom =
-    tryVia @(Ratio Natural)
-
-instance From ProfitRate Rational where
-  from =
-    via @(Ratio Natural)
+instance From ProfitRate Rational
 
 instance FromJSON ProfitRate where
   parseJSON = withText
     (showType @ProfitRate)
-    $ \x0 -> do
-      case tryReadViaRatio @(Ratio Natural) x0 of
+    $ \raw -> do
+      case tryReadViaRatio @Rational raw of
         Left x -> fail $ show x
         Right x -> pure x
 
@@ -383,17 +379,23 @@ newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
 instance (Typeable crel) => FromJSON (CurrencyCode crel) where
   parseJSON = withText
     (showType @(CurrencyCode crel))
-    $ \x0 -> do
-      case newCurrencyCode x0 of
+    $ \raw -> do
+      case newCurrencyCode raw of
         Left x -> fail $ show x
         Right x -> pure x
 
 deriving via
   Text
   instance
+    ( Typeable crel
+    ) =>
     PersistFieldSql (CurrencyCode crel)
 
-instance PersistField (CurrencyCode crel) where
+instance
+  ( Typeable crel
+  ) =>
+  PersistField (CurrencyCode crel)
+  where
   toPersistValue =
     PersistText . coerce
   fromPersistValue raw =
@@ -404,7 +406,9 @@ instance PersistField (CurrencyCode crel) where
         Left failure
     where
       failure =
-        "CurrencyCode PersistValue is invalid " <> show raw
+        showType @(CurrencyCode crel)
+          <> " PersistValue is invalid "
+          <> show raw
 
 newCurrencyCode ::
   forall crel.
@@ -432,8 +436,8 @@ data CurrencyPair = CurrencyPair
 instance FromJSON CurrencyPair where
   parseJSON = withText
     (showType @CurrencyPair)
-    $ \x0 -> do
-      case newCurrencyPair x0 of
+    $ \raw -> do
+      case newCurrencyPair raw of
         Left x -> fail $ show x
         Right x -> pure x
 
@@ -493,8 +497,8 @@ newCurrencyPair raw
 
 data CurrencyPairConf = CurrencyPairConf
   { currencyPairPrecision :: Natural,
-    currencyPairInitMargin :: Ratio Natural,
-    currencyPairMinMargin :: Ratio Natural,
+    currencyPairInitMargin :: Rational,
+    currencyPairMinMargin :: Rational,
     currencyPairMaxOrderAmt :: Money 'Base 'Buy,
     currencyPairMinOrderAmt :: Money 'Base 'Buy
   }

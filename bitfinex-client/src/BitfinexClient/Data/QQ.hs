@@ -107,27 +107,27 @@ mkTryRatQQ =
 --   ) =>
 --   QuasiQuoter
 -- feeRate =
---   mkTryRatQQ @(Ratio Natural) @(FeeRate mr cr)
+--   mkTryRatQQ @Rational @(FeeRate mr cr)
 
 feeRateMakerBase :: QuasiQuoter
 feeRateMakerBase =
-  mkTryRatQQ @(Ratio Natural) @(FeeRate 'Maker 'Base)
+  mkTryRatQQ @Rational @(FeeRate 'Maker 'Base)
 
 feeRateMakerQuote :: QuasiQuoter
 feeRateMakerQuote =
-  mkTryRatQQ @(Ratio Natural) @(FeeRate 'Maker 'Quote)
+  mkTryRatQQ @Rational @(FeeRate 'Maker 'Quote)
 
 feeRateTakerBase :: QuasiQuoter
 feeRateTakerBase =
-  mkTryRatQQ @(Ratio Natural) @(FeeRate 'Taker 'Base)
+  mkTryRatQQ @Rational @(FeeRate 'Taker 'Base)
 
 feeRateTakerQuote :: QuasiQuoter
 feeRateTakerQuote =
-  mkTryRatQQ @(Ratio Natural) @(FeeRate 'Taker 'Quote)
+  mkTryRatQQ @Rational @(FeeRate 'Taker 'Quote)
 
 profitRate :: QuasiQuoter
 profitRate =
-  mkTryRatQQ @(Ratio Natural) @ProfitRate
+  mkTryRatQQ @Rational @ProfitRate
 
 ccBase :: QuasiQuoter
 ccBase =
