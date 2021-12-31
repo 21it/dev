@@ -51,7 +51,6 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     bfx <- asks EnvData.envBfx
     withExceptT ErrorBfx . args $ method bfx
   getPairs = asks EnvData.envPairs
-  getProfit = asks EnvData.envProfit
   orderExpired x = do
     ttl <- asks EnvData.envOrderTtl
     ct <- liftIO getCurrentTime

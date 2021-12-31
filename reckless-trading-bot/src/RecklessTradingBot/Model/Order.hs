@@ -4,7 +4,7 @@
 
 module RecklessTradingBot.Model.Order
   ( create,
-    bfxUpdate,
+    updateBfx,
     updateStatus,
     getByStatus,
   )
@@ -64,13 +64,13 @@ create cfg (Entity priceId price) = do
           orderUpdatedAt = ct
         }
 
-bfxUpdate ::
+updateBfx ::
   ( Storage m
   ) =>
   OrderId ->
   Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
   m ()
-bfxUpdate orderId bfxOrder = do
+updateBfx orderId bfxOrder = do
   ct <- liftIO getCurrentTime
   runSql $
     Psql.update $ \row -> do
@@ -158,12 +158,9 @@ getByStatus sym ss =
                              )
                        )
           )
-        --
-        -- TODO : this limit might be a problem, in case where
-        -- are order which changed status already, but are out
-        -- of range of this limit. Might be useful to use
-        -- updatedAt field for ordering to not miss updated
-        -- data in long-term.
-        --
-        Psql.limit 1000
+        Psql.limit 100
+        Psql.orderBy
+          [ Psql.desc $
+              order Psql.^. OrderUpdatedAt
+          ]
         pure (order, price)

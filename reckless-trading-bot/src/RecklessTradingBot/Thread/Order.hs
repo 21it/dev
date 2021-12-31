@@ -119,7 +119,7 @@ placeOrderT cfg (Entity orderId order) price = do
               }
       )
   lift $
-    Order.bfxUpdate orderId bfxOrder
+    Order.updateBfx orderId bfxOrder
 
 --
 -- TODO : !!!

@@ -70,7 +70,6 @@ data Env = Env
   { -- app
     envBfx :: Bfx.Env,
     envPairs :: [MVar TradeConf],
-    envProfit :: Bfx.ProfitRate,
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
     envPriceChan :: TChan (Entity Price),
@@ -86,7 +85,6 @@ data RawConfig = RawConfig
   { -- app
     rawConfigBfx :: Bfx.Env,
     rawConfigPairs :: Map Bfx.CurrencyPair RawTradeConf,
-    rawConfigProfit :: Bfx.ProfitRate,
     rawConfigPriceTtl :: Seconds,
     rawConfigOrderTtl :: Seconds,
     -- storage
@@ -103,15 +101,8 @@ newRawConfig = liftIO $ do
   parse (header "RecklessTradingBot config") $
     RawConfig env
       <$> var
-        (tradeCfg <=< nonempty)
+        (tradePairs <=< nonempty)
         "RECKLESS_TRADING_BOT_PAIRS"
-        op
-      <*> var
-        ( err . tryFrom @Rational
-            <=< auto
-            <=< nonempty
-        )
-        "RECKLESS_TRADING_BOT_PROFIT"
         op
       <*> var
         ( err . tryFrom @Pico
@@ -145,20 +136,23 @@ newRawConfig = liftIO $ do
         op
   where
     op :: Mod Var a
-    op = keep <> help ""
-    tradeCfg ::
+    op =
+      keep <> help ""
+    tradePairs ::
       String ->
       Either Env.Error (Map Bfx.CurrencyPair RawTradeConf)
-    tradeCfg =
+    tradePairs =
       first
         UnreadError
         . A.eitherDecodeStrict
         . C8.pack
     err ::
-      Show a =>
+      ( Show a
+      ) =>
       Either a b ->
       Either Env.Error b
-    err = first $ UnreadError . show
+    err =
+      first $ UnreadError . show
 
 withEnv :: forall m. (MonadUnliftIO m) => (Env -> m ()) -> m ()
 withEnv this = do
@@ -206,7 +200,6 @@ withEnv this = do
           { -- app
             envBfx = bfx,
             envPairs = cfg,
-            envProfit = rawConfigProfit rc,
             envPriceTtl = rawConfigPriceTtl rc,
             envOrderTtl = rawConfigOrderTtl rc,
             envPriceChan = priceChan,
