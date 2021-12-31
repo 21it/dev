@@ -12,7 +12,6 @@ import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
-import Data.Metrology.Poly ((#))
 
 addFee ::
   forall crel act mrel.
@@ -35,8 +34,8 @@ tweakMakerRate ::
   Either
     (TryFromException Rational (QuotePerBase act))
     (QuotePerBase act)
-tweakMakerRate rate@(QuotePerBase rate') =
-  tweakMakerRateRec rate rate' tweak
+tweakMakerRate rate =
+  tweakMakerRateRec rate (unQuotePerBase rate) tweak
   where
     --
     -- TODO : use pip when 'units' bug with
@@ -61,7 +60,7 @@ tweakMakerRateRec ::
     (TryFromException Rational (QuotePerBase act))
     (QuotePerBase act)
 tweakMakerRateRec rate rate' tweak =
-  case roundQuotePerBase $ newRate' # quotePerBaseAmt of
+  case roundQuotePerBase' newRate' of
     Left e -> Left e
     Right x | x /= rate -> Right x
     Right {} -> tweakMakerRateRec rate newRate' tweak
@@ -83,7 +82,8 @@ newCounterOrder ::
 newCounterOrder base0 rate0 feeB feeQ prof0 = do
   exitQuote <- tryErrorE $ roundMoney' exitQuoteGain
   exitBase <- tryErrorE $ roundMoney' exitBaseLoss
-  pure (exitQuote, exitBase, QuotePerBase exitRate)
+  exitPrice <- tryErrorE $ roundQuotePerBase' exitRate
+  pure (exitQuote, exitBase, exitPrice)
   where
     enterFee :: Rational
     enterFee =

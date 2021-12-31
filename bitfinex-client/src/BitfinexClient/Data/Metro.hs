@@ -5,21 +5,25 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Metro
-  ( Money,
+  ( -- | Primary money types
+    Money,
     unMoney,
     SomeMoney (..),
+    -- | Metrology compatible money type aliases
     MoneyBase',
-    MoneyBaseAmt (..),
     MoneyQuote',
-    MoneyQuoteAmt (..),
-    QuotePerBase (..),
+    -- | Primary exchange rate types
+    QuotePerBase,
+    unQuotePerBase,
     SomeQuotePerBase (..),
+    -- | Metrology compatible exchange rate type alias
     QuotePerBase',
-    quotePerBaseAmt,
-    -- | Lossy constructors
+    -- | Lossy primitive constructors
     roundMoney,
-    roundMoney',
     roundQuotePerBase,
+    -- | Lossy metrology compatible constructors
+    roundMoney',
+    roundQuotePerBase',
     -- | QuasiQuoters for literals in code
     moneyBaseBuy,
     moneyBaseSell,
@@ -216,11 +220,11 @@ instance
     | raw > 0 && rounded == raw =
       Right $
         SomeMoney (sing :: Sing 'Buy) $
-          mkMoney raw
+          mkMoney rounded
     | raw < 0 && rounded == raw =
       Right $
         SomeMoney (sing :: Sing 'Sell) $
-          mkMoney raw
+          mkMoney rounded
     | otherwise =
       Left $
         TryFromException raw Nothing
@@ -267,6 +271,12 @@ newtype QuotePerBase (act :: ExchangeAction) = QuotePerBase
     ( Eq,
       Ord
     )
+
+unQuotePerBase' ::
+  QuotePerBase' ->
+  Rational
+unQuotePerBase' =
+  (# quotePerBaseAmt)
 
 quotePerBaseAmt :: MoneyQuoteAmt :/ MoneyBaseAmt
 quotePerBaseAmt = MoneyQuoteAmt :/ MoneyBaseAmt
@@ -348,18 +358,6 @@ roundMoney raw =
     rounded =
       roundMoneyRat raw
 
-roundMoney' ::
-  forall crel act.
-  ( SingI crel
-  ) =>
-  MkQu_DLN (MoneyDim crel) LCSU' Rational ->
-  Either
-    (TryFromException Rational (Money crel act))
-    (Money crel act)
-roundMoney' =
-  roundMoney
-    . unMoney' @crel
-
 roundQuotePerBase ::
   forall act.
   Rational ->
@@ -373,6 +371,28 @@ roundQuotePerBase raw =
   where
     rounded =
       roundQuotePerBaseRat raw
+
+roundMoney' ::
+  forall crel act.
+  ( SingI crel
+  ) =>
+  MkQu_DLN (MoneyDim crel) LCSU' Rational ->
+  Either
+    (TryFromException Rational (Money crel act))
+    (Money crel act)
+roundMoney' =
+  roundMoney
+    . unMoney' @crel
+
+roundQuotePerBase' ::
+  forall act.
+  QuotePerBase' ->
+  Either
+    (TryFromException Rational (QuotePerBase act))
+    (QuotePerBase act)
+roundQuotePerBase' =
+  roundQuotePerBase
+    . unQuotePerBase'
 
 roundMoneyRat :: Rational -> Rational
 roundMoneyRat =

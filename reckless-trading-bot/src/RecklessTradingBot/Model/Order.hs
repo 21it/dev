@@ -28,13 +28,14 @@ create cfg (Entity priceId price) = do
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
-    enterPrice@(Bfx.QuotePerBase enterPrice') =
+    enterPrice =
       priceBuy price
     enterGain =
       tradeConfMinBuyAmt cfg
     enterLoss =
       case Bfx.roundMoney' $
-        enterPrice' |*| Bfx.unMoney enterGain of
+        Bfx.unQuotePerBase enterPrice
+          |*| Bfx.unMoney enterGain of
         Left e -> error $ show e
         Right x -> x
     newOrder ct =
@@ -99,13 +100,14 @@ bfxUpdate orderId bfxOrder = do
             Psql.==. Psql.val orderId
         )
   where
-    enterPrice@(Bfx.QuotePerBase enterPrice') =
+    enterPrice =
       Bfx.orderRate bfxOrder
     enterGain =
       Bfx.orderAmount bfxOrder
     enterLoss =
       case Bfx.roundMoney' $
-        enterPrice' |*| Bfx.unMoney enterGain of
+        Bfx.unQuotePerBase enterPrice
+          |*| Bfx.unMoney enterGain of
         Left e -> error $ show e
         Right x -> x
 
