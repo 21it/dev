@@ -32,7 +32,7 @@ create orderEnt bfxOrder cfg = do
         (Bfx.orderRate bfxOrder)
         (orderFee $ entityVal orderEnt)
         exitFee
-        $ tradeConfProfitPerOrder cfg of
+        $ tradeConfMinProfitPerOrder cfg of
         Left e -> error $ show e
         Right x -> x
     newRow ct =

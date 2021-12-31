@@ -160,7 +160,7 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
             bfxOrderId
             (orderFee order)
             (tradeConfQuoteFee cfg)
-            (tradeConfProfitPerOrder cfg)
+            (tradeConfMinProfitPerOrder cfg)
             $ Bfx.optsPostOnly
               { Bfx.clientId =
                   Just bfxCounterCid,

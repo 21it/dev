@@ -195,7 +195,6 @@ submitOrder ::
   forall act m.
   ( MonadIO m,
     ToRequestParam (Money 'Base act),
-    ToRequestParam (QuotePerBase act),
     SingI act
   ) =>
   Env ->
@@ -220,7 +219,6 @@ submitOrderMaker ::
   forall act m.
   ( MonadIO m,
     ToRequestParam (Money 'Base act),
-    ToRequestParam (QuotePerBase act),
     SingI act,
     Typeable act
   ) =>

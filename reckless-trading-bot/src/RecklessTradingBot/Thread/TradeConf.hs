@@ -58,7 +58,8 @@ updateTradeConf syms fees varCfg = do
     $ TradeConf
       { tradeConfCurrencyPair = sym,
         tradeConfCurrencyKind = cck,
-        tradeConfProfitPerOrder = tradeConfProfitPerOrder cfg,
+        tradeConfMinProfitPerOrder =
+          tradeConfMinProfitPerOrder cfg,
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = coerce fee,
         tradeConfMinBuyAmt = amtWithFee,

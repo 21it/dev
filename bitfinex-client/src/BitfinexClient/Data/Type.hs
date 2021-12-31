@@ -47,6 +47,7 @@ import BitfinexClient.Import.External
 import BitfinexClient.Orphan ()
 import BitfinexClient.Util
 import Data.Aeson (withText)
+import qualified Data.Aeson as A
 import qualified Data.Text as T
 import qualified Database.Persist as P
 import qualified Database.Persist.Sql as P
@@ -441,7 +442,10 @@ instance FromJSON CurrencyPair where
         Left x -> fail $ show x
         Right x -> pure x
 
-instance FromJSONKey CurrencyPair
+instance FromJSONKey CurrencyPair where
+  fromJSONKey =
+    A.FromJSONKeyTextParser $
+      parseJSON . A.String
 
 currencyPairCon ::
   CurrencyCode 'Base ->

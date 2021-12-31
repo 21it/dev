@@ -9,12 +9,12 @@ export RECKLESS_TRADING_BOT_PAIRS="
   \"ADABTC\":{
     \"currency_kind\":\"Crypto\",
     \"max_quote_investment\":\"0.04\",
-    \"target_profit_per_order\":\"0.001\"
+    \"min_profit_per_order\":\"0.001\"
   },
   \"XMRBTC\":{
     \"currency_kind\":\"Crypto\",
     \"max_quote_investment\":\"0.01\",
-    \"target_profit_per_order\":\"0.001\"
+    \"min_profit_per_order\":\"0.001\"
   }
 }
 "

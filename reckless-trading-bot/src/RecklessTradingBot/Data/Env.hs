@@ -34,9 +34,12 @@ import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 
 data RawTradeConf = RawTradeConf
-  { rawTradeConfCurrencyKind :: Bfx.CurrencyKind,
-    rawTradeConfProfitPerOrder :: Bfx.ProfitRate,
-    rawTradeConfMaxQuoteInvestment :: Bfx.Money 'Bfx.Quote 'Bfx.Sell
+  { rawTradeConfCurrencyKind ::
+      Bfx.CurrencyKind,
+    rawTradeConfMinProfitPerOrder ::
+      Bfx.ProfitRate,
+    rawTradeConfMaxQuoteInvestment ::
+      Bfx.Money 'Bfx.Quote 'Bfx.Sell
   }
   deriving stock
     ( Eq,
@@ -55,7 +58,7 @@ instance FromJSON RawTradeConf where
 data TradeConf = TradeConf
   { tradeConfCurrencyPair :: Bfx.CurrencyPair,
     tradeConfCurrencyKind :: Bfx.CurrencyKind,
-    tradeConfProfitPerOrder :: Bfx.ProfitRate,
+    tradeConfMinProfitPerOrder :: Bfx.ProfitRate,
     tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
     tradeConfMinBuyAmt :: Bfx.Money 'Bfx.Base 'Bfx.Buy,
@@ -100,7 +103,7 @@ newRawConfig = liftIO $ do
   parse (header "RecklessTradingBot config") $
     RawConfig env
       <$> var
-        (json <=< nonempty)
+        (tradeCfg <=< nonempty)
         "RECKLESS_TRADING_BOT_PAIRS"
         op
       <*> var
@@ -143,10 +146,10 @@ newRawConfig = liftIO $ do
   where
     op :: Mod Var a
     op = keep <> help ""
-    json ::
+    tradeCfg ::
       String ->
       Either Env.Error (Map Bfx.CurrencyPair RawTradeConf)
-    json =
+    tradeCfg =
       first
         UnreadError
         . A.eitherDecodeStrict
@@ -260,8 +263,8 @@ newTradeConf symDetails feeDetails (sym, raw) =
               sym,
             tradeConfCurrencyKind =
               cck,
-            tradeConfProfitPerOrder =
-              rawTradeConfProfitPerOrder raw,
+            tradeConfMinProfitPerOrder =
+              rawTradeConfMinProfitPerOrder raw,
             tradeConfBaseFee =
               fee,
             tradeConfQuoteFee =
