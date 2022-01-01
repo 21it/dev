@@ -5,7 +5,6 @@
 module RecklessTradingBot.Thread.Order
   ( apply,
     cancelUnexpected,
-    cancelUnexpectedT,
   )
 where
 
@@ -77,7 +76,8 @@ cancelUnexpectedT entities = do
     withBfxT
       Bfx.cancelOrderMulti
       ($ BfxCancel.ByOrderGroupId $ Set.fromList gids)
-  lift $ Order.updateStatus OrderUnexpected ids
+  lift $
+    Order.updateStatus OrderUnexpected ids
   where
     ids =
       entityKey <$> entities

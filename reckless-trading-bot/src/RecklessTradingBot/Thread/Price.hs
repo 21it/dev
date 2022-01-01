@@ -2,7 +2,10 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module RecklessTradingBot.Thread.Price (apply) where
+module RecklessTradingBot.Thread.Price
+  ( apply,
+  )
+where
 
 import qualified BitfinexClient as Bfx
 import RecklessTradingBot.Import

@@ -3,7 +3,10 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module RecklessTradingBot.Thread.CounterOrder (apply) where
+module RecklessTradingBot.Thread.CounterOrder
+  ( apply,
+  )
+where
 
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.GetOrders as BfxGetOrders
@@ -81,32 +84,32 @@ updateActiveT entities = do
             Set.fromList $
               snd <$> ordersWithRefs
       )
-  ThreadOrder.cancelUnexpectedT
-    . mapMaybe
-      ( \(order, bfxId) ->
-          maybe
-            (Just order)
-            ( \(Bfx.SomeOrder _ x) ->
-                case newOrderStatus $ Bfx.orderStatus x of
-                  OrderActive -> Nothing
-                  OrderExecuted -> Nothing
-                  _ -> Just order
-            )
-            $ Map.lookup bfxId bfxOrderMap
-      )
-    $ ordersWithRefs
   lift $
-    Order.updateStatus OrderExecuted
-      . mapMaybe
-        ( \(order, bfxId) -> do
-            Bfx.SomeOrder _ bfxOrder <-
-              Map.lookup bfxId bfxOrderMap
-            if newOrderStatus (Bfx.orderStatus bfxOrder)
-              == OrderExecuted
-              then Just $ entityKey order
-              else Nothing
-        )
-      $ ordersWithRefs
+    mapM_
+      ( \arg@(orderEnt@(Entity orderId _), bfxId) ->
+          case Map.lookup bfxId bfxOrderMap of
+            Nothing -> do
+              $(logTM) ErrorS $
+                "Missing bfx order " <> show arg
+              ThreadOrder.cancelUnexpected [orderEnt]
+            Just (Bfx.SomeOrder Bfx.SBuy bfxOrder) ->
+              case newOrderStatus $ Bfx.orderStatus bfxOrder of
+                OrderActive ->
+                  Order.updateBfx orderId bfxOrder
+                OrderExecuted ->
+                  Order.updateBfx orderId bfxOrder
+                OrderCancelled ->
+                  Order.updateBfx orderId bfxOrder
+                _ -> do
+                  $(logTM) ErrorS $
+                    "Wrong bfx status " <> show (arg, bfxOrder)
+                  ThreadOrder.cancelUnexpected [orderEnt]
+            Just someBfxOrder -> do
+              $(logTM) ErrorS $
+                "Wrong bfx order " <> show (arg, someBfxOrder)
+              ThreadOrder.cancelUnexpected [orderEnt]
+      )
+      ordersWithRefs
 
 counterExecuted ::
   ( Env m
