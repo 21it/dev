@@ -34,13 +34,13 @@ loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
-  priceEnt@(Entity _ price) <- rcvNextPrice sym
+  priceEnt <- rcvNextPrice sym
   cancelUnexpected . (fst <$>)
     =<< Order.getByStatus sym [OrderNew]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
     orderEnt <- Order.create cfg priceEnt
-    placeOrder cfg orderEnt price
+    placeOrder cfg orderEnt $ entityVal priceEnt
   loop varCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
@@ -79,7 +79,8 @@ cancelUnexpectedT entities = do
       ($ BfxCancel.ByOrderGroupId $ Set.fromList gids)
   lift $ Order.updateStatus OrderUnexpected ids
   where
-    ids = entityKey <$> entities
+    ids =
+      entityKey <$> entities
 
 placeOrder ::
   ( Env m
@@ -121,9 +122,12 @@ placeOrderT cfg (Entity orderId order) price = do
   lift $
     Order.updateBfx orderId bfxOrder
 
---
--- TODO : !!!
---
+-- | The price sequence is good if it decreased monotonously.
 goodPriceSeq :: [Entity Price] -> Bool
-goodPriceSeq xs | length xs >= 3 = True
-goodPriceSeq _ = False
+goodPriceSeq (x0 : x1 : x2 : _) =
+  let p0 = priceBuy $ entityVal x0
+      p1 = priceBuy $ entityVal x1
+      p2 = priceBuy $ entityVal x2
+   in p0 >= p1 && p1 >= p2 && p0 > p2
+goodPriceSeq _ =
+  False

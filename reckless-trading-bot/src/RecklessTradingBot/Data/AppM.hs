@@ -93,7 +93,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
           . priceUpdatedAt
           $ entityVal price of
           Left e -> do
-            $(logTM) ErrorS $ logStr (show e :: Text)
+            $(logTM) ErrorS $ show e
             sleep wantedTtl
           Right realTtl
             | wantedTtl > realTtl ->

@@ -25,7 +25,7 @@ loop = do
       mapM_ (updateTradeConf syms fees) xs
   whenLeft res $
     $(logTM) ErrorS . show
-  sleep [seconds|600|]
+  sleep [seconds|300|]
   loop
 
 updateTradeConf ::
@@ -42,13 +42,13 @@ updateTradeConf syms fees varCfg = do
   let fee = BfxFeeSummary.getFee @'Bfx.Maker cck fees
   bfxCfg <-
     tryJust
-      (ErrorRuntime $ "Missing CurrencyPair" <> show sym)
+      (ErrorRuntime $ "Missing " <> show sym)
       $ Map.lookup sym syms
   let amtNoFee = Bfx.currencyPairMinOrderAmt bfxCfg
   when (amtNoFee <= [moneyBaseBuy|0|])
     . throwE
     . ErrorRuntime
-    $ "Wrong Money " <> show amtNoFee
+    $ "Wrong " <> show amtNoFee
   amtWithFee <-
     tryErrorT $
       BfxMath.addFee amtNoFee fee

@@ -15,9 +15,9 @@ apply = do
   xs <-
     mapM
       spawnLink
-      [ ThreadPrice.apply,
-        ThreadOrder.apply,
-        ThreadTradeConf.apply
+      [ ThreadTradeConf.apply,
+        ThreadPrice.apply,
+        ThreadOrder.apply
       ]
   liftIO
     . void

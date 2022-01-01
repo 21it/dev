@@ -117,6 +117,8 @@ updateStatus ::
   OrderStatus ->
   [OrderId] ->
   m ()
+updateStatus _ [] =
+  pure ()
 updateStatus ss xs = do
   ct <- liftIO getCurrentTime
   runSql $
@@ -135,6 +137,8 @@ getByStatus ::
   Bfx.CurrencyPair ->
   [OrderStatus] ->
   m [(Entity Order, Entity Price)]
+getByStatus _ [] =
+  pure []
 getByStatus sym ss =
   runSql $
     Psql.select $
@@ -160,7 +164,7 @@ getByStatus sym ss =
           )
         Psql.limit 100
         Psql.orderBy
-          [ Psql.desc $
+          [ Psql.asc $
               order Psql.^. OrderUpdatedAt
           ]
         pure (order, price)

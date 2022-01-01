@@ -78,18 +78,31 @@ getLatestLimit ::
   Int64 ->
   Bfx.CurrencyPair ->
   m [Entity Price]
-getLatestLimit lim sym =
-  runSql $
-    P.select $
-      P.from $ \row -> do
-        P.where_
-          ( ( row P.^. PriceBase
-                P.==. P.val (Bfx.currencyPairBase sym)
-            )
-              P.&&. ( row P.^. PriceQuote
-                        P.==. P.val (Bfx.currencyPairQuote sym)
+getLatestLimit lim sym = do
+  xs <-
+    runSql $
+      P.select $
+        P.from $ \row -> do
+          P.where_
+            ( ( row P.^. PriceBase
+                  P.==. P.val
+                    ( Bfx.currencyPairBase sym
                     )
-          )
-        P.orderBy [P.desc $ row P.^. PriceId]
-        P.limit lim
-        pure row
+              )
+                P.&&. ( row P.^. PriceQuote
+                          P.==. P.val
+                            ( Bfx.currencyPairQuote sym
+                            )
+                      )
+            )
+          P.orderBy [P.desc $ row P.^. PriceId]
+          P.limit lim
+          pure row
+  pure $
+    sortBy
+      ( \lhs rhs ->
+          compare
+            (entityKey lhs)
+            (entityKey rhs)
+      )
+      xs
