@@ -136,7 +136,7 @@ getByStatus ::
   ) =>
   Bfx.CurrencyPair ->
   [OrderStatus] ->
-  m [(Entity Order, Entity Price)]
+  m [Entity Order]
 getByStatus _ [] =
   pure []
 getByStatus sym ss =
@@ -167,4 +167,4 @@ getByStatus sym ss =
           [ Psql.asc $
               order Psql.^. OrderUpdatedAt
           ]
-        pure (order, price)
+        pure order
