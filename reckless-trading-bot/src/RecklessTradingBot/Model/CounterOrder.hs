@@ -3,7 +3,7 @@
 
 module RecklessTradingBot.Model.CounterOrder
   ( create,
-    bfxUpdate,
+    updateBfx,
   )
 where
 
@@ -16,11 +16,11 @@ import qualified RecklessTradingBot.Import.Psql as P
 create ::
   ( Storage m
   ) =>
+  TradeConf ->
   Entity Order ->
   Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
-  TradeConf ->
   m (Entity CounterOrder)
-create orderEnt bfxOrder cfg = do
+create cfg orderEnt bfxOrder = do
   row <- liftIO $ newRow <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
@@ -37,7 +37,20 @@ create orderEnt bfxOrder cfg = do
         Right x -> x
     newRow ct =
       CounterOrder
-        { counterOrderIntRef = entityKey orderEnt,
+        { --
+          -- NOTE : some fields should be updated
+          -- with real data pulled from Bitfinex
+          -- after order is placed on exchange orderbook
+          -- including:
+          --
+          --   counterOrderExtRef
+          --   counterOrderPrice
+          --   counterOrderGain
+          --   counterOrderLoss
+          --   counterOrderStatus
+          --   counterOrderUpdatedAt
+          --
+          counterOrderIntRef = entityKey orderEnt,
           counterOrderExtRef = Nothing,
           counterOrderPrice = exitRate,
           counterOrderGain = exitGain,
@@ -48,13 +61,13 @@ create orderEnt bfxOrder cfg = do
           counterOrderUpdatedAt = ct
         }
 
-bfxUpdate ::
+updateBfx ::
   ( Storage m
   ) =>
   CounterOrderId ->
   Bfx.Order 'Bfx.Sell 'Bfx.Remote ->
   m ()
-bfxUpdate counterId bfxCounterOrder = do
+updateBfx counterId bfxCounterOrder = do
   ct <- liftIO getCurrentTime
   runSql $
     P.update $ \row -> do

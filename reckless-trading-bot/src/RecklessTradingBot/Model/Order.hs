@@ -51,7 +51,7 @@ create cfg (Entity priceId price) = do
           --   orderGain
           --   orderLoss
           --   orderStatus
-          --   updatedAt
+          --   orderUpdatedAt
           --
           orderPriceRef = priceId,
           orderExtRef = Nothing,

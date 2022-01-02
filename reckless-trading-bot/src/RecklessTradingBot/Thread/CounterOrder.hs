@@ -35,20 +35,20 @@ loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
-  updateActive . (fst <$>)
+  updateActiveOrders . (fst <$>)
     =<< Order.getByStatus sym [OrderActive]
-  mapM_ (counterExecuted cfg . fst)
+  mapM_ (counterExecutedOrder cfg . fst)
     =<< Order.getByStatus sym [OrderExecuted]
   sleep [seconds|30|]
   loop varCfg
 
-updateActive ::
+updateActiveOrders ::
   ( Env m
   ) =>
   [Entity Order] ->
   m ()
-updateActive [] = pure ()
-updateActive entities = do
+updateActiveOrders [] = pure ()
+updateActiveOrders entities = do
   res <-
     runExceptT $
       updateActiveT entities
@@ -111,15 +111,17 @@ updateActiveT entities = do
       )
       ordersWithRefs
 
-counterExecuted ::
+counterExecutedOrder ::
   ( Env m
   ) =>
   TradeConf ->
   Entity Order ->
   m ()
-counterExecuted cfg orderEnt = do
+counterExecutedOrder cfg orderEnt = do
   case orderExtRef $ entityVal orderEnt of
-    Nothing ->
+    Nothing -> do
+      $(logTM) ErrorS $
+        "Missing bfx ref " <> show orderEnt
       ThreadOrder.cancelUnexpected [orderEnt]
     Just bfxId -> do
       res <-
@@ -148,7 +150,7 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
             Bfx.ErrorOrderState bfxSomeOrder
   counterId <-
     lift . (entityKey <$>) $
-      CounterOrder.create orderEnt bfxOrder cfg
+      CounterOrder.create cfg orderEnt bfxOrder
   bfxCounterCid <-
     tryFromT counterId
   --
@@ -172,6 +174,6 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
               }
       )
   lift $
-    CounterOrder.bfxUpdate
+    CounterOrder.updateBfx
       counterId
       bfxCounterOrder
