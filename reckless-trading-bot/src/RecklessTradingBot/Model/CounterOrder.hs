@@ -4,6 +4,7 @@
 module RecklessTradingBot.Model.CounterOrder
   ( create,
     updateBfx,
+    getOrdersToCounter,
   )
 where
 
@@ -85,3 +86,58 @@ updateBfx counterId bfxCounterOrder = do
         ( row P.^. CounterOrderId
             P.==. P.val counterId
         )
+
+getOrdersToCounter ::
+  ( Storage m
+  ) =>
+  Bfx.CurrencyPair ->
+  m [Entity Order]
+getOrdersToCounter sym =
+  runSql $
+    P.select $
+      P.from $
+        \( counter
+             `P.RightOuterJoin` order
+             `P.InnerJoin` price
+           ) ->
+            P.distinctOn [P.don $ order P.^. OrderId] $ do
+              P.on
+                ( price P.^. PriceId
+                    P.==. order P.^. OrderPriceRef
+                )
+              P.on
+                ( P.just (order P.^. OrderId)
+                    P.==. counter P.?. CounterOrderIntRef
+                )
+              P.where_
+                ( ( price P.^. PriceBase
+                      P.==. P.val
+                        ( Bfx.currencyPairBase sym
+                        )
+                  )
+                    P.&&. ( price P.^. PriceQuote
+                              P.==. P.val
+                                ( Bfx.currencyPairQuote sym
+                                )
+                          )
+                    P.&&. ( order P.^. OrderStatus
+                              P.==. P.val OrderExecuted
+                          )
+                    P.&&. ( ( counter P.?. CounterOrderId
+                                P.==. P.val Nothing
+                            )
+                              P.||. P.not_
+                                ( counter P.?. CounterOrderStatus
+                                    `P.in_` P.valList
+                                      [ Just OrderActive,
+                                        Just OrderExecuted
+                                      ]
+                                )
+                          )
+                )
+              P.limit 100
+              P.orderBy
+                [ P.asc $
+                    order P.^. OrderUpdatedAt
+                ]
+              pure order

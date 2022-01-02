@@ -37,8 +37,8 @@ loop varCfg = do
   let sym = tradeConfCurrencyPair cfg
   updateActiveOrders . (fst <$>)
     =<< Order.getByStatus sym [OrderActive]
-  mapM_ (counterExecutedOrder cfg . fst)
-    =<< Order.getByStatus sym [OrderExecuted]
+  mapM_ (counterExecutedOrder cfg)
+    =<< CounterOrder.getOrdersToCounter sym
   sleep [seconds|30|]
   loop varCfg
 
