@@ -4,6 +4,7 @@
 module RecklessTradingBot.Model.CounterOrder
   ( create,
     updateBfx,
+    getByStatus,
     getOrdersToCounter,
   )
 where
@@ -13,6 +14,7 @@ import qualified BitfinexClient.Math as BfxMath
 import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Import.Psql as P
+import qualified RecklessTradingBot.Model.Order as Order
 
 create ::
   ( Storage m
@@ -65,27 +67,104 @@ create cfg orderEnt bfxOrder = do
 updateBfx ::
   ( Storage m
   ) =>
-  CounterOrderId ->
+  Entity CounterOrder ->
   Bfx.Order 'Bfx.Sell 'Bfx.Remote ->
   m ()
-updateBfx counterId bfxCounterOrder = do
+updateBfx ent bfxCounter = do
   ct <- liftIO getCurrentTime
-  runSql $
+  runSql $ do
+    when (counterStatus == OrderExecuted) $
+      Order.updateStatusSql
+        OrderCountered
+        [ counterOrderIntRef $
+            entityVal ent
+        ]
     P.update $ \row -> do
       P.set
         row
-        [ CounterOrderStatus
+        [ CounterOrderExtRef
             P.=. P.val
-              ( newOrderStatus $
-                  Bfx.orderStatus bfxCounterOrder
+              ( Just . from $
+                  Bfx.orderId bfxCounter
               ),
+          CounterOrderPrice
+            P.=. P.val exitPrice,
+          CounterOrderGain
+            P.=. P.val exitGain,
+          CounterOrderLoss
+            P.=. P.val exitLoss,
+          CounterOrderStatus
+            P.=. P.val counterStatus,
           CounterOrderUpdatedAt
             P.=. P.val ct
         ]
       P.where_
         ( row P.^. CounterOrderId
-            P.==. P.val counterId
+            P.==. P.val (entityKey ent)
         )
+  where
+    exitPrice =
+      Bfx.orderRate bfxCounter
+    exitLoss =
+      Bfx.orderAmount bfxCounter
+    exitGain =
+      case Bfx.roundMoney' $
+        Bfx.unQuotePerBase exitPrice
+          |*| Bfx.unMoney exitLoss of
+        Left e -> error $ show e
+        Right x -> x
+    counterStatus =
+      newOrderStatus $
+        Bfx.orderStatus bfxCounter
+
+getByStatus ::
+  ( Storage m
+  ) =>
+  Bfx.CurrencyPair ->
+  [OrderStatus] ->
+  m [Entity CounterOrder]
+getByStatus _ [] = pure []
+getByStatus sym ss =
+  runSql $
+    P.select $
+      P.from $
+        \( counter
+             `P.InnerJoin` order
+             `P.InnerJoin` price
+           ) ->
+            P.distinctOn
+              [ P.don $ counter P.^. CounterOrderId
+              ]
+              $ do
+                P.on
+                  ( price P.^. PriceId
+                      P.==. order P.^. OrderPriceRef
+                  )
+                P.on
+                  ( order P.^. OrderId
+                      P.==. counter P.^. CounterOrderIntRef
+                  )
+                P.where_
+                  ( ( price P.^. PriceBase
+                        P.==. P.val
+                          ( Bfx.currencyPairBase sym
+                          )
+                    )
+                      P.&&. ( price P.^. PriceQuote
+                                P.==. P.val
+                                  ( Bfx.currencyPairQuote sym
+                                  )
+                            )
+                      P.&&. ( counter P.^. CounterOrderStatus
+                                `P.in_` P.valList ss
+                            )
+                  )
+                P.limit 100
+                P.orderBy
+                  [ P.asc $
+                      counter P.^. CounterOrderUpdatedAt
+                  ]
+                pure counter
 
 getOrdersToCounter ::
   ( Storage m

@@ -39,6 +39,8 @@ loop varCfg = do
     =<< Order.getByStatus sym [OrderActive]
   mapM_ (counterExecutedOrder cfg)
     =<< CounterOrder.getOrdersToCounter sym
+  updateCounterOrders
+    =<< CounterOrder.getByStatus sym [OrderActive]
   sleep [seconds|30|]
   loop varCfg
 
@@ -48,10 +50,10 @@ updateActiveOrders ::
   [Entity Order] ->
   m ()
 updateActiveOrders [] = pure ()
-updateActiveOrders entities = do
+updateActiveOrders rows = do
   res <-
     runExceptT $
-      updateActiveT entities
+      updateActiveT rows
   whenLeft res $
     $(logTM) ErrorS . show
 
@@ -61,8 +63,8 @@ updateActiveT ::
   [Entity Order] ->
   ExceptT Error m ()
 updateActiveT [] = pure ()
-updateActiveT entities = do
-  ordersWithRefs <-
+updateActiveT rows = do
+  rowsWithRefs <-
     mapM
       ( \x ->
           tryJust
@@ -75,19 +77,19 @@ updateActiveT entities = do
             . orderExtRef
             $ entityVal x
       )
-      entities
-  bfxOrderMap <-
+      rows
+  bfxRowMap <-
     withBfxT
       Bfx.getOrders
       ( $
           BfxGetOrders.optsIds $
             Set.fromList $
-              snd <$> ordersWithRefs
+              snd <$> rowsWithRefs
       )
   lift $
     mapM_
       ( \arg@(orderEnt@(Entity orderId _), bfxId) ->
-          case Map.lookup bfxId bfxOrderMap of
+          case Map.lookup bfxId bfxRowMap of
             Nothing -> do
               $(logTM) ErrorS $
                 "Missing bfx order " <> show arg
@@ -109,7 +111,7 @@ updateActiveT entities = do
                 "Wrong bfx order " <> show (arg, someBfxOrder)
               ThreadOrder.cancelUnexpected [orderEnt]
       )
-      ordersWithRefs
+      rowsWithRefs
 
 counterExecutedOrder ::
   ( Env m
@@ -117,16 +119,16 @@ counterExecutedOrder ::
   TradeConf ->
   Entity Order ->
   m ()
-counterExecutedOrder cfg orderEnt = do
-  case orderExtRef $ entityVal orderEnt of
+counterExecutedOrder cfg row = do
+  case orderExtRef $ entityVal row of
     Nothing -> do
       $(logTM) ErrorS $
-        "Missing bfx ref " <> show orderEnt
-      ThreadOrder.cancelUnexpected [orderEnt]
-    Just bfxId -> do
+        "Missing bfx ref " <> show row
+      ThreadOrder.cancelUnexpected [row]
+    Just ref -> do
       res <-
-        runExceptT . counterExecutedT cfg orderEnt $
-          from bfxId
+        runExceptT . counterExecutedT cfg row $
+          from ref
       whenLeft res $
         $(logTM) ErrorS . show
 
@@ -148,16 +150,16 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
         throwE $
           ErrorBfx $
             Bfx.ErrorOrderState bfxSomeOrder
-  counterId <-
-    lift . (entityKey <$>) $
+  counter <-
+    lift $
       CounterOrder.create cfg orderEnt bfxOrder
   bfxCounterCid <-
-    tryFromT counterId
+    tryFromT $ entityKey counter
   --
   -- TODO : cancel all other counters with same
   -- order and group ids.
   --
-  bfxCounterOrder <-
+  bfxCounter <-
     withBfxT
       Bfx.submitCounterOrderMaker
       ( \cont ->
@@ -175,5 +177,83 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
       )
   lift $
     CounterOrder.updateBfx
-      counterId
-      bfxCounterOrder
+      counter
+      bfxCounter
+
+updateCounterOrders ::
+  ( Env m
+  ) =>
+  [Entity CounterOrder] ->
+  m ()
+updateCounterOrders [] = pure ()
+updateCounterOrders rows = do
+  res <-
+    runExceptT $
+      updateCounterT rows
+  whenLeft res $
+    $(logTM) ErrorS . show
+
+updateCounterT ::
+  ( Env m
+  ) =>
+  [Entity CounterOrder] ->
+  ExceptT Error m ()
+updateCounterT [] = pure ()
+updateCounterT rows = do
+  rowsWithRefs <-
+    mapM
+      ( \row ->
+          tryJust
+            ( ErrorRuntime $
+                "Missing counterOrderExtRef in "
+                  <> show row
+            )
+            . ((row,) <$>)
+            . (from <$>)
+            . counterOrderExtRef
+            $ entityVal row
+      )
+      rows
+  bfxRowMap <-
+    withBfxT
+      Bfx.getOrders
+      ( $
+          BfxGetOrders.optsIds $
+            Set.fromList $
+              snd <$> rowsWithRefs
+      )
+  lift $
+    mapM_
+      ( \arg@(row, bfxId) ->
+          case Map.lookup bfxId bfxRowMap of
+            Nothing -> do
+              $(logTM) ErrorS $
+                "Missing bfx order " <> show arg
+            --
+            -- TODO : !!!
+            --
+            --ThreadCounterOrder.cancelUnexpected [orderEnt]
+            Just (Bfx.SomeOrder Bfx.SSell bfxCounter) ->
+              case newOrderStatus $ Bfx.orderStatus bfxCounter of
+                OrderActive ->
+                  CounterOrder.updateBfx row bfxCounter
+                OrderExecuted ->
+                  CounterOrder.updateBfx row bfxCounter
+                OrderCancelled ->
+                  CounterOrder.updateBfx row bfxCounter
+                _ -> do
+                  $(logTM) ErrorS $
+                    "Wrong bfx status " <> show (arg, bfxCounter)
+            --
+            -- TODO : !!!
+            --
+            --ThreadCounterOrder.cancelUnexpected [orderEnt]
+            Just someBfxOrder -> do
+              $(logTM) ErrorS $
+                "Wrong bfx order " <> show (arg, someBfxOrder)
+                --
+                -- TODO : !!!
+                --
+                --ThreadOrder.cancelUnexpected [orderEnt]
+      )
+      rowsWithRefs

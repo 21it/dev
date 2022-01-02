@@ -6,12 +6,12 @@ module RecklessTradingBot.Model.Order
   ( create,
     updateBfx,
     updateStatus,
+    updateStatusSql,
     getByStatus,
   )
 where
 
 import qualified BitfinexClient as Bfx
-import BitfinexClient.Import.External ((|*|))
 import qualified Database.Persist as P
 import RecklessTradingBot.Class.Storage
 import RecklessTradingBot.Import
@@ -117,19 +117,28 @@ updateStatus ::
   OrderStatus ->
   [OrderId] ->
   m ()
-updateStatus _ [] =
-  pure ()
-updateStatus ss xs = do
-  ct <- liftIO getCurrentTime
+updateStatus _ [] = pure ()
+updateStatus ss xs =
   runSql $
-    Psql.update $ \row -> do
-      Psql.set
-        row
-        [ OrderStatus Psql.=. Psql.val ss,
-          OrderUpdatedAt Psql.=. Psql.val ct
-        ]
-      Psql.where_ $
-        row Psql.^. OrderId `Psql.in_` Psql.valList xs
+    updateStatusSql ss xs
+
+updateStatusSql ::
+  ( Storage m
+  ) =>
+  OrderStatus ->
+  [OrderId] ->
+  ReaderT SqlBackend m ()
+updateStatusSql _ [] = pure ()
+updateStatusSql ss xs = do
+  ct <- liftIO getCurrentTime
+  Psql.update $ \row -> do
+    Psql.set
+      row
+      [ OrderStatus Psql.=. Psql.val ss,
+        OrderUpdatedAt Psql.=. Psql.val ct
+      ]
+    Psql.where_ $
+      row Psql.^. OrderId `Psql.in_` Psql.valList xs
 
 getByStatus ::
   ( Storage m
@@ -137,8 +146,7 @@ getByStatus ::
   Bfx.CurrencyPair ->
   [OrderStatus] ->
   m [Entity Order]
-getByStatus _ [] =
-  pure []
+getByStatus _ [] = pure []
 getByStatus sym ss =
   runSql $
     Psql.select $

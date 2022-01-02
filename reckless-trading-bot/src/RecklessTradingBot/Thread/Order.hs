@@ -34,7 +34,8 @@ loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
   priceEnt <- rcvNextPrice sym
-  cancelUnexpected =<< Order.getByStatus sym [OrderNew]
+  cancelUnexpected
+    =<< Order.getByStatus sym [OrderNew]
   priceSeq <- Price.getSeq sym
   when (goodPriceSeq priceSeq) $ do
     orderEnt <- Order.create cfg priceEnt
