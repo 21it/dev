@@ -8,7 +8,9 @@ module BitfinexClient.Data.Web
     RawResponse (..),
     Nonce,
     unNonce,
-    newNonce,
+    NonceGen,
+    newNonceGen,
+    withNonce,
     epoch,
   )
 where
@@ -29,7 +31,8 @@ newtype PrvKey
     )
 
 instance Prelude.Show PrvKey where
-  show = const "SECRET"
+  show =
+    const "SECRET"
 
 newtype ApiKey
   = ApiKey BS.ByteString
@@ -40,7 +43,8 @@ newtype ApiKey
     )
 
 instance Prelude.Show ApiKey where
-  show = const "SECRET"
+  show =
+    const "SECRET"
 
 data RequestMethod
   = GET
@@ -62,7 +66,10 @@ newtype BaseUrl
 
 newtype RawResponse
   = RawResponse ByteString
-  deriving newtype (Eq, Ord)
+  deriving newtype
+    ( Eq,
+      Ord
+    )
 
 instance Show RawResponse where
   show x =
@@ -72,11 +79,51 @@ instance Show RawResponse where
     where
       bs = BL.toStrict $ coerce x
 
-newtype Nonce = Nonce {unNonce :: Natural}
-  deriving newtype (Eq, Ord, Show)
+newtype Nonce = Nonce
+  { unNonce :: Natural
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show
+    )
 
-newNonce :: MonadIO m => m Nonce
-newNonce = liftIO $ Nonce . utcTimeToMicros <$> getCurrentTime
+mkNonce :: (MonadIO m) => m Nonce
+mkNonce =
+  liftIO $
+    Nonce . utcTimeToMicros <$> getCurrentTime
+
+newtype NonceGen
+  = NonceGen (MVar Nonce)
+  deriving stock
+    ( Eq
+    )
+
+instance Prelude.Show NonceGen where
+  show =
+    const "NonceGen"
+
+newNonceGen ::
+  ( MonadIO m
+  ) =>
+  m NonceGen
+newNonceGen = do
+  nonce <- mkNonce
+  var <- liftIO $ newMVar nonce
+  pure $ NonceGen var
+
+withNonce ::
+  ( MonadUnliftIO m
+  ) =>
+  NonceGen ->
+  (Nonce -> m a) ->
+  m a
+withNonce (NonceGen var) this = do
+  nextNonce <- mkNonce
+  bracket
+    (takeMVar var)
+    (putMVar var . max nextNonce)
+    (const $ this nextNonce)
 
 utcTimeToMicros :: UTCTime -> Natural
 utcTimeToMicros x =
@@ -89,4 +136,5 @@ utcTimeToMicros x =
       `div` 1000000
 
 epoch :: UTCTime
-epoch = posixSecondsToUTCTime 0
+epoch =
+  posixSecondsToUTCTime 0

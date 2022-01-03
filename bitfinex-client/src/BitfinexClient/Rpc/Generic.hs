@@ -80,45 +80,46 @@ prv env req = catchWeb $ do
     Web.newManager Tls.tlsManagerSettings
   let apiPath =
         T.intercalate "/" $ toPathPieces @method req
-  nonce <- encodeUtf8 <$> (show <$> newNonce :: IO Text)
   let reqBody = A.encode req
   webReq0 <-
     Web.parseRequest
       . T.unpack
       $ coerce (toBaseUrl @method) <> "/" <> apiPath
-  let webReq1 =
-        webReq0
-          { Web.method = show $ toRequestMethod @method,
-            Web.requestBody = Web.RequestBodyLBS reqBody,
-            Web.requestHeaders =
-              [ ( "Content-Type",
-                  "application/json"
-                ),
-                ( "bfx-nonce",
-                  nonce
-                ),
-                ( "bfx-apikey",
-                  coerce $ envApiKey env
-                ),
-                ( "bfx-signature",
-                  B16.encode
-                    . BS.pack
-                    . BA.unpack
-                    $ sign (envPrvKey env) apiPath nonce reqBody
-                )
-              ]
-          }
-  webRes <-
-    Web.httpLbs webReq1 manager
-  let rawRes =
-        RawResponse $ Web.responseBody webRes
-  pure $
-    if Web.responseStatus webRes == Web.ok200
-      then
-        first (parserFailure @method webReq1 webRes rawRes)
-          . fromRpc @method
-          $ rawRes
-      else Left $ ErrorWebPrv reqBody webReq1 webRes
+  withNonce (envNonceGen env) $ \nonce' -> do
+    let nonce = encodeUtf8 (show nonce' :: Text)
+    let webReq1 =
+          webReq0
+            { Web.method = show $ toRequestMethod @method,
+              Web.requestBody = Web.RequestBodyLBS reqBody,
+              Web.requestHeaders =
+                [ ( "Content-Type",
+                    "application/json"
+                  ),
+                  ( "bfx-nonce",
+                    nonce
+                  ),
+                  ( "bfx-apikey",
+                    coerce $ envApiKey env
+                  ),
+                  ( "bfx-signature",
+                    B16.encode
+                      . BS.pack
+                      . BA.unpack
+                      $ sign (envPrvKey env) apiPath nonce reqBody
+                  )
+                ]
+            }
+    webRes <-
+      Web.httpLbs webReq1 manager
+    let rawRes =
+          RawResponse $ Web.responseBody webRes
+    pure $
+      if Web.responseStatus webRes == Web.ok200
+        then
+          first (parserFailure @method webReq1 webRes rawRes)
+            . fromRpc @method
+            $ rawRes
+        else Left $ ErrorWebPrv reqBody webReq1 webRes
 
 sign ::
   PrvKey ->

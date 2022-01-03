@@ -56,5 +56,18 @@ import Database.Persist.Sql as X
   ( PersistFieldSql (..),
   )
 import Network.HTTP.Client as X (HttpException (..))
-import Universum as X hiding (ByteString, catch)
-import UnliftIO as X (catch)
+import Universum as X hiding
+  ( ByteString,
+    bracket,
+    catch,
+    finally,
+  )
+import UnliftIO as X
+  ( Handler (..),
+    MonadUnliftIO (..),
+    UnliftIO (..),
+    bracket,
+    catch,
+    catches,
+    finally,
+  )

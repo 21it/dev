@@ -21,15 +21,15 @@ import Env
   )
 
 data Env = Env
-  { envApiKey :: ApiKey,
+  { envNonceGen :: NonceGen,
+    envApiKey :: ApiKey,
     envPrvKey :: PrvKey
   }
   deriving stock
     ( Eq,
-      Ord,
       -- | It's safe to derive 'Show' instance,
-      -- because 'ApiKey' and 'PrvKey' instances
-      -- are safe.
+      -- because 'NonceGen', 'ApiKey' and 'PrvKey'
+      -- instances are safe.
       Show
     )
 
@@ -37,10 +37,11 @@ newEnv ::
   ( MonadIO m
   ) =>
   m Env
-newEnv =
+newEnv = do
+  nonceGen <- newNonceGen
   liftIO
     . parse (header "BitfinexClient config")
-    $ Env
+    $ Env nonceGen
       <$> var (str <=< nonempty) "BITFINEX_API_KEY" op
       <*> var (str <=< nonempty) "BITFINEX_PRV_KEY" op
   where
