@@ -187,13 +187,16 @@ instance
           )
 
 instance
+  ( SingI crel,
+    Typeable crel
+  ) =>
   FromRpc
     'Wallets
     ( Map
-        (CurrencyCode 'Base)
+        (CurrencyCode crel)
         ( Map
             Wallets.WalletType
-            Wallets.Response
+            (Wallets.Response crel)
         )
     )
   where

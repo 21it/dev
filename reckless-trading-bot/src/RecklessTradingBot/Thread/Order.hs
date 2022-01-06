@@ -36,10 +36,12 @@ loop varCfg = do
   priceEnt <- rcvNextPrice sym
   cancelUnexpected
     =<< Order.getByStatus sym [OrderNew]
+  --
+  -- TODO : verify max investment limit
+  --
   priceSeq <- Price.getSeq sym
-  when (goodPriceSeq priceSeq) $ do
-    orderEnt <- Order.create cfg priceEnt
-    placeOrder cfg orderEnt $ entityVal priceEnt
+  when (goodPriceSeq priceSeq) $
+    placeOrder cfg priceEnt
   loop varCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
@@ -86,24 +88,41 @@ placeOrder ::
   ( Env m
   ) =>
   TradeConf ->
-  Entity Order ->
-  Price ->
+  Entity Price ->
   m ()
-placeOrder cfg orderEnt price = do
+placeOrder cfg priceEnt = do
   res <-
-    runExceptT $
-      placeOrderT cfg orderEnt price
+    runExceptT $ do
+      quoteBalance <-
+        withBfxT
+          Bfx.spendableExchangeBalance
+          ($ Bfx.currencyPairQuote $ tradeConfCurrencyPair cfg)
+      when (quoteBalance > enterLoss) $
+        placeOrderT cfg priceEnt
   whenLeft res $
     $(logTM) ErrorS . show
+  where
+    enterPrice =
+      priceBuy $ entityVal priceEnt
+    enterGain =
+      tradeConfMinBuyAmt cfg
+    enterLoss =
+      case Bfx.roundMoney' $
+        Bfx.unQuotePerBase enterPrice
+          |*| Bfx.unMoney enterGain of
+        Left e -> error $ show e
+        Right x -> x
 
 placeOrderT ::
   ( Env m
   ) =>
   TradeConf ->
-  Entity Order ->
-  Price ->
+  Entity Price ->
   ExceptT Error m ()
-placeOrderT cfg (Entity orderId order) price = do
+placeOrderT cfg priceEnt = do
+  Entity orderId order <-
+    lift $
+      Order.create cfg priceEnt
   cid <- tryFromT orderId
   gid <- tryFromT orderId
   bfxOrder <-
@@ -113,7 +132,7 @@ placeOrderT cfg (Entity orderId order) price = do
           cont
             (orderGain order)
             (tradeConfCurrencyPair cfg)
-            (priceBuy price)
+            (priceBuy $ entityVal priceEnt)
             Bfx.optsPostOnly
               { Bfx.clientId = Just cid,
                 Bfx.groupId = Just gid

@@ -76,17 +76,20 @@ feeSummary env =
     (mempty :: Map Int Int)
 
 wallets ::
-  ( MonadIO m
+  forall crel m.
+  ( SingI crel,
+    Typeable crel,
+    MonadIO m
   ) =>
   Env ->
   ExceptT
     Error
     m
     ( Map
-        (CurrencyCode 'Base)
+        (CurrencyCode crel)
         ( Map
             Wallets.WalletType
-            Wallets.Response
+            (Wallets.Response crel)
         )
     )
 wallets env =
@@ -96,16 +99,24 @@ wallets env =
     (mempty :: Map Int Int)
 
 spendableExchangeBalance ::
-  ( MonadIO m
+  forall crel m.
+  ( SingI crel,
+    Typeable crel,
+    MonadIO m
   ) =>
   Env ->
-  CurrencyCode 'Base ->
-  ExceptT Error m (Money 'Base 'Sell)
+  CurrencyCode crel ->
+  ExceptT Error m (Money crel 'Sell)
 spendableExchangeBalance env cc =
-  maybe [moneyBaseSell|0|] Wallets.availableBalance
+  maybe noMoney Wallets.availableBalance
     . Map.lookup Wallets.Exchange
     . Map.findWithDefault mempty cc
     <$> wallets env
+  where
+    noMoney =
+      case sing :: Sing crel of
+        SBase -> [moneyBaseSell|0|]
+        SQuote -> [moneyQuoteSell|0|]
 
 retrieveOrders ::
   ( MonadIO m

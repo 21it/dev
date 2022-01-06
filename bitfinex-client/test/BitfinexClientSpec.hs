@@ -74,7 +74,7 @@ spec = before newEnv $ do
       SubmitOrder.optsPostOnly
   itRight
     "wallets succeeds"
-    Bitfinex.wallets
+    (Bitfinex.wallets @'Base)
 
 --  describe "End2End" $ do
 --    itRight "submitOrderMaker" $ \env -> do

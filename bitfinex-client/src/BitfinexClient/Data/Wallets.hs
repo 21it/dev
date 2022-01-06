@@ -33,15 +33,19 @@ newWalletType = \case
   "funding" -> Right Funding
   x -> Left $ TryFromException x Nothing
 
-data Response = Response
-  { balance :: Money 'Base 'Sell,
-    unsettledInterest :: Money 'Base 'Sell,
-    availableBalance :: Money 'Base 'Sell,
+data Response (crel :: CurrencyRelation) = Response
+  { balance :: Money crel 'Sell,
+    unsettledInterest :: Money crel 'Sell,
+    availableBalance :: Money crel 'Sell,
     lastChange :: Maybe Text
   }
   deriving stock
     ( Eq,
       Ord,
-      Show,
       Generic
     )
+
+deriving stock instance
+  ( Show (Money crel 'Sell)
+  ) =>
+  Show (Response crel)
