@@ -8,6 +8,7 @@ module RecklessTradingBot.Model.Order
     updateStatus,
     updateStatusSql,
     getByStatusLimit,
+    getTotalInvestment,
   )
 where
 
@@ -176,3 +177,40 @@ getByStatusLimit sym ss =
               order Psql.^. OrderUpdatedAt
           ]
         pure order
+
+getTotalInvestment ::
+  ( Storage m
+  ) =>
+  Bfx.CurrencyPair ->
+  m (Bfx.Money 'Bfx.Quote 'Bfx.Buy)
+getTotalInvestment sym = do
+  totalInvestment <-
+    runSql $
+      Psql.select $
+        Psql.from $ \(order `Psql.InnerJoin` price) -> do
+          Psql.on
+            ( order Psql.^. OrderPriceRef
+                Psql.==. price Psql.^. PriceId
+            )
+          Psql.where_
+            ( ( order Psql.^. OrderStatus
+                  `Psql.in_` Psql.valList
+                    [ OrderActive,
+                      OrderExecuted
+                    ]
+              )
+                Psql.&&. ( price Psql.^. PriceBase
+                             Psql.==. Psql.val
+                               ( Bfx.currencyPairBase sym
+                               )
+                         )
+                Psql.&&. ( price Psql.^. PriceQuote
+                             Psql.==. Psql.val
+                               ( Bfx.currencyPairQuote sym
+                               )
+                         )
+            )
+          pure . Psql.sum_ $
+            order Psql.^. OrderLoss
+  pure . fromMaybe [moneyQuoteBuy|0|] $
+    Psql.unValue =<< safeHead totalInvestment

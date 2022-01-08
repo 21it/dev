@@ -36,12 +36,19 @@ loop varCfg = do
   priceEnt <- rcvNextPrice sym
   cancelUnexpected
     =<< Order.getByStatusLimit sym [OrderNew]
-  --
-  -- TODO : verify max investment limit
-  --
-  priceSeq <- Price.getSeq sym
-  when (goodPriceSeq priceSeq) $
-    placeOrder cfg priceEnt
+  totalInvestment <- Order.getTotalInvestment sym
+  if totalInvestment < tradeConfMaxQuoteInvestment cfg
+    then do
+      priceSeq <- Price.getSeq sym
+      when (goodPriceSeq priceSeq) $
+        placeOrder cfg priceEnt
+    else
+      $(logTM) InfoS $
+        "Total investment "
+          <> show totalInvestment
+          <> " exceeded limit for "
+          <> show sym
+          <> ", ignoring new price."
   loop varCfg
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()

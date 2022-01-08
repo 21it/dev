@@ -41,6 +41,7 @@ import Database.Esqueleto.Legacy as X
     select,
     selectFirst,
     set,
+    sum_,
     transactionUndo,
     unValue,
     update,

@@ -63,6 +63,8 @@ updateTradeConf syms fees varCfg = do
         tradeConfCurrencyKind = cck,
         tradeConfMinProfitPerOrder =
           tradeConfMinProfitPerOrder cfg,
+        tradeConfMaxQuoteInvestment =
+          tradeConfMaxQuoteInvestment cfg,
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = coerce fee,
         tradeConfMinBuyAmt = amtWithFee,
