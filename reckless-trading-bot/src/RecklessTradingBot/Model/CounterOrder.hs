@@ -4,8 +4,8 @@
 module RecklessTradingBot.Model.CounterOrder
   ( create,
     updateBfx,
-    getByStatus,
-    getOrdersToCounter,
+    getByStatusLimit,
+    getOrdersToCounterLimit,
   )
 where
 
@@ -117,14 +117,14 @@ updateBfx ent bfxCounter = do
       newOrderStatus $
         Bfx.orderStatus bfxCounter
 
-getByStatus ::
+getByStatusLimit ::
   ( Storage m
   ) =>
   Bfx.CurrencyPair ->
   [OrderStatus] ->
   m [Entity CounterOrder]
-getByStatus _ [] = pure []
-getByStatus sym ss =
+getByStatusLimit _ [] = pure []
+getByStatusLimit sym ss =
   runSql $
     P.select $
       P.from $
@@ -166,12 +166,12 @@ getByStatus sym ss =
                   ]
                 pure counter
 
-getOrdersToCounter ::
+getOrdersToCounterLimit ::
   ( Storage m
   ) =>
   Bfx.CurrencyPair ->
   m [Entity Order]
-getOrdersToCounter sym =
+getOrdersToCounterLimit sym =
   runSql $
     P.select $
       P.from $

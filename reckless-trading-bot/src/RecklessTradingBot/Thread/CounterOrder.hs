@@ -36,11 +36,11 @@ loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
   updateActiveOrders
-    =<< Order.getByStatus sym [OrderActive]
+    =<< Order.getByStatusLimit sym [OrderActive]
   mapM_ (counterExecutedOrder cfg)
-    =<< CounterOrder.getOrdersToCounter sym
+    =<< CounterOrder.getOrdersToCounterLimit sym
   updateCounterOrders
-    =<< CounterOrder.getByStatus sym [OrderActive]
+    =<< CounterOrder.getByStatusLimit sym [OrderActive]
   sleep [seconds|30|]
   loop varCfg
 
@@ -139,7 +139,7 @@ counterExecutedT ::
   Entity Order ->
   Bfx.OrderId ->
   ExceptT Error m ()
-counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
+counterExecutedT cfg orderEnt bfxOrderId = do
   bfxSomeOrder <-
     withBfxT Bfx.getOrder ($ bfxOrderId)
   bfxOrder <-
@@ -150,29 +150,43 @@ counterExecutedT cfg orderEnt@(Entity _ order) bfxOrderId = do
         throwE $
           ErrorBfx $
             Bfx.ErrorOrderState bfxSomeOrder
+  baseBalance <-
+    withBfxT
+      Bfx.spendableExchangeBalance
+      ($ Bfx.currencyPairBase $ tradeConfCurrencyPair cfg)
+  when (coerce baseBalance < Bfx.orderAmount bfxOrder) $
+    throwE $
+      ErrorRuntime $
+        "Insufficient balance "
+          <> show baseBalance
+          <> " to counter "
+          <> show bfxOrder
+  gid <-
+    tryFromT $
+      entityKey orderEnt
+  --
+  -- Extra safety measures to prevent double-counter
+  -- which should never happen anyway.
+  --
+  void $
+    withBfxT Bfx.cancelOrderByGroupId ($ gid)
   counter <-
     lift $
       CounterOrder.create cfg orderEnt bfxOrder
   bfxCounterCid <-
     tryFromT $ entityKey counter
-  --
-  -- TODO : cancel all other counters with same
-  -- order and group ids.
-  --
   bfxCounter <-
     withBfxT
       Bfx.submitCounterOrderMaker
       ( \cont ->
           cont
             bfxOrderId
-            (orderFee order)
+            (orderFee $ entityVal orderEnt)
             (tradeConfQuoteFee cfg)
             (tradeConfMinProfitPerOrder cfg)
             $ Bfx.optsPostOnly
-              { Bfx.clientId =
-                  Just bfxCounterCid,
-                Bfx.groupId =
-                  Just $ via @Natural bfxOrderId
+              { Bfx.clientId = Just bfxCounterCid,
+                Bfx.groupId = Just gid
               }
       )
   lift $

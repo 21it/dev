@@ -7,7 +7,7 @@ module RecklessTradingBot.Model.Order
     updateBfx,
     updateStatus,
     updateStatusSql,
-    getByStatus,
+    getByStatusLimit,
   )
 where
 
@@ -140,14 +140,14 @@ updateStatusSql ss xs = do
     Psql.where_ $
       row Psql.^. OrderId `Psql.in_` Psql.valList xs
 
-getByStatus ::
+getByStatusLimit ::
   ( Storage m
   ) =>
   Bfx.CurrencyPair ->
   [OrderStatus] ->
   m [Entity Order]
-getByStatus _ [] = pure []
-getByStatus sym ss =
+getByStatusLimit _ [] = pure []
+getByStatusLimit sym ss =
   runSql $
     Psql.select $
       Psql.from $ \(order `Psql.InnerJoin` price) -> do

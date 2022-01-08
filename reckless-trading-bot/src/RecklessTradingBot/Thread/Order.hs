@@ -35,7 +35,7 @@ loop varCfg = do
   let sym = tradeConfCurrencyPair cfg
   priceEnt <- rcvNextPrice sym
   cancelUnexpected
-    =<< Order.getByStatus sym [OrderNew]
+    =<< Order.getByStatusLimit sym [OrderNew]
   --
   -- TODO : verify max investment limit
   --
