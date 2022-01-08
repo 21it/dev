@@ -2,23 +2,7 @@
 
 set -m
 
-export PATH=$PATH:/bin/
-export PGDATA=$PWD/postgres
-export PGHOST=/tmp/postgres
-export PGLOG=$PGDATA/LOG
-export PGDATABASE=postgres
-export DATABASE_URL="postgresql:///postgres?host=$PGHOST"
+THIS_DIR="$(dirname "$(realpath "$0")")"
+PGDATA="$THIS_DIR/../postgres"
 
-#
-# Postgres
-#
-
-if [[ $EUID -ne 0 ]]; then
-  alias postgres-sh="sh"
-else
-  alias postgres-sh="su -m nixbld1"
-fi
-
-echo "shutdown postgres..."
-postgres-sh -c 'pg_ctl stop -o "-c unix_socket_directories=$PGHOST"'
-echo "shutdown hook executed"
+timeout 5 pg_ctl -D $PGDATA stop

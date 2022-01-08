@@ -3,20 +3,19 @@ in
 {
   pkgs ? import nixpkgs {
     overlays = import ./overlay.nix {
-      inherit vimBackground vimColorScheme;
+      inherit minishell;
     };
   },
-  vimBackground ? "light",
-  vimColorScheme ? "PaperColor",
+  minishell ? false,
   bitfinexApiKey ? "TODO",
   bitfinexPrvKey ? "TODO",
 }:
 with pkgs;
 
 stdenv.mkDerivation {
-  name = "bitfinex-client-shell";
+  name = "shell21";
   buildInputs = [
-    haskell-ide
+    ide21
     postgresql
   ];
   TERM="xterm-256color";
@@ -26,13 +25,16 @@ stdenv.mkDerivation {
   NIX_PATH="/nix/var/nix/profiles/per-user/root/channels";
   BITFINEX_API_KEY=bitfinexApiKey;
   BITFINEX_PRV_KEY=bitfinexPrvKey;
-  shellHook = ''
+  shellHook =
+    if minishell
+    then ""
+    else ''
 
-    (cd /app/bitfinex-client/nix/ && cabal2nix ./.. > ./pkg.nix)
-    (cd /app/reckless-trading-bot/nix/ && cabal2nix ./.. > ./pkg.nix)
+      (cd /app/bitfinex-client/nix/ && cabal2nix ./.. > ./pkg.nix)
+      (cd /app/reckless-trading-bot/nix/ && cabal2nix ./.. > ./pkg.nix)
 
-    source /app/reckless-trading-bot/nix/export-test-envs.sh
-    /app/reckless-trading-bot/nix/spawn-test-deps.sh
+      source /app/reckless-trading-bot/nix/export-test-envs.sh
+      /app/reckless-trading-bot/nix/spawn-test-deps.sh
 
-  '';
+    '';
 }
