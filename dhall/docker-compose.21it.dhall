@@ -47,7 +47,7 @@ in  { networks.global.external = True
             ''
         , RECKLESS_TRADING_BOT_PRICE_TTL = "300"
         , RECKLESS_TRADING_BOT_ORDER_TTL = "900"
-        , RECKLESS_TRADING_BOT_LOG_ENV = "ds"
+        , RECKLESS_TRADING_BOT_LOG_ENV = "21it"
         , RECKLESS_TRADING_BOT_LOG_FORMAT = "Bracket"
         , RECKLESS_TRADING_BOT_LOG_VERBOSITY = "V3"
         , RECKLESS_TRADING_BOT_LIBPQ_CONN_STR =

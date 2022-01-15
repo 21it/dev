@@ -6,12 +6,12 @@ cabal-version: 1.12
 
 name:           reckless-trading-bot
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/tkachuk-labs/reckless-trading-bot#readme>
-homepage:       https://github.com/tkachuk-labs/reckless-trading-bot#readme
-bug-reports:    https://github.com/tkachuk-labs/reckless-trading-bot/issues
-author:         Ilja Tkachuk
-maintainer:     tkachuk.labs@gmail.com
-copyright:      2021 Tkachuk Labs [https://tkachuklabs.gitlab.io]
+description:    Please see the README on GitHub at <https://github.com/21it/reckless-trading-bot#readme>
+homepage:       https://github.com/21it/reckless-trading-bot#readme
+bug-reports:    https://github.com/21it/reckless-trading-bot/issues
+author:         21it
+maintainer:     21it@protonmail.com
+copyright:      (c) 2021-2022 21it
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/tkachuk-labs/reckless-trading-bot
+  location: https://github.com/21it/reckless-trading-bot
 
 library
   exposed-modules:

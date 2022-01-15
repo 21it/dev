@@ -22,6 +22,6 @@ mkDerivation {
   executableHaskellDepends = [ base ];
   testHaskellDepends = [ base hspec ];
   prePatch = "hpack";
-  homepage = "https://github.com/tkachuk-labs/reckless-trading-bot#readme";
+  homepage = "https://github.com/21it/reckless-trading-bot#readme";
   license = lib.licenses.bsd3;
 }

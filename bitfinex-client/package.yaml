@@ -1,10 +1,10 @@
 name:                bitfinex-client
 version:             0.1.0.0
-github:              "tkachuk-labs/bitfinex-client"
+github:              "21it/bitfinex-client"
 license:             BSD3
-author:              "Ilja Tkachuk"
-maintainer:          "tkachuk.labs@gmail.com"
-copyright:           "2021 Tkachuk Labs [https://tkachuklabs.gitlab.io]"
+author:              "21it"
+maintainer:          "21it@protonmail.com"
+copyright:           "(c) 2021-2022 21it"
 
 extra-source-files:
 - README.md
@@ -16,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/tkachuk-labs/bitfinex-client#readme>
+description:         Please see the README on GitHub at <https://github.com/21it/bitfinex-client#readme>
 
 dependencies:
 # foundation

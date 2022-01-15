@@ -1,34 +1,38 @@
 # reckless-trading-bot
 
-Interactive web chat based on `concur-replica` (Haskell live view).
+Bitfinex trading bot.
 
 ## Development
 
-Sometimes projects are using dependencies from private repositories. Docker and Nix can get access to private repositories through environment variables:
+Configure Bitfinex user data:
 
 ```shell
 vi ~/.profile
 
-# hex.pm access to private Erlang/Elixir dependencies
-export HEX_API_KEY="SECRET"
-# hex.pm organization
-export HEX_ORGANIZATION="tkachuk-labs"
-# ssh access to private git dependencies
-export ROBOT_SSH_KEY="$(cat ~/.ssh/id_rsa | base64 --wrap=0)"
-# git user info
-export GIT_AUTHOR_NAME="tkachuk-labs"
-export GIT_AUTHOR_EMAIL="tkachuk.labs@gmail.com"
+export BITFINEX_API_KEY="SECRET"
+export BITFINEX_PRV_KEY="SECRET"
 ```
 
-And then:
+Spawn nix-shell:
 
 ```shell
-# start nix-shell
 ./nix/shell.sh
+```
 
-# run tests in nix-shell
-stack test
+Develop in nix-shell:
 
-# develop in nix-shell
+```shell
 vi .
+```
+
+Run tests in nix-shell:
+
+```shell
+stack test --fast --file-watch reckless-trading-bot
+```
+
+Run development daemon:
+
+```shell
+ghcid
 ```

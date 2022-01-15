@@ -21,6 +21,6 @@ mkDerivation {
     aeson base containers hspec time transformers units
   ];
   prePatch = "hpack";
-  homepage = "https://github.com/tkachuk-labs/bitfinex-client#readme";
+  homepage = "https://github.com/21it/bitfinex-client#readme";
   license = lib.licenses.bsd3;
 }

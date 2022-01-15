@@ -1,26 +1,38 @@
 # bitfinex-client
 
-Bitfinex client API library for Haskell
+Bitfinex client API library for Haskell.
 
 ## Development
+
+Configure Bitfinex user data:
 
 ```shell
 vi ~/.profile
 
-# bitfinex user data
 export BITFINEX_API_KEY="SECRET"
 export BITFINEX_PRV_KEY="SECRET"
 ```
 
-And then:
+Spawn nix-shell:
 
 ```shell
-# start nix-shell
 ./nix/shell.sh
+```
 
-# run tests in nix-shell
-stack test --fast
+Develop in nix-shell:
 
-# develop in nix-shell
+```shell
 vi .
+```
+
+Run tests in nix-shell:
+
+```shell
+stack test --fast --file-watch bitfinex-client
+```
+
+Run development daemon:
+
+```shell
+ghcid
 ```
