@@ -23,7 +23,7 @@ docker load -q -i \
   > "$BUILD_DIR/docker-image-reckless-trading-bot.txt"
 
 echo "==> dhall compilation"
-sh "$THIS_DIR/shell-docker.sh" --mini \
+sh "$THIS_DIR/shell.sh" --mini \
    "--run './nix/dhall-compile.sh'"
 
 sh "$THIS_DIR/ds-up.sh"

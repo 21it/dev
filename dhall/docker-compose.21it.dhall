@@ -1,13 +1,5 @@
 let P = ./Prelude/Import.dhall
 
-let unJson
-    : P.JSON.Type → Text
-    = λ(x : P.JSON.Type) → Text/replace "\\u0024" "\$" (P.JSON.renderCompact x)
-
-let escape
-    : Text → Text
-    = λ(x : Text) → Text/replace "\"" "" (unJson (P.JSON.string x))
-
 in  { networks.global.external = True
     , version = "3"
     , volumes.postgres = [] : P.Map.Type Text Text
@@ -51,7 +43,7 @@ in  { networks.global.external = True
         , RECKLESS_TRADING_BOT_LOG_FORMAT = "Bracket"
         , RECKLESS_TRADING_BOT_LOG_VERBOSITY = "V3"
         , RECKLESS_TRADING_BOT_LIBPQ_CONN_STR =
-            "postgresql://user:user@localhost/reckless-trading-bot"
+            "postgresql://user:user@postgres/reckless-trading-bot"
         }
       , networks.global = [] : P.Map.Type Text Text
       }
