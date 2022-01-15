@@ -1,24 +1,13 @@
-let nixpkgs = import ../../nix/nixpkgs.nix;
+let
+  project = import ./../../nix/default.nix;
+  reckless-trading-bot = project.reckless-trading-bot.components.exes.reckless-trading-bot-exe;
 in
-{
-  pkgs ? import nixpkgs {
-    overlays = import ../../nix/overlay.nix {
-
+  project.pkgs.dockerTools.buildImage {
+    name = "21it/reckless-trading-bot";
+    contents = [ reckless-trading-bot ];
+    config = {
+      Cmd = [
+        "${reckless-trading-bot}/bin/reckless-trading-bot-exe"
+      ];
     };
   }
-}:
-let pkg = import ./default.nix {};
-in
-with pkgs;
-
-dockerTools.buildImage {
-  name = "21it/reckless-trading-bot";
-  contents = [ pkg ];
-
-  config = {
-    Cmd = [ "${pkg}/bin/reckless-trading-bot-exe" ];
-    ExposedPorts = {
-      "80/tcp" = {};
-    };
-  };
-}

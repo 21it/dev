@@ -3,7 +3,7 @@
 set -e
 
 THIS_DIR="$(dirname "$(realpath "$0")")"
-USER="${USER:-developer}"
+USER="${USER:-user}"
 NIX_CONF="http2 = false
 trusted-users = root $USER
 extra-substituters = https://cache.nixos.org https://hydra.iohk.io https://all-hies.cachix.org
@@ -41,7 +41,8 @@ docker run -it --rm \
   echo \"$NIX_CONF\" >> /etc/nix/nix.conf &&
   (nix-daemon &) &&
   sleep 1 &&
-  su $USER -c \"NIX_REMOTE=daemon nix-shell \
+  su $USER -c \"NIX_REMOTE=daemon \
+      nix-shell \
       ./nix/shell.nix \
       --pure \
       --show-trace -v \

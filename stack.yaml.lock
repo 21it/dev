@@ -41,7 +41,7 @@ packages:
     url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
 snapshots:
 - completed:
-    size: 581696
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2021/9/18.yaml
-    sha256: f5184f7aaede1ce0aa29ec8be072f916c3c1b1ba95772cc55cb6e1787fa0ef51
-  original: nightly-2021-09-18
+    size: 618527
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/1/10.yaml
+    sha256: 7e864d058e2ca2f2cf4a43218352a888341eb11c9b94b7441ac4a0bccd91cef7
+  original: nightly-2022-01-10

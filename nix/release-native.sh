@@ -9,11 +9,18 @@ sh \
   || true
 
 build () {
-  nix-build "$THIS_DIR/../$1/nix/$2.nix" \
+  nix-build "$THIS_DIR/default.nix" \
+    -A "$1" \
     -v --show-trace \
-    --out-link "result-$1-$2"
+    --out-link "result-$1"
 }
 
-build bitfinex-client default
-build reckless-trading-bot default
-build reckless-trading-bot docker
+build \
+  bitfinex-client.components.library
+
+build \
+  reckless-trading-bot.components.exes.reckless-trading-bot-exe
+
+nix-build "$THIS_DIR/../reckless-trading-bot/nix/docker.nix" \
+  -v --show-trace \
+  --out-link "result-docker-image-reckless-trading-bot"

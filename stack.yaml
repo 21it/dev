@@ -1,6 +1,5 @@
-resolver: nightly-2021-09-18
+resolver: nightly-2022-01-10
 system-ghc: true
-allow-different-user: true
 packages:
   - bitfinex-client
   - reckless-trading-bot

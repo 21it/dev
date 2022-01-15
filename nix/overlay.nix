@@ -11,8 +11,8 @@
                else ["dhall" "haskell"];
     in
       {
-        ide21 = import (fetchTarball "https://github.com/tkachuk-labs/ultimate-haskell-ide/tarball/78fb42182fb8bdc3b084b9f81d8e0b0df60dc73a") {inherit bundle;};
-        haskellPackages = super.haskell.packages.ghc901.extend(
+        ide21 = import (fetchTarball "https://github.com/tkachuk-labs/ultimate-haskell-ide/tarball/00d2f3c320d7b961f5a6188a9dcd6c1447562a99") {inherit bundle;};
+        haskellPackages = super.haskell.packages.ghc921.extend(
           self': super': {
             bitfinex-client =
               callPackage ../bitfinex-client/nix/default.nix {
@@ -23,6 +23,11 @@
                 stdenv = self.stdenv;
                 fetchgit = self.fetchgit;
               };
+            witch =
+              doJailbreak (callPackage ./overlay/witch.nix {
+                lib = self.lib;
+                fetchgit = self.fetchgit;
+              });
           }
         );
       }
