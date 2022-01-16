@@ -4,6 +4,7 @@
 
 module RecklessTradingBot.Data.Type
   ( LogFormat (..),
+    TradeMode (..),
     Error (..),
     OrderExternalId (..),
     OrderStatus (..),
@@ -21,7 +22,28 @@ import RecklessTradingBot.Import.External
 data LogFormat
   = Bracket
   | Json
-  deriving stock (Eq, Ord, Show, Read)
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Read,
+      Generic
+    )
+
+data TradeMode
+  = Speculate
+  | BuyOnly
+  | SellOnly
+  | ObserveOnly
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Read,
+      Generic
+    )
+
+instance FromJSON TradeMode
 
 data Error
   = ErrorBfx Bfx.Error
@@ -88,7 +110,7 @@ newOrderStatus = \case
   Bfx.Executed -> OrderExecuted
   Bfx.Canceled -> OrderCancelled
   Bfx.PostOnlyCanceled -> OrderCancelled
-  Bfx.PartiallyFilled -> OrderUnexpected
+  Bfx.PartiallyFilled -> OrderActive
   Bfx.InsufficientMargin -> OrderUnexpected
   Bfx.RsnDust -> OrderUnexpected
   Bfx.RsnPause -> OrderUnexpected

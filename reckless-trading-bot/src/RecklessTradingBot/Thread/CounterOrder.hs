@@ -11,6 +11,7 @@ where
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.GetOrders as BfxGetOrders
 import qualified BitfinexClient.Data.SubmitOrder as Bfx
+import qualified BitfinexClient.Math as BfxMath
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import RecklessTradingBot.Import
@@ -37,13 +38,19 @@ loop varCfg = do
   let sym = tradeConfCurrencyPair cfg
   updateActiveOrders
     =<< Order.getByStatusLimit sym [OrderActive]
-  ordersToCounter <-
-    CounterOrder.getOrdersToCounterLimit sym
-  $(logTM) DebugS . logStr $
-    "Got orders to counter " <> (show ordersToCounter :: Text)
-  mapM_
-    (counterExecutedOrder cfg)
-    ordersToCounter
+  when
+    ( (tradeConfMode cfg)
+        `elem` ([Speculate, SellOnly] :: [TradeMode])
+    )
+    $ do
+      ordersToCounter <-
+        CounterOrder.getOrdersToCounterLimit sym
+      $(logTM) DebugS . logStr $
+        "Got orders to counter "
+          <> (show ordersToCounter :: Text)
+      mapM_
+        (counterExecutedOrder cfg)
+        ordersToCounter
   updateCounterOrders
     =<< CounterOrder.getByStatusLimit sym [OrderActive]
   sleep [seconds|30|]
@@ -159,7 +166,16 @@ counterExecutedT cfg orderEnt bfxOrderId = do
     withBfxT
       Bfx.spendableExchangeBalance
       ($ Bfx.currencyPairBase $ tradeConfCurrencyPair cfg)
-  when (coerce baseBalance < Bfx.orderAmount bfxOrder) $
+  (_, exitLoss, _) <-
+    case BfxMath.newCounterOrder
+      (Bfx.orderAmount bfxOrder)
+      (Bfx.orderRate bfxOrder)
+      (orderFee $ entityVal orderEnt)
+      (tradeConfQuoteFee cfg)
+      $ tradeConfMinProfitPerOrder cfg of
+      Left e -> throwE $ ErrorBfx e
+      Right x -> pure x
+  when (coerce baseBalance < exitLoss) $
     throwE $
       ErrorRuntime $
         "Insufficient balance "

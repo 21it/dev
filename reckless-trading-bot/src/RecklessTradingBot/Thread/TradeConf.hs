@@ -68,5 +68,6 @@ updateTradeConf syms fees varCfg = do
         tradeConfBaseFee = fee,
         tradeConfQuoteFee = coerce fee,
         tradeConfMinBuyAmt = amtWithFee,
-        tradeConfMinSellAmt = coerce amtNoFee
+        tradeConfMinSellAmt = coerce amtNoFee,
+        tradeConfMode = tradeConfMode cfg
       }

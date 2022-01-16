@@ -259,7 +259,12 @@ newOrderStatus = \case
   x | "EXECUTED" `T.isPrefixOf` x -> Right Executed
   x | "PARTIALLY FILLED" `T.isPrefixOf` x -> Right PartiallyFilled
   x | "INSUFFICIENT MARGIN" `T.isPrefixOf` x -> Right InsufficientMargin
-  "CANCELED" -> Right Canceled
+  x | "CANCELED" `T.isPrefixOf` x -> Right Canceled
+  --
+  -- TODO : verify this, it's some corner case
+  -- related to PartiallyFilled status.
+  --
+  x | "INSUFFICIENT BALANCE" `T.isPrefixOf` x -> Right Canceled
   "POSTONLY CANCELED" -> Right PostOnlyCanceled
   "RSN_DUST" -> Right RsnDust
   "RSN_PAUSE" -> Right RsnPause

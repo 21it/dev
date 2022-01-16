@@ -42,7 +42,9 @@ data RawTradeConf = RawTradeConf
     rawTradeConfMinProfitPerOrder ::
       Bfx.ProfitRate,
     rawTradeConfMaxQuoteInvestment ::
-      Bfx.Money 'Bfx.Quote 'Bfx.Buy
+      Bfx.Money 'Bfx.Quote 'Bfx.Buy,
+    rawTradeConfMode ::
+      TradeMode
   }
   deriving stock
     ( Eq,
@@ -66,7 +68,8 @@ data TradeConf = TradeConf
     tradeConfBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeConfQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
     tradeConfMinBuyAmt :: Bfx.Money 'Bfx.Base 'Bfx.Buy,
-    tradeConfMinSellAmt :: Bfx.Money 'Bfx.Base 'Bfx.Sell
+    tradeConfMinSellAmt :: Bfx.Money 'Bfx.Base 'Bfx.Sell,
+    tradeConfMode :: TradeMode
   }
   deriving stock (Eq)
 
@@ -281,7 +284,9 @@ newTradeConf symDetails feeDetails (sym, raw) =
             tradeConfMinBuyAmt =
               amtWithFee,
             tradeConfMinSellAmt =
-              coerce amtNoFee
+              coerce amtNoFee,
+            tradeConfMode =
+              rawTradeConfMode raw
           }
   where
     cck = rawTradeConfCurrencyKind raw
