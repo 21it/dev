@@ -11,52 +11,69 @@ import BitfinexClient.Data.Kind
 import BitfinexClient.Data.Metro
 import BitfinexClient.Data.Type
 import BitfinexClient.Import.External
+import BitfinexClient.Util
 import Data.Aeson.Lens
 import qualified Data.Map as Map
 
 parseOrder ::
-  ( AsValue a
+  ( AsValue a,
+    Show a
   ) =>
   a ->
   Either Text (SomeOrder 'Remote)
 parseOrder x = do
   id0 <-
-    maybeToRight "OrderId is missing" $
+    maybeToRight (failure "OrderId is missing") $
       OrderId
         <$> x ^? nth 0 . _Integral
   gid <-
-    maybeToRight "OrderGroupId is missing" $
+    maybeToRight (failure "OrderGroupId is missing") $
       (Just . OrderGroupId <$> x ^? nth 1 . _Integral)
+        <|> ( ( either
+                  (const Nothing)
+                  (Just . Just)
+                  . readVia @Natural @OrderGroupId @Text
+              )
+                =<< x ^? nth 1 . _String
+            )
         <|> (Nothing <$ x ^? nth 1 . _Null)
   cid <-
-    maybeToRight "OrderClientId is missing" $
+    maybeToRight (failure "OrderClientId is missing") $
       (Just . OrderClientId <$> x ^? nth 2 . _Integral)
         <|> (Nothing <$ x ^? nth 2 . _Null)
   sym0 <-
-    maybeToRight "Symbol is missing" $
+    maybeToRight (failure "Symbol is missing") $
       x ^? nth 3 . _String
   sym <-
-    first (const $ "Symbol is invalid " <> sym0) $
+    first (const $ failure "Symbol is invalid") $
       newCurrencyPair sym0
   amt0 <-
-    maybeToRight "OrderAmount is missing" $
+    maybeToRight (failure "OrderAmount is missing") $
       toRational <$> x ^? nth 7 . _Number
   SomeMoney sAct amt <-
-    first (("OrderAmount is invalid " <>) . show) $
+    first (failure . ("OrderAmount is invalid " <>) . show) $
       tryFrom amt0
   ss0 <-
-    maybeToRight "OrderStatus is missing" $
+    maybeToRight (failure "OrderStatus is missing") $
       x ^? nth 13 . _String
   ss1 <-
-    first (("OrderStatus is not recognized " <>) . show) $
-      newOrderStatus ss0
+    first
+      ( failure
+          . ("OrderStatus is not recognized " <>)
+          . show
+      )
+      $ newOrderStatus ss0
   price <-
     maybeToRight
-      "ExchangeRate is missing"
+      (failure "ExchangeRate is missing")
       $ x ^? nth 16 . _Number
   rate <-
-    first (const $ "ExchangeRate is invalid " <> show price) $
-      tryFrom (toRational price)
+    first
+      ( const
+          . failure
+          $ "ExchangeRate is invalid " <> show price
+      )
+      $ tryFrom (toRational price)
   pure . SomeOrder sAct $
     Order
       { orderId = id0,
@@ -67,6 +84,9 @@ parseOrder x = do
         orderRate = rate,
         orderStatus = ss1
       }
+  where
+    failure =
+      (<> " in " <> show x)
 
 parseOrderMap ::
   ( AsValue a
