@@ -11,7 +11,10 @@ where
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import qualified BitfinexClient.Math as Bfx
-import Control.Monad.Logger (runNoLoggingT)
+import Control.Monad.Logger
+  ( runNoLoggingT,
+    runStdoutLoggingT,
+  )
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.Map as Map
@@ -93,6 +96,7 @@ data RawConfig = RawConfig
     -- logging
     rawConfigLogEnv :: Text,
     rawConfigLogFormat :: LogFormat,
+    rawConfigLogSeverity :: Severity,
     rawConfigLogVerbosity :: Verbosity
   }
 
@@ -133,6 +137,10 @@ newRawConfig = liftIO $ do
         op
       <*> var
         (auto <=< nonempty)
+        "RECKLESS_TRADING_BOT_LOG_SEVERITY"
+        op
+      <*> var
+        (auto <=< nonempty)
         "RECKLESS_TRADING_BOT_LOG_VERBOSITY"
         op
   where
@@ -158,6 +166,8 @@ newRawConfig = liftIO $ do
 withEnv :: forall m. (MonadUnliftIO m) => (Env -> m ()) -> m ()
 withEnv this = do
   rc <- newRawConfig
+  let sev = rawConfigLogSeverity rc
+  let connStr = rawConfigLibpqConnStr rc
   handleScribe <-
     liftIO $
       mkHandleScribeWithFormatter
@@ -167,7 +177,7 @@ withEnv this = do
         )
         ColorIfTerminal
         stdout
-        (permitItem InfoS)
+        (permitItem sev)
         (rawConfigLogVerbosity rc)
   let mkLogEnv :: m LogEnv =
         liftIO $
@@ -179,11 +189,14 @@ withEnv this = do
               "RecklessTradingBot"
               (Environment $ rawConfigLogEnv rc)
   let mkSqlPool :: m (Pool SqlBackend) =
-        liftIO
-          . runNoLoggingT
-          $ createPostgresqlPool
-            (rawConfigLibpqConnStr rc)
-            10
+        liftIO $
+          if sev > DebugS
+            then
+              runNoLoggingT $
+                createPostgresqlPool connStr 10
+            else
+              runStdoutLoggingT $
+                createPostgresqlPool connStr 10
   bracket mkLogEnv rmLogEnv $ \le ->
     bracket mkSqlPool rmSqlPool $ \pool -> do
       let bfx = rawConfigBfx rc

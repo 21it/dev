@@ -197,8 +197,8 @@ getOrdersToCounterLimit sym =
                   P.&&. ( order P.^. OrderStatus
                             P.==. P.val OrderExecuted
                         )
-                  P.&&. ( ( counter P.?. CounterOrderId
-                              P.==. P.val Nothing
+                  P.&&. ( ( P.isNothing $
+                              counter P.?. CounterOrderId
                           )
                             P.||. P.not_
                               ( counter P.?. CounterOrderStatus

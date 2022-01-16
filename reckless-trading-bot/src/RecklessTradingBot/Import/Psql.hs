@@ -26,6 +26,7 @@ import Database.Esqueleto.Legacy as X
     getBy,
     in_,
     insert,
+    isNothing,
     just,
     limit,
     max_,

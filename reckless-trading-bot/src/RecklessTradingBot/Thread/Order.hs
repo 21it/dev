@@ -127,9 +127,11 @@ placeOrderT ::
   Entity Price ->
   ExceptT Error m ()
 placeOrderT cfg priceEnt = do
-  Entity orderId order <-
+  orderEnt@(Entity orderId order) <-
     lift $
       Order.create cfg priceEnt
+  $(logTM) InfoS . logStr $
+    "Placing a new order " <> (show orderEnt :: Text)
   cid <- tryFromT orderId
   gid <- tryFromT orderId
   bfxOrder <-
