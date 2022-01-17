@@ -400,7 +400,12 @@ dumpIntoQuote' ::
 dumpIntoQuote' submit env sym opts = do
   amt <- spendableExchangeBalance env (currencyPairBase sym)
   rate <- marketAveragePrice amt sym
-  submit env amt sym rate opts
+  catchE
+    (submit env amt sym rate opts)
+    . const
+    $ do
+      newAmt <- tryErrorT $ Math.tweakMoneyPip amt
+      submit env newAmt sym rate opts
 
 dumpIntoQuote ::
   ( MonadIO m

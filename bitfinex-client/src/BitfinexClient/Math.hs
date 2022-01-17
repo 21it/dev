@@ -3,6 +3,7 @@
 
 module BitfinexClient.Math
   ( addFee,
+    tweakMoneyPip,
     tweakMakerRate,
     newCounterOrder,
   )
@@ -25,6 +26,37 @@ addFee ::
 addFee amt fee =
   roundMoney' @crel $
     unMoney amt |/ (1 - unFeeRate fee)
+
+tweakMoneyPip ::
+  forall act.
+  ( SingI act
+  ) =>
+  Money 'Base act ->
+  Either
+    (TryFromException Rational (Money 'Base act))
+    (Money 'Base act)
+tweakMoneyPip amt =
+  case sing :: Sing act of
+    SBuy -> tweakMoneyPip' (|+| pip) amt
+    SSell -> tweakMoneyPip' (|-| pip) amt
+  where
+    pip :: MoneyBase'
+    pip = unMoney [moneyBaseBuy|0.00000001|]
+
+tweakMoneyPip' ::
+  (MoneyBase' -> MoneyBase') ->
+  Money 'Base act ->
+  Either
+    (TryFromException Rational (Money 'Base act))
+    (Money 'Base act)
+tweakMoneyPip' expr amt = do
+  newAmt <-
+    roundMoney'
+      . expr
+      $ unMoney amt
+  if newAmt /= amt
+    then pure newAmt
+    else tweakMoneyPip' (expr . expr) amt
 
 tweakMakerRate ::
   forall act.

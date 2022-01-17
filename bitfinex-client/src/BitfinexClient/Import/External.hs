@@ -9,7 +9,11 @@ module BitfinexClient.Import.External
 where
 
 import BitfinexClient.Import.Witch as X
-import Control.Monad.Trans.Except as X (except, throwE)
+import Control.Monad.Trans.Except as X
+  ( catchE,
+    except,
+    throwE,
+  )
 import Data.Aeson as X
   ( FromJSON (..),
     FromJSONKey (..),

@@ -129,6 +129,9 @@ profitRate :: QuasiQuoter
 profitRate =
   mkTryRatQQ @Rational @ProfitRate
 
+--
+-- TODO : use phantom type in QQ
+--
 ccBase :: QuasiQuoter
 ccBase =
   mkQQ $
