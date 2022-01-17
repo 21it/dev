@@ -254,7 +254,7 @@ submitOrderMaker env amt sym rate0 opts0 =
       ExceptT Error m (Order act 'Remote)
     this attempt rate = do
       order <- submitOrder env amt sym rate opts
-      if orderStatus order /= PostOnlyCanceled
+      if orderStatus order /= PostOnlyCancelled
         then pure order
         else do
           when (attempt >= 10)

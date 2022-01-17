@@ -236,8 +236,8 @@ data OrderStatus
   | Executed
   | PartiallyFilled
   | InsufficientMargin
-  | Canceled
-  | PostOnlyCanceled
+  | Cancelled
+  | PostOnlyCancelled
   | RsnDust
   | RsnPause
   deriving stock
@@ -259,13 +259,13 @@ newOrderStatus = \case
   x | "EXECUTED" `T.isPrefixOf` x -> Right Executed
   x | "PARTIALLY FILLED" `T.isPrefixOf` x -> Right PartiallyFilled
   x | "INSUFFICIENT MARGIN" `T.isPrefixOf` x -> Right InsufficientMargin
-  x | "CANCELED" `T.isPrefixOf` x -> Right Canceled
+  x | "CANCELED" `T.isPrefixOf` x -> Right Cancelled
   --
   -- TODO : verify this, it's some corner case
   -- related to PartiallyFilled status.
   --
-  x | "INSUFFICIENT BALANCE" `T.isPrefixOf` x -> Right Canceled
-  "POSTONLY CANCELED" -> Right PostOnlyCanceled
+  x | "INSUFFICIENT BALANCE" `T.isPrefixOf` x -> Right Cancelled
+  "POSTONLY CANCELED" -> Right PostOnlyCancelled
   "RSN_DUST" -> Right RsnDust
   "RSN_PAUSE" -> Right RsnPause
   x -> Left $ TryFromException x Nothing

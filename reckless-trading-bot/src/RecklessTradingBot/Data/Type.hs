@@ -108,8 +108,8 @@ newOrderStatus :: Bfx.OrderStatus -> OrderStatus
 newOrderStatus = \case
   Bfx.Active -> OrderActive
   Bfx.Executed -> OrderExecuted
-  Bfx.Canceled -> OrderCancelled
-  Bfx.PostOnlyCanceled -> OrderCancelled
+  Bfx.Cancelled -> OrderCancelled
+  Bfx.PostOnlyCancelled -> OrderCancelled
   Bfx.PartiallyFilled -> OrderActive
   Bfx.InsufficientMargin -> OrderUnexpected
   Bfx.RsnDust -> OrderUnexpected
