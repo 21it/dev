@@ -54,7 +54,8 @@ updateTradeConf syms fees varCfg = do
     $ "Wrong " <> show amtNoFee
   amtWithFee <-
     tryErrorT $
-      BfxMath.addFee amtNoFee fee
+      BfxMath.tweakMoneyPip
+        =<< BfxMath.addFee amtNoFee fee
   void
     . liftIO
     . swapMVar varCfg

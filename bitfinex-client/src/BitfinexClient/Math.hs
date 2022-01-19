@@ -113,7 +113,8 @@ newCounterOrder ::
     )
 newCounterOrder base0 rate0 feeB feeQ prof0 = do
   exitQuote <- tryErrorE $ roundMoney' exitQuoteGain
-  exitBase <- tryErrorE $ roundMoney' exitBaseLoss
+  exitBase0 <- tryErrorE $ roundMoney' exitBaseLoss
+  exitBase <- tryErrorE $ tweakMoneyPip exitBase0
   exitPrice <- tryErrorE $ roundQuotePerBase' exitRate
   pure (exitQuote, exitBase, exitPrice)
   where

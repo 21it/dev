@@ -264,7 +264,8 @@ newTradeConf symDetails feeDetails (sym, raw) =
     Just cfg -> do
       let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
       let amtWithFee =
-            case Bfx.addFee amtNoFee fee of
+            case Bfx.tweakMoneyPip
+              =<< Bfx.addFee amtNoFee fee of
               Left e -> error $ show e
               Right x -> x
       liftIO . newMVar $

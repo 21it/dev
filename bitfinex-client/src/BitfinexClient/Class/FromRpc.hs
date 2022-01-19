@@ -73,7 +73,7 @@ instance FromRpc 'MarketAveragePrice (QuotePerBase act) where
         "QuotePerBase is missing"
         (toRational <$> raw ^? nth 0 . _Number)
     first (const $ "QuotePerBase is invalid " <> show x) $
-      tryFrom x
+      roundQuotePerBase x
 
 instance FromRpc 'FeeSummary FeeSummary.Response where
   fromRpc (RawResponse raw) = do
