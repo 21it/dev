@@ -25,14 +25,21 @@ build_bitfinex_client () {
 
 
 build_reckless_trading_bot_native () {
-  build \
-    reckless-trading-bot \
-    reckless-trading-bot.components.exes.reckless-trading-bot-exe
-  rm -rf \
-    "$BUILD_DIR/reckless-trading-bot"
-  cp -Lr \
-    "$ROOT_DIR/result-reckless-trading-bot/bin/reckless-trading-bot-exe" \
-    "$BUILD_DIR/reckless-trading-bot"
+  nix-bundle "(import $THIS_DIR/default.nix).reckless-trading-bot.components.exes.reckless-trading-bot-exe" "/bin/reckless-trading-bot-exe"
+  mv "$ROOT_DIR/reckless-trading-bot-exe" \
+     "$BUILD_DIR/reckless-trading-bot"
+  #
+  # NOTE : simple dynamically linked build
+  # is not that useful because of many shared libraries
+  #
+  # build \
+  #   reckless-trading-bot \
+  #   reckless-trading-bot.components.exes.reckless-trading-bot-exe
+  # rm -rf \
+  #   "$BUILD_DIR/reckless-trading-bot"
+  # cp -Lr \
+  #   "$ROOT_DIR/result-reckless-trading-bot/bin/reckless-trading-bot-exe" \
+  #   "$BUILD_DIR/reckless-trading-bot"
   #
   # NOTE : for linker debug
   #

@@ -17,6 +17,7 @@ stdenv.mkDerivation {
   buildInputs = [
     ide21
     postgresql
+    nix-bundle
   ];
   TERM="xterm-256color";
   LC_ALL="C.UTF-8";
