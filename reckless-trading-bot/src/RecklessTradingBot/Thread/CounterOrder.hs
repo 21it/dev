@@ -36,24 +36,25 @@ loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeConfCurrencyPair cfg
-  updateActiveOrders
-    =<< Order.getByStatusLimit sym [OrderActive]
-  when
-    ( (tradeConfMode cfg)
-        `elem` ([Speculate, SellOnly] :: [TradeMode])
-    )
-    $ do
-      ordersToCounter <-
-        CounterOrder.getOrdersToCounterLimit sym
-      $(logTM) DebugS . logStr $
-        "Got orders to counter "
-          <> (show ordersToCounter :: Text)
-      mapM_
-        (counterExecutedOrder cfg)
-        ordersToCounter
-  updateCounterOrders
-    =<< CounterOrder.getByStatusLimit sym [OrderActive]
-  sleep [seconds|30|]
+  withOperativeBfx $ do
+    updateActiveOrders
+      =<< Order.getByStatusLimit sym [OrderActive]
+    when
+      ( (tradeConfMode cfg)
+          `elem` ([Speculate, SellOnly] :: [TradeMode])
+      )
+      $ do
+        ordersToCounter <-
+          CounterOrder.getOrdersToCounterLimit sym
+        $(logTM) DebugS . logStr $
+          "Got orders to counter "
+            <> (show ordersToCounter :: Text)
+        mapM_
+          (counterExecutedOrder cfg)
+          ordersToCounter
+    updateCounterOrders
+      =<< CounterOrder.getByStatusLimit sym [OrderActive]
+    sleep [seconds|30|]
   loop varCfg
 
 updateActiveOrders ::

@@ -7,7 +7,9 @@ module RecklessTradingBot.Storage.Migration
 where
 
 import Database.Persist.Migration
-import qualified Database.Persist.Migration.Postgres as P (runMigration)
+import qualified Database.Persist.Migration.Postgres as P
+  ( runMigration,
+  )
 import RecklessTradingBot.Import
 
 migrateBefore :: Migration

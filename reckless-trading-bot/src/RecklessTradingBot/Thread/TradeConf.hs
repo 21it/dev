@@ -21,14 +21,15 @@ apply = do
 loop :: (Env m) => m ()
 loop = do
   xs <- getPairs
-  res <-
-    runExceptT $ do
-      syms <- withExceptT ErrorBfx Bfx.symbolsDetails
-      fees <- withBfxT Bfx.feeSummary id
-      mapM_ (updateTradeConf syms fees) xs
-  whenLeft res $
-    $(logTM) ErrorS . show
-  sleep [seconds|300|]
+  withOperativeBfx $ do
+    res <-
+      runExceptT $ do
+        syms <- withExceptT ErrorBfx Bfx.symbolsDetails
+        fees <- withBfxT Bfx.feeSummary id
+        mapM_ (updateTradeConf syms fees) xs
+    whenLeft res $
+      $(logTM) ErrorS . show
+    sleep [seconds|300|]
   loop
 
 updateTradeConf ::

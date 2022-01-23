@@ -21,7 +21,7 @@ loop :: (Env m) => MVar TradeConf -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   sleepPriceTtl $ tradeConfCurrencyPair cfg
-  createUpdate cfg
+  withOperativeBfx $ createUpdate cfg
   loop varCfg
 
 createUpdate :: (Env m) => TradeConf -> m ()
