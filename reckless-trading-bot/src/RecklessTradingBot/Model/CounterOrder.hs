@@ -155,7 +155,7 @@ getByStatusLimit sym ss =
                             `P.in_` P.valList ss
                         )
               )
-            P.limit 100
+            P.limit 10
             P.orderBy
               [ P.asc $
                   counter P.^. CounterOrderUpdatedAt
@@ -209,7 +209,7 @@ getOrdersToCounterLimit sym =
                               )
                         )
               )
-            P.limit 100
+            P.limit 10
             P.orderBy
               [ P.asc $
                   order P.^. OrderUpdatedAt

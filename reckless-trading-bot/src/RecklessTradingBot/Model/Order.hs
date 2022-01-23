@@ -171,7 +171,7 @@ getByStatusLimit sym ss =
                              )
                        )
           )
-        Psql.limit 100
+        Psql.limit 10
         Psql.orderBy
           [ Psql.asc $
               order Psql.^. OrderUpdatedAt
