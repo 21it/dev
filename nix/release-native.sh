@@ -33,6 +33,18 @@ build_reckless_trading_bot_native () {
   cp -Lr \
     "$ROOT_DIR/result-reckless-trading-bot/bin/reckless-trading-bot-exe" \
     "$BUILD_DIR/reckless-trading-bot"
+  #
+  # NOTE : for linker debug
+  #
+  # ldd "$BUILD_DIR/reckless-trading-bot"
+  # objdump -j .interp -s "$BUILD_DIR/reckless-trading-bot"
+  #
+  # NOTE : for fixing shared libraries linking
+  #
+  # chmod +rwx \
+  #   "$BUILD_DIR/reckless-trading-bot"
+  # patchelf --set-interpreter \
+  #   /lib64/ld-linux-x86-64.so.2 "$BUILD_DIR/reckless-trading-bot"
 }
 
 build_reckless_trading_bot_docker () {

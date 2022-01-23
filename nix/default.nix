@@ -28,6 +28,27 @@ in pkgs.haskell-nix.project {
     name = "haskell-nix-project";
     src = ../.;
   };
+  #
+  # NOTE : uncomment for static builds
+  #
+  # modules = [{
+  #   enableStatic = true;
+  #   ghcOptions = [
+  #     "-static"
+  #     "-dynamic-too"
+  #   ];
+  #   configureFlags = [
+  #     "--ghc-option=-optl=-pthread"
+  #     "--ghc-option=-optl=-static"
+  #     "--ghc-option=-optl=-dynamic-too"
+  #     "--ghc-option=-optl=-L${pkgs.gmp6.override { withStatic = true; }}/lib"
+  #     "--ghc-option=-optl=-L${pkgs.zlib.static}/lib"
+  #     "--ghc-option=-optl=-L${pkgs.glibc.static}/lib"
+  #     "--ghc-option=-optl=-L${pkgs.libffi.overrideAttrs (_: { dontDisableStatic = true; })}/lib"
+  #     "--ghc-option=-optl=-L${pkgs.numactl.overrideAttrs (_: { dontDisableStatic = true; }) }/lib"
+  #     "--ghc-option=-optl=-L${pkgs.postgresql.overrideAttrs (_: { dontDisableStatic = true; })}/lib"
+  #   ];
+  # }];
   # Specify the GHC version to use.
   compiler-nix-name = "ghc901"; # Not required for `stack.yaml` based projects.
 }

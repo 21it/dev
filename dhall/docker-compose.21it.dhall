@@ -27,14 +27,14 @@ in  { networks.global.external = True
             {
               "ADABTC":{
                 "currency_kind":"Crypto",
-                "max_quote_investment":"0.04",
-                "min_profit_per_order":"0.001",
+                "max_quote_investment":"0.0145",
+                "min_profit_per_order":"0.01",
                 "mode":"Speculate"
               },
               "XMRBTC":{
                 "currency_kind":"Crypto",
-                "max_quote_investment":"0.01",
-                "min_profit_per_order":"0.001",
+                "max_quote_investment":"0.0145",
+                "min_profit_per_order":"0.01",
                 "mode":"Speculate"
               }
             }
@@ -43,7 +43,7 @@ in  { networks.global.external = True
         , RECKLESS_TRADING_BOT_ORDER_TTL = "900"
         , RECKLESS_TRADING_BOT_LOG_ENV = "21it"
         , RECKLESS_TRADING_BOT_LOG_FORMAT = "Bracket"
-        , RECKLESS_TRADING_BOT_LOG_SEVERITY = "InfoS"
+        , RECKLESS_TRADING_BOT_LOG_SEVERITY = "ErrorS"
         , RECKLESS_TRADING_BOT_LOG_VERBOSITY = "V3"
         , RECKLESS_TRADING_BOT_LIBPQ_CONN_STR =
             "postgresql://user:user@postgres/reckless-trading-bot"
