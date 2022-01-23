@@ -9,6 +9,7 @@ module BitfinexClient.Import.External
 where
 
 import BitfinexClient.Import.Witch as X
+import Control.Concurrent as X (threadDelay)
 import Control.Monad.Trans.Except as X
   ( catchE,
     except,

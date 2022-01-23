@@ -150,10 +150,30 @@ getOrders ::
   Env ->
   GetOrders.Options ->
   ExceptT Error m (Map OrderId (SomeOrder 'Remote))
-getOrders env opts = do
+getOrders =
+  getOrders' 0
+
+getOrders' ::
+  ( MonadIO m
+  ) =>
+  Natural ->
+  Env ->
+  GetOrders.Options ->
+  ExceptT Error m (Map OrderId (SomeOrder 'Remote))
+getOrders' attempt env opts = do
   xs0 <- retrieveOrders env opts
   xs1 <- ordersHistory env opts
-  pure $ xs1 <> xs0
+  let xs = xs1 <> xs0
+  if ( ( all (\x -> Map.member x xs)
+           . toList
+           $ GetOrders.orderIds opts
+       )
+         || (attempt > 7)
+     )
+    then pure xs
+    else do
+      liftIO $ threadDelay 250000
+      getOrders' (attempt + 1) env opts
 
 getOrder ::
   ( MonadIO m
