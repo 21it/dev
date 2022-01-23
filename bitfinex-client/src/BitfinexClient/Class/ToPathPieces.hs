@@ -14,6 +14,10 @@ import BitfinexClient.Import.External
 class ToPathPieces (method :: Method) req where
   toPathPieces :: req -> [Text]
 
+instance ToPathPieces 'PlatformStatus req where
+  toPathPieces =
+    const ["v2", "platform", "status"]
+
 instance ToPathPieces 'SymbolsDetails req where
   toPathPieces =
     const ["v1", "symbols_details"]

@@ -12,6 +12,9 @@ import BitfinexClient.Data.Web
 class ToRequestMethod (method :: Method) where
   toRequestMethod :: RequestMethod
 
+instance ToRequestMethod 'PlatformStatus where
+  toRequestMethod = GET
+
 instance ToRequestMethod 'SymbolsDetails where
   toRequestMethod = GET
 

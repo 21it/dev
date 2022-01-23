@@ -16,6 +16,9 @@ import Test.Hspec
 
 spec :: Spec
 spec = before newEnv $ do
+  itRight "platformStatus succeeds" . const $ do
+    ss <- Bitfinex.platformStatus
+    liftIO $ ss `shouldBe` PltOperative
   itRight "symbolsDetails succeeds" . const $ do
     ss <- Bitfinex.symbolsDetails
     liftIO $

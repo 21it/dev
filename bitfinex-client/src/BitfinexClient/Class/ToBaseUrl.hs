@@ -12,6 +12,9 @@ import BitfinexClient.Data.Web
 class ToBaseUrl (method :: Method) where
   toBaseUrl :: BaseUrl
 
+instance ToBaseUrl 'PlatformStatus where
+  toBaseUrl = base
+
 instance ToBaseUrl 'SymbolsDetails where
   toBaseUrl = base
 

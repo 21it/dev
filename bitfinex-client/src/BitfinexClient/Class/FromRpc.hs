@@ -23,6 +23,17 @@ import qualified Data.Vector as V
 class FromRpc (method :: Method) res where
   fromRpc :: RawResponse -> Either Text res
 
+instance FromRpc 'PlatformStatus PltStatus where
+  fromRpc (RawResponse raw) = do
+    ss <-
+      maybeToRight
+        "PltStatus is missing"
+        $ raw ^? nth 0 . _Integral
+    case ss :: Natural of
+      1 -> Right PltOperative
+      0 -> Right PltMaintenance
+      _ -> Left "Incorrect PltStatus"
+
 instance
   FromRpc
     'CancelOrderMulti

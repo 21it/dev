@@ -12,7 +12,8 @@ import Data.Singletons.Base.TH
 $( singletons
      [d|
        data Method
-         = SymbolsDetails
+         = PlatformStatus
+         | SymbolsDetails
          | MarketAveragePrice
          | FeeSummary
          | Wallets

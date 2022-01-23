@@ -2,7 +2,8 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient
-  ( symbolsDetails,
+  ( platformStatus,
+    symbolsDetails,
     marketAveragePrice,
     feeSummary,
     wallets,
@@ -38,6 +39,13 @@ import qualified BitfinexClient.Math as Math
 import qualified BitfinexClient.Rpc.Generic as Generic
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+
+platformStatus ::
+  ( MonadIO m
+  ) =>
+  ExceptT Error m PltStatus
+platformStatus =
+  Generic.pub @'PlatformStatus [] ()
 
 symbolsDetails ::
   ( MonadIO m

@@ -32,6 +32,7 @@ module BitfinexClient.Data.Type
 
     -- * Misc
     -- $misc
+    PltStatus (..),
     Error (..),
     tryErrorE,
     tryErrorT,
@@ -520,6 +521,16 @@ data CurrencyPairConf = CurrencyPairConf
 
 -- $misc
 -- General utility data used elsewhere.
+
+data PltStatus
+  = PltOperative
+  | PltMaintenance
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
 
 data Error
   = ErrorWebException HttpException
