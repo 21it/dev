@@ -2,8 +2,8 @@
 
 module RecklessTradingBot.Model.Price
   ( createUpdate,
-    getSeq,
     getLatest,
+    getLatestLimit,
   )
 where
 
@@ -54,14 +54,6 @@ theSamePrice x y =
       priceUpdatedAt = priceUpdatedAt y
     }
     == y
-
-getSeq ::
-  ( Storage m
-  ) =>
-  Bfx.CurrencyPair ->
-  m [Entity Price]
-getSeq =
-  getLatestLimit 3
 
 getLatest ::
   ( Storage m

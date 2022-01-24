@@ -45,9 +45,13 @@ loop varCfg = do
         totalInvestment <- Order.getTotalInvestment sym
         if totalInvestment < tradeConfMaxQuoteInvestment cfg
           then do
-            priceSeq <- Price.getSeq sym
-            when (goodPriceSeq priceSeq) $
-              placeOrder cfg priceEnt
+            let lim = 7 :: Int
+            priceSeq <- Price.getLatestLimit (from lim) sym
+            when
+              ( length priceSeq == lim
+                  && goodPriceSeq True priceSeq
+              )
+              $ placeOrder cfg priceEnt
           else
             $(logTM) InfoS $
               "Total investment "
@@ -157,11 +161,12 @@ placeOrderT cfg priceEnt = do
     Order.updateBfx orderId bfxOrder
 
 -- | The price sequence is good if it decreased monotonously.
-goodPriceSeq :: [Entity Price] -> Bool
-goodPriceSeq (x0 : x1 : x2 : _) =
+goodPriceSeq :: Bool -> [Entity Price] -> Bool
+goodPriceSeq False _ =
+  False
+goodPriceSeq True (x0 : x1 : xs) =
   let p0 = priceBuy $ entityVal x0
       p1 = priceBuy $ entityVal x1
-      p2 = priceBuy $ entityVal x2
-   in p0 >= p1 && p1 >= p2 && p0 > p2
-goodPriceSeq _ =
-  False
+   in goodPriceSeq (p0 > p1) $ x1 : xs
+goodPriceSeq isGood _ =
+  isGood
