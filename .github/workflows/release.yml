@@ -1,0 +1,10 @@
+name: release
+on: [push]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        ./nix/shell.sh --mini \
+        "--run './nix/release-native.sh all'"

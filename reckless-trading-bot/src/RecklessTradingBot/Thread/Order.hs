@@ -45,7 +45,7 @@ loop varCfg = do
         totalInvestment <- Order.getTotalInvestment sym
         if totalInvestment < tradeConfMaxQuoteInvestment cfg
           then do
-            let lim = 7 :: Int
+            let lim = 6 :: Int
             priceSeq <- Price.getLatestLimit (from lim) sym
             when
               ( length priceSeq == lim
