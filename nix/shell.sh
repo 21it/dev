@@ -31,7 +31,9 @@ else
 fi
 NIX_EXTRA_ARGS="$@"
 
-docker run -it --rm \
+USE_TTY=""
+test -t 1 && USE_TTY="-t"
+docker run -i $USE_TTY --rm \
   -v "$THIS_DIR/..:/app" \
   -v "nix-$USER:/nix" \
   -v "nix-home-$USER:/home/$USER" \
