@@ -6,6 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - run: |
-        ./nix/shell.sh --mini \
-        "--run './nix/release-native.sh all'"
+    - uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-docker-volumes
+        path: /var/lib/docker/volumes
+    - name: release
+      run: ./nix/release-github.sh
