@@ -3,6 +3,7 @@
 set -e
 
 THIS_DIR="$(dirname "$(realpath "$0")")"
+CONTAINER="nixos/nix:2.3.12"
 USER="${USER:-user}"
 NIX_CONF="http2 = false
 trusted-users = root $USER
@@ -12,7 +13,8 @@ trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDS
 BITFINEX_API_KEY="${BITFINEX_API_KEY:-TODO}"
 BITFINEX_PRV_KEY="${BITFINEX_PRV_KEY:-TODO}"
 
-MINISHELL=false
+MINISHELL="false"
+CHOWN_CMD="true"
 if [ -z "$*" ]; then
   true
 else
@@ -20,12 +22,16 @@ else
   do
     case $arg in
       -m|--mini|--minishell)
-      MINISHELL=true
-      shift
-      ;;
+        MINISHELL="true"
+        shift
+        ;;
+      -g|--github|--github-actions)
+        CHOWN_CMD="chown -R $USER ./"
+        shift
+        ;;
       *)
-      break
-      ;;
+        break
+        ;;
     esac
   done
 fi
@@ -37,9 +43,11 @@ docker run -i $USE_TTY --rm \
   -v "$THIS_DIR/..:/app" \
   -v "nix-$USER:/nix" \
   -v "nix-home-$USER:/home/$USER" \
-  -w "/app" nixos/nix:2.3.12 \
+  -w "/app" "$CONTAINER" \
   sh -c "
+  echo '$CONTAINER ==> running as $USER' &&
   adduser $USER -D &&
+  $CHOWN_CMD &&
   echo \"$NIX_CONF\" >> /etc/nix/nix.conf &&
   (nix-daemon &) &&
   sleep 1 &&
