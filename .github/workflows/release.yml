@@ -12,3 +12,4 @@ jobs:
         path: /var/lib/docker/volumes
     - name: release
       run: ./nix/release-github.sh
+      continue-on-error: true
