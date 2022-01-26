@@ -15,6 +15,7 @@ BITFINEX_PRV_KEY="${BITFINEX_PRV_KEY:-TODO}"
 
 MINISHELL="false"
 CHOWN_CMD="true"
+TRACE_FLAGS="--show-trace -v"
 if [ -z "$*" ]; then
   true
 else
@@ -27,6 +28,7 @@ else
         ;;
       -g|--github|--github-actions)
         CHOWN_CMD="chown -R $USER ./"
+        TRACE_FLAGS=""
         shift
         ;;
       *)
@@ -54,8 +56,7 @@ docker run -i $USE_TTY --rm \
   su $USER -c \"NIX_REMOTE=daemon \
       nix-shell \
       ./nix/shell.nix \
-      --pure \
-      --show-trace -v \
+      --pure $TRACE_FLAGS \
       --arg minishell $MINISHELL \
       --argstr bitfinexApiKey $BITFINEX_API_KEY \
       --argstr bitfinexPrvKey $BITFINEX_PRV_KEY \
