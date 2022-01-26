@@ -13,7 +13,6 @@ sh \
 build () {
   nix-build "$THIS_DIR/default.nix" \
     -A "$2" \
-    -v --show-trace \
     --out-link "result-$1"
 }
 
@@ -56,7 +55,6 @@ build_reckless_trading_bot_native () {
 
 build_reckless_trading_bot_docker () {
   nix-build "$ROOT_DIR/reckless-trading-bot/nix/docker.nix" \
-    -v --show-trace \
     --out-link "result-docker-image-reckless-trading-bot"
   rm -rf \
     "$BUILD_DIR/docker-image-reckless-trading-bot.tar.gz"
