@@ -13,15 +13,19 @@ jobs:
     - name: Restore cache
       run: |
         docker run --rm \
+          -v nix:/nix \
           -v $(pwd):/app \
           -w /app nixos/nix:2.3.12 \
           tar xvf ./nix.tar -C /nix/ \
         || true
     - name: Release all
-      run: ./nix/release-github.sh || true
+      run: |
+        ./nix/release-github.sh \
+        || true
     - name: Save cache
       run: |
         docker run --rm \
+          -v nix:/nix \
           -v $(pwd):/app \
           -w /app nixos/nix:2.3.12 \
           tar cvf ./nix.tar /nix/*
