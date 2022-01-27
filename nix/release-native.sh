@@ -6,6 +6,8 @@ THIS_DIR="$(dirname "$(realpath "$0")")"
 ROOT_DIR="$THIS_DIR/.."
 BUILD_DIR="$ROOT_DIR/build"
 
+mkdir -p "$BUILD_DIR"
+
 sh \
   "$ROOT_DIR/reckless-trading-bot/nix/shutdown-test-deps.sh" \
   || true
@@ -22,13 +24,10 @@ build_bitfinex_client () {
     bitfinex-client.components.library
 }
 
-
 build_reckless_trading_bot_bundle () {
   nix-bundle "(import $THIS_DIR/default.nix).reckless-trading-bot.components.exes.reckless-trading-bot-exe" "/bin/reckless-trading-bot-exe"
-  # trying to debug CI...
-  ls -la "$ROOT_DIR"
-  #mv "$ROOT_DIR/reckless-trading-bot-exe" \
-  #   "$BUILD_DIR/reckless-trading-bot"
+  mv "$ROOT_DIR/reckless-trading-bot-exe" \
+     "$BUILD_DIR/reckless-trading-bot"
   #
   # NOTE : simple dynamically linked build
   # is not that useful because of many shared libraries
