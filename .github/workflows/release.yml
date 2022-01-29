@@ -16,7 +16,7 @@ jobs:
           -v nix:/nix \
           -v $(pwd):/app \
           -w /app nixos/nix:2.3.12 \
-          tar xvf ./nix.tar -C /nix/ \
+          sh -c "tar -xvzf ./nix.tar.gz -C /" \
         || true
     - name: Release all
       run: |
@@ -28,4 +28,4 @@ jobs:
           -v nix:/nix \
           -v $(pwd):/app \
           -w /app nixos/nix:2.3.12 \
-          tar cvf ./nix.tar /nix/*
+          sh -c "tar -czvf ./nix.tar.gz /nix/*"
