@@ -9,7 +9,7 @@ jobs:
     - uses: actions/cache@v2
       with:
         key: ${{ runner.os }}-nix
-        path: ./nix.tar
+        path: ./nix.tar.gz
     - name: Restore cache
       run: |
         docker run --rm \

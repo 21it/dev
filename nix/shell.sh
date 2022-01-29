@@ -15,7 +15,6 @@ BITFINEX_PRV_KEY="${BITFINEX_PRV_KEY:-TODO}"
 
 MINISHELL="false"
 CHOWN_CMD="true"
-NIX_VOLUME="nix-$USER"
 TRACE_FLAGS="--show-trace -v"
 if [ -z "$*" ]; then
   true
@@ -28,8 +27,7 @@ else
         shift
         ;;
       -g|--github|--github-actions)
-        CHOWN_CMD="chown -R $USER ./"
-        NIX_VOLUME="nix"
+        CHOWN_CMD="chown -R $USER:$USER ."
         TRACE_FLAGS=""
         shift
         ;;
@@ -45,7 +43,7 @@ USE_TTY=""
 test -t 1 && USE_TTY="-t"
 docker run -i $USE_TTY --rm \
   -v "$THIS_DIR/..:/app" \
-  -v "$NIX_VOLUME:/nix" \
+  -v "nix-$USER:/nix" \
   -v "nix-home-$USER:/home/$USER" \
   -w "/app" "$CONTAINER" \
   sh -c "
