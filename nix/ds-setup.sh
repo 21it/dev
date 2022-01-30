@@ -7,8 +7,13 @@ BUILD_DIR="$THIS_DIR/../build"
 
 echo "==> docker swarm network setup"
 sh "$THIS_DIR/ds-down.sh" || true
-docker swarm leave --force || true
-docker swarm init || true
+if [ "$1" = "--reset-swarm" ]; then
+  echo "==> DOING SWARM RESET"
+  docker swarm leave --force || true
+  docker swarm init || true
+else
+  echo "==> using existing swarm"
+fi
 docker network create -d overlay --attachable global || true
 
 echo "==> cleanup build dir"

@@ -13,7 +13,7 @@ jobs:
     - name: Restore cache
       run: |
         docker run --rm \
-          -v nix:/nix \
+          -v nix-$USER:/nix \
           -v $(pwd):/app \
           -w /app nixos/nix:2.3.12 \
           sh -c "tar -xvzf ./nix.tar.gz -C /" \
@@ -25,7 +25,7 @@ jobs:
     - name: Save cache
       run: |
         docker run --rm \
-          -v nix:/nix \
+          -v nix-$USER:/nix \
           -v $(pwd):/app \
           -w /app nixos/nix:2.3.12 \
           sh -c "tar -czvf ./nix.tar.gz /nix/*"
