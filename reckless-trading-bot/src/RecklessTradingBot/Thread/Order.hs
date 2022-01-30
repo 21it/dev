@@ -4,6 +4,7 @@
 
 module RecklessTradingBot.Thread.Order
   ( apply,
+    cancelExpired,
     cancelUnexpected,
   )
 where
@@ -60,6 +61,59 @@ loop varCfg = do
                 <> show sym
                 <> ", ignoring new price."
   loop varCfg
+
+cancelExpired :: (Env m) => [Entity Order] -> m ()
+cancelExpired entities = do
+  expiredOrders <-
+    getExpiredOrders entities
+  res <-
+    runExceptT $
+      cancelExpiredT expiredOrders
+  whenLeft res $
+    $(logTM) ErrorS . show
+
+cancelExpiredT ::
+  ( Env m
+  ) =>
+  [Entity Order] ->
+  ExceptT Error m ()
+cancelExpiredT [] = pure ()
+cancelExpiredT entities = do
+  $(logTM) InfoS $ show entities
+  ids <-
+    mapM
+      ( \x ->
+          tryJust
+            ( ErrorRuntime $
+                "Missing orderExtRef in "
+                  <> show x
+            )
+            . (from <$>)
+            . orderExtRef
+            $ entityVal x
+      )
+      entities
+  cids <-
+    mapM
+      ( \(Entity id0 x) -> do
+          id1 <- tryFromT id0
+          pure (id1, orderInsertedAt x)
+      )
+      entities
+  gids <-
+    mapM tryFromT $ entityKey <$> entities
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderId $ Set.fromList ids)
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderClientId $ Set.fromList cids)
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderGroupId $ Set.fromList gids)
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
 cancelUnexpected [] = pure ()

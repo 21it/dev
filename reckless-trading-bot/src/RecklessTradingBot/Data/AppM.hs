@@ -51,11 +51,18 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     bfx <- asks EnvData.envBfx
     withExceptT ErrorBfx . args $ method bfx
   getPairs = asks EnvData.envPairs
-  orderExpired x = do
-    ttl <- asks EnvData.envOrderTtl
+  getExpiredOrders xs = do
     ct <- liftIO getCurrentTime
+    ttl <- asks EnvData.envOrderTtl
     pure $
-      ct > addUTCTime (from ttl) (orderInsertedAt x)
+      filter
+        ( \x ->
+            ct
+              > addUTCTime
+                (from ttl)
+                (orderInsertedAt $ entityVal x)
+        )
+        xs
   putCurrPrice x = do
     ch <- asks EnvData.envPriceChan
     liftIO . atomically $ writeTChan ch x

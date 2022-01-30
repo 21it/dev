@@ -30,6 +30,8 @@ data LogFormat
       Generic
     )
 
+instance FromJSON LogFormat
+
 data TradeMode
   = Speculate
   | BuyOnly

@@ -23,7 +23,8 @@ newtype Seconds = Seconds
   deriving newtype
     ( Eq,
       Ord,
-      Show
+      Show,
+      FromJSON
     )
   deriving stock
     ( Generic,

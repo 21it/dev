@@ -13,6 +13,7 @@ module BitfinexClient.Data.Web
     newNonceGen,
     withNonce,
     epoch,
+    parseJsonBs,
   )
 where
 

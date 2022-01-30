@@ -20,21 +20,18 @@ import qualified Data.ByteString.Char8 as C8
 import qualified Data.Map as Map
 import Env
   ( Error (UnreadError),
-    Mod,
-    Var,
-    auto,
     header,
     help,
     keep,
     nonempty,
     parse,
-    str,
     var,
   )
 import RecklessTradingBot.Data.Model
 import RecklessTradingBot.Data.Time
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
+import qualified Prelude
 
 data RawTradeEnv = RawTradeEnv
   { rawTradeEnvCurrencyKind ::
@@ -90,87 +87,73 @@ data Env = Env
 
 data RawEnv = RawEnv
   { -- app
-    rawEnvBfx :: Bfx.Env,
+    rawEnvBfx :: Bfx.RawEnv,
     rawEnvPairs :: Map Bfx.CurrencyPair RawTradeEnv,
     rawEnvPriceTtl :: Seconds,
     rawEnvOrderTtl :: Seconds,
     -- storage
-    rawEnvLibpqConnStr :: ConnectionString,
+    rawEnvLibpqConnStr :: LibpqConnStr,
     -- logging
     rawEnvLogEnv :: Text,
     rawEnvLogFormat :: LogFormat,
     rawEnvLogSeverity :: Severity,
     rawEnvLogVerbosity :: Verbosity
   }
+  deriving stock
+    ( Eq,
+      Show,
+      Generic
+    )
+
+instance FromJSON RawEnv where
+  parseJSON =
+    A.genericParseJSON
+      A.defaultOptions
+        { A.fieldLabelModifier = A.camelTo2 '_' . drop 6
+        }
+
+newtype LibpqConnStr
+  = LibpqConnStr ConnectionString
+  deriving newtype
+    ( Eq,
+      Ord,
+      IsString
+    )
+
+instance Prelude.Show LibpqConnStr where
+  show =
+    const "SECRET"
+
+instance From ConnectionString LibpqConnStr
+
+instance From LibpqConnStr ConnectionString
+
+instance FromJSON LibpqConnStr where
+  parseJSON =
+    Bfx.parseJsonBs
 
 sysRawConfig :: (MonadUnliftIO m) => m RawEnv
 sysRawConfig = liftIO $ do
-  env <- Bfx.sysEnv
-  parse (header "RecklessTradingBot config") $
-    RawEnv env
-      <$> var
-        (tradePairs <=< nonempty)
-        "RECKLESS_TRADING_BOT_PAIRS"
-        op
-      <*> var
-        ( err . tryFrom @Pico
-            <=< auto
-            <=< nonempty
-        )
-        "RECKLESS_TRADING_BOT_PRICE_TTL"
-        op
-      <*> var
-        ( err . tryFrom @Pico
-            <=< auto
-            <=< nonempty
-        )
-        "RECKLESS_TRADING_BOT_ORDER_TTL"
-        op
-      <*> var
-        (str <=< nonempty)
-        "RECKLESS_TRADING_BOT_LIBPQ_CONN_STR"
-        op
-      <*> var
-        (str <=< nonempty)
-        "RECKLESS_TRADING_BOT_LOG_ENV"
-        op
-      <*> var
-        (auto <=< nonempty)
-        "RECKLESS_TRADING_BOT_LOG_FORMAT"
-        op
-      <*> var
-        (auto <=< nonempty)
-        "RECKLESS_TRADING_BOT_LOG_SEVERITY"
-        op
-      <*> var
-        (auto <=< nonempty)
-        "RECKLESS_TRADING_BOT_LOG_VERBOSITY"
-        op
+  parse (header "RecklessTradingBot") $
+    var
+      (json <=< nonempty)
+      "RECKLESS_TRADING_BOT_ENV"
+      (keep <> help "")
   where
-    op :: Mod Var a
-    op =
-      keep <> help ""
-    tradePairs ::
+    json ::
       String ->
-      Either Env.Error (Map Bfx.CurrencyPair RawTradeEnv)
-    tradePairs =
+      Either Env.Error RawEnv
+    json =
       first
         UnreadError
         . A.eitherDecodeStrict
         . C8.pack
-    err ::
-      ( Show a
-      ) =>
-      Either a b ->
-      Either Env.Error b
-    err =
-      first $ UnreadError . show
 
 withEnv :: forall m. (MonadUnliftIO m) => (Env -> m ()) -> m ()
 withEnv this = do
   rc <- sysRawConfig
   let sev = rawEnvLogSeverity rc
-  let connStr = rawEnvLibpqConnStr rc
+  let connStr = from $ rawEnvLibpqConnStr rc
   handleScribe <-
     liftIO $
       mkHandleScribeWithFormatter
@@ -202,7 +185,7 @@ withEnv this = do
                 createPostgresqlPool connStr 10
   bracket mkLogEnv rmLogEnv $ \le ->
     bracket mkSqlPool rmSqlPool $ \pool -> do
-      let bfx = rawEnvBfx rc
+      bfx <- Bfx.newEnv $ rawEnvBfx rc
       priceChan <-
         liftIO $
           atomically newBroadcastTChan

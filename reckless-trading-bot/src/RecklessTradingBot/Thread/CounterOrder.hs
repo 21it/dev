@@ -37,8 +37,9 @@ loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
   let sym = tradeEnvCurrencyPair cfg
   withOperativeBfx $ do
-    updateActiveOrders
-      =<< Order.getByStatusLimit sym [OrderActive]
+    activeOrders <- Order.getByStatusLimit sym [OrderActive]
+    ThreadOrder.cancelExpired activeOrders
+    updateActiveOrders activeOrders
     when
       ( (tradeEnvMode cfg)
           `elem` ([Speculate, SellOnly] :: [TradeMode])

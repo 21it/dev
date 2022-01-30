@@ -23,7 +23,7 @@ class (Storage m, KatipContext m) => Env m where
     (a -> ExceptT Bfx.Error m b) ->
     ExceptT Error m b
   getPairs :: m [MVar EnvData.TradeEnv]
-  orderExpired :: Order -> m Bool
+  getExpiredOrders :: [Entity Order] -> m [Entity Order]
   putCurrPrice :: Entity Price -> m ()
   rcvNextPrice :: Bfx.CurrencyPair -> m (Entity Price)
   sleepPriceTtl :: Bfx.CurrencyPair -> m ()

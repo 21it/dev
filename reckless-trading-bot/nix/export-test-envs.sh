@@ -1,30 +1,31 @@
 #!/bin/sh
 
-#
-# app
-#
-
-export RECKLESS_TRADING_BOT_PAIRS="
+export RECKLESS_TRADING_BOT_ENV="
 {
-  \"ADABTC\":{
-    \"currency_kind\":\"Crypto\",
-    \"max_quote_investment\":\"0.04\",
-    \"min_profit_per_order\":\"0.001\",
-    \"mode\":\"ObserveOnly\"
+  \"bfx\":{
+    \"api_key\":\"$BITFINEX_API_KEY\",
+    \"prv_key\":\"$BITFINEX_PRV_KEY\"
   },
-  \"XMRBTC\":{
-    \"currency_kind\":\"Crypto\",
-    \"max_quote_investment\":\"0.01\",
-    \"min_profit_per_order\":\"0.001\",
-    \"mode\":\"ObserveOnly\"
-  }
+  \"pairs\":{
+    \"ADABTC\":{
+      \"currency_kind\":\"Crypto\",
+      \"max_quote_investment\":\"0.04\",
+      \"min_profit_per_order\":\"0.001\",
+      \"mode\":\"ObserveOnly\"
+    },
+    \"XMRBTC\":{
+      \"currency_kind\":\"Crypto\",
+      \"max_quote_investment\":\"0.01\",
+      \"min_profit_per_order\":\"0.001\",
+      \"mode\":\"ObserveOnly\"
+    }
+  },
+  \"price_ttl\":300,
+  \"order_ttl\":3600,
+  \"libpq_conn_str\":\"postgresql://$USER@localhost/reckless-trading-bot\",
+  \"log_env\":\"21it\",
+  \"log_format\":\"Bracket\",
+  \"log_severity\":\"debug\",
+  \"log_verbosity\":\"V3\"
 }
 "
-export RECKLESS_TRADING_BOT_PRICE_TTL="300"
-export RECKLESS_TRADING_BOT_ORDER_TTL="900"
-
-export RECKLESS_TRADING_BOT_LOG_ENV="dev"
-export RECKLESS_TRADING_BOT_LOG_FORMAT="Bracket"
-export RECKLESS_TRADING_BOT_LOG_SEVERITY="DebugS"
-export RECKLESS_TRADING_BOT_LOG_VERBOSITY="V3"
-export RECKLESS_TRADING_BOT_LIBPQ_CONN_STR="postgresql://nixbld1@localhost/reckless-trading-bot"
