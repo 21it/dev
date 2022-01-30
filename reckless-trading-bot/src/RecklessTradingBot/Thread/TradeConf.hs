@@ -37,12 +37,12 @@ updateTradeConf ::
   ) =>
   Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
   BfxFeeSummary.Response ->
-  MVar TradeConf ->
+  MVar TradeEnv ->
   ExceptT Error m ()
 updateTradeConf syms fees varCfg = do
   cfg <- lift $ readMVar varCfg
-  let sym = tradeConfCurrencyPair cfg
-  let cck = tradeConfCurrencyKind cfg
+  let sym = tradeEnvCurrencyPair cfg
+  let cck = tradeEnvCurrencyKind cfg
   let fee = BfxFeeSummary.getFee @'Bfx.Maker cck fees
   bfxCfg <-
     tryJust
@@ -60,16 +60,16 @@ updateTradeConf syms fees varCfg = do
   void
     . liftIO
     . swapMVar varCfg
-    $ TradeConf
-      { tradeConfCurrencyPair = sym,
-        tradeConfCurrencyKind = cck,
-        tradeConfMinProfitPerOrder =
-          tradeConfMinProfitPerOrder cfg,
-        tradeConfMaxQuoteInvestment =
-          tradeConfMaxQuoteInvestment cfg,
-        tradeConfBaseFee = fee,
-        tradeConfQuoteFee = coerce fee,
-        tradeConfMinBuyAmt = amtWithFee,
-        tradeConfMinSellAmt = coerce amtNoFee,
-        tradeConfMode = tradeConfMode cfg
+    $ TradeEnv
+      { tradeEnvCurrencyPair = sym,
+        tradeEnvCurrencyKind = cck,
+        tradeEnvMinProfitPerOrder =
+          tradeEnvMinProfitPerOrder cfg,
+        tradeEnvMaxQuoteInvestment =
+          tradeEnvMaxQuoteInvestment cfg,
+        tradeEnvBaseFee = fee,
+        tradeEnvQuoteFee = coerce fee,
+        tradeEnvMinBuyAmt = amtWithFee,
+        tradeEnvMinSellAmt = coerce amtNoFee,
+        tradeEnvMode = tradeEnvMode cfg
       }

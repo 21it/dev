@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Web
@@ -16,6 +17,9 @@ module BitfinexClient.Data.Web
 where
 
 import BitfinexClient.Import.External
+import BitfinexClient.Util
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as A
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
@@ -30,9 +34,17 @@ newtype PrvKey
       IsString
     )
 
+instance From BS.ByteString PrvKey
+
+instance From PrvKey BS.ByteString
+
 instance Prelude.Show PrvKey where
   show =
     const "SECRET"
+
+instance FromJSON PrvKey where
+  parseJSON =
+    parseJsonBs
 
 newtype ApiKey
   = ApiKey BS.ByteString
@@ -42,9 +54,17 @@ newtype ApiKey
       IsString
     )
 
+instance From BS.ByteString ApiKey
+
+instance From ApiKey BS.ByteString
+
 instance Prelude.Show ApiKey where
   show =
     const "SECRET"
+
+instance FromJSON ApiKey where
+  parseJSON =
+    parseJsonBs
 
 data RequestMethod
   = GET
@@ -71,13 +91,17 @@ newtype RawResponse
       Ord
     )
 
+instance From ByteString RawResponse
+
+instance From RawResponse ByteString
+
 instance Show RawResponse where
   show x =
     case decodeUtf8' bs of
       Left {} -> "ByteString RawResponse" <> show (BS.unpack bs)
       Right res -> "Text RawResponse " <> T.unpack res
     where
-      bs = BL.toStrict $ coerce x
+      bs = BL.toStrict $ from x
 
 newtype Nonce = Nonce
   { unNonce :: Natural
@@ -138,3 +162,16 @@ utcTimeToMicros x =
 epoch :: UTCTime
 epoch =
   posixSecondsToUTCTime 0
+
+parseJsonBs ::
+  forall a.
+  ( Typeable a,
+    From BS.ByteString a,
+    'False ~ (BS.ByteString == a)
+  ) =>
+  A.Value ->
+  A.Parser a
+parseJsonBs =
+  A.withText (showType @a) $
+    pure
+      . via @BS.ByteString

@@ -17,14 +17,14 @@ apply = do
   xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => MVar TradeConf -> m ()
+loop :: (Env m) => MVar TradeEnv -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
-  sleepPriceTtl $ tradeConfCurrencyPair cfg
+  sleepPriceTtl $ tradeEnvCurrencyPair cfg
   withOperativeBfx $ createUpdate cfg
   loop varCfg
 
-createUpdate :: (Env m) => TradeConf -> m ()
+createUpdate :: (Env m) => TradeEnv -> m ()
 createUpdate cfg = do
   res <-
     runExceptT . withExceptT ErrorBfx $
@@ -41,7 +41,7 @@ createUpdate cfg = do
   where
     sym :: Bfx.CurrencyPair
     sym =
-      tradeConfCurrencyPair cfg
+      tradeEnvCurrencyPair cfg
     getPrice ::
       forall (act :: Bfx.ExchangeAction) m.
       ( Env m,
@@ -52,7 +52,7 @@ createUpdate cfg = do
     getPrice = do
       Bfx.marketAveragePrice
         ( case sing :: Sing act of
-            Bfx.SBuy -> tradeConfMinBuyAmt cfg
-            Bfx.SSell -> tradeConfMinSellAmt cfg
+            Bfx.SBuy -> tradeEnvMinBuyAmt cfg
+            Bfx.SSell -> tradeEnvMinSellAmt cfg
         )
         sym

@@ -19,7 +19,7 @@ import qualified RecklessTradingBot.Model.Order as Order
 create ::
   ( Storage m
   ) =>
-  TradeConf ->
+  TradeEnv ->
   Entity Order ->
   Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
   m (Entity CounterOrder)
@@ -28,14 +28,14 @@ create cfg orderEnt bfxOrder = do
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
-    exitFee = tradeConfQuoteFee cfg
+    exitFee = tradeEnvQuoteFee cfg
     (exitGain, exitLoss, exitRate) =
       case BfxMath.newCounterOrder
         (Bfx.orderAmount bfxOrder)
         (Bfx.orderRate bfxOrder)
         (orderFee $ entityVal orderEnt)
         exitFee
-        $ tradeConfMinProfitPerOrder cfg of
+        $ tradeEnvMinProfitPerOrder cfg of
         Left e -> error $ show e
         Right x -> x
     newRow ct =

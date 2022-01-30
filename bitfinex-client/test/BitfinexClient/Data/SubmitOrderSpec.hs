@@ -13,7 +13,7 @@ import qualified Data.Aeson as A
 import Test.Hspec
 
 spec :: Spec
-spec = before newEnv $
+spec = before sysEnv $
   describe "ToJSON" $
     itRight "Request" . const $ do
       let req =

@@ -32,15 +32,15 @@ apply = do
   xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => MVar TradeConf -> m ()
+loop :: (Env m) => MVar TradeEnv -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
-  let sym = tradeConfCurrencyPair cfg
+  let sym = tradeEnvCurrencyPair cfg
   withOperativeBfx $ do
     updateActiveOrders
       =<< Order.getByStatusLimit sym [OrderActive]
     when
-      ( (tradeConfMode cfg)
+      ( (tradeEnvMode cfg)
           `elem` ([Speculate, SellOnly] :: [TradeMode])
       )
       $ do
@@ -129,7 +129,7 @@ updateActiveT rows = do
 counterExecutedOrder ::
   ( Env m
   ) =>
-  TradeConf ->
+  TradeEnv ->
   Entity Order ->
   m ()
 counterExecutedOrder cfg row = do
@@ -148,7 +148,7 @@ counterExecutedOrder cfg row = do
 counterExecutedT ::
   ( Env m
   ) =>
-  TradeConf ->
+  TradeEnv ->
   Entity Order ->
   Bfx.OrderId ->
   ExceptT Error m ()
@@ -166,14 +166,14 @@ counterExecutedT cfg orderEnt bfxOrderId = do
   baseBalance <-
     withBfxT
       Bfx.spendableExchangeBalance
-      ($ Bfx.currencyPairBase $ tradeConfCurrencyPair cfg)
+      ($ Bfx.currencyPairBase $ tradeEnvCurrencyPair cfg)
   (_, exitLoss, _) <-
     case BfxMath.newCounterOrder
       (Bfx.orderAmount bfxOrder)
       (Bfx.orderRate bfxOrder)
       (orderFee $ entityVal orderEnt)
-      (tradeConfQuoteFee cfg)
-      $ tradeConfMinProfitPerOrder cfg of
+      (tradeEnvQuoteFee cfg)
+      $ tradeEnvMinProfitPerOrder cfg of
       Left e -> throwE $ ErrorBfx e
       Right x -> pure x
   when (coerce baseBalance < exitLoss) $
@@ -204,8 +204,8 @@ counterExecutedT cfg orderEnt bfxOrderId = do
           cont
             bfxOrderId
             (orderFee $ entityVal orderEnt)
-            (tradeConfQuoteFee cfg)
-            (tradeConfMinProfitPerOrder cfg)
+            (tradeEnvQuoteFee cfg)
+            (tradeEnvMinProfitPerOrder cfg)
             $ Bfx.optsPostOnly
               { Bfx.clientId = Just bfxCounterCid,
                 Bfx.groupId = Just gid

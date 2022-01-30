@@ -29,21 +29,21 @@ apply = do
   xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
-loop :: (Env m) => MVar TradeConf -> m ()
+loop :: (Env m) => MVar TradeEnv -> m ()
 loop varCfg = do
   cfg <- liftIO $ readMVar varCfg
-  let sym = tradeConfCurrencyPair cfg
+  let sym = tradeEnvCurrencyPair cfg
   priceEnt <- rcvNextPrice sym
   withOperativeBfx $ do
     cancelUnexpected
       =<< Order.getByStatusLimit sym [OrderNew]
     when
-      ( (tradeConfMode cfg)
+      ( (tradeEnvMode cfg)
           `elem` ([Speculate, BuyOnly] :: [TradeMode])
       )
       $ do
         totalInvestment <- Order.getTotalInvestment sym
-        if totalInvestment < tradeConfMaxQuoteInvestment cfg
+        if totalInvestment < tradeEnvMaxQuoteInvestment cfg
           then do
             let lim = 5 :: Int
             priceSeq <- Price.getLatestLimit (from lim) sym
@@ -104,7 +104,7 @@ cancelUnexpectedT entities = do
 placeOrder ::
   ( Env m
   ) =>
-  TradeConf ->
+  TradeEnv ->
   Entity Price ->
   m ()
 placeOrder cfg priceEnt = do
@@ -113,7 +113,7 @@ placeOrder cfg priceEnt = do
       quoteBalance <-
         withBfxT
           Bfx.spendableExchangeBalance
-          ($ Bfx.currencyPairQuote $ tradeConfCurrencyPair cfg)
+          ($ Bfx.currencyPairQuote $ tradeEnvCurrencyPair cfg)
       when (quoteBalance > enterLoss) $
         placeOrderT cfg priceEnt
   whenLeft res $
@@ -122,7 +122,7 @@ placeOrder cfg priceEnt = do
     enterPrice =
       priceBuy $ entityVal priceEnt
     enterGain =
-      tradeConfMinBuyAmt cfg
+      tradeEnvMinBuyAmt cfg
     enterLoss =
       case Bfx.roundMoney' $
         Bfx.unQuotePerBase enterPrice
@@ -133,7 +133,7 @@ placeOrder cfg priceEnt = do
 placeOrderT ::
   ( Env m
   ) =>
-  TradeConf ->
+  TradeEnv ->
   Entity Price ->
   ExceptT Error m ()
 placeOrderT cfg priceEnt = do
@@ -150,7 +150,7 @@ placeOrderT cfg priceEnt = do
       ( \cont -> do
           cont
             (orderGain order)
-            (tradeConfCurrencyPair cfg)
+            (tradeEnvCurrencyPair cfg)
             (priceBuy $ entityVal priceEnt)
             Bfx.optsPostOnly
               { Bfx.clientId = Just cid,

@@ -15,7 +15,7 @@ import qualified Data.Map as Map
 import Test.Hspec
 
 spec :: Spec
-spec = before newEnv $ do
+spec = before sysEnv $ do
   itRight "platformStatus succeeds" . const $ do
     ss <- Bitfinex.platformStatus
     liftIO $ ss `shouldBe` PltOperative

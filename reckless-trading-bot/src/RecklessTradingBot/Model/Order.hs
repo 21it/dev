@@ -21,7 +21,7 @@ import qualified RecklessTradingBot.Import.Psql as Psql
 create ::
   ( Storage m
   ) =>
-  TradeConf ->
+  TradeEnv ->
   Entity Price ->
   m (Entity Order)
 create cfg (Entity priceId price) = do
@@ -32,7 +32,7 @@ create cfg (Entity priceId price) = do
     enterPrice =
       priceBuy price
     enterGain =
-      tradeConfMinBuyAmt cfg
+      tradeEnvMinBuyAmt cfg
     enterLoss =
       case Bfx.roundMoney' $
         Bfx.unQuotePerBase enterPrice
@@ -59,7 +59,7 @@ create cfg (Entity priceId price) = do
           orderPrice = enterPrice,
           orderGain = enterGain,
           orderLoss = enterLoss,
-          orderFee = tradeConfBaseFee cfg,
+          orderFee = tradeEnvBaseFee cfg,
           orderStatus = OrderNew,
           orderInsertedAt = ct,
           orderUpdatedAt = ct

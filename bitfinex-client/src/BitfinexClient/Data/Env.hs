@@ -1,13 +1,16 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Data.Env
-  ( Env (..),
+  ( RawEnv (..),
+    Env (..),
     newEnv,
+    sysEnv,
   )
 where
 
 import BitfinexClient.Data.Web
 import BitfinexClient.Import.External
+import qualified Data.Aeson as A
 import Env
   ( Mod,
     Var,
@@ -20,6 +23,26 @@ import Env
     var,
   )
 
+data RawEnv = RawEnv
+  { rawEnvApiKey :: ApiKey,
+    rawEnvPrvKey :: PrvKey
+  }
+  deriving stock
+    ( Eq,
+      -- | It's safe to derive 'Show' instance,
+      -- because 'ApiKey' and 'PrvKey'
+      -- instances are safe.
+      Show,
+      Generic
+    )
+
+instance FromJSON RawEnv where
+  parseJSON =
+    A.genericParseJSON
+      A.defaultOptions
+        { A.fieldLabelModifier = A.camelTo2 '_' . drop 6
+        }
+
 data Env = Env
   { envNonceGen :: NonceGen,
     envApiKey :: ApiKey,
@@ -27,20 +50,27 @@ data Env = Env
   }
   deriving stock
     ( Eq,
-      -- | It's safe to derive 'Show' instance,
-      -- because 'NonceGen', 'ApiKey' and 'PrvKey'
-      -- instances are safe.
       Show
     )
 
-newEnv ::
+newEnv :: (MonadIO m) => RawEnv -> m Env
+newEnv raw = do
+  nonceGen <- newNonceGen
+  pure $
+    Env
+      { envNonceGen = nonceGen,
+        envApiKey = rawEnvApiKey raw,
+        envPrvKey = rawEnvPrvKey raw
+      }
+
+sysEnv ::
   ( MonadIO m
   ) =>
   m Env
-newEnv = do
+sysEnv = do
   nonceGen <- newNonceGen
   liftIO
-    . parse (header "BitfinexClient config")
+    . parse (header "BitfinexClient")
     $ Env nonceGen
       <$> var (str <=< nonempty) "BITFINEX_API_KEY" op
       <*> var (str <=< nonempty) "BITFINEX_PRV_KEY" op
