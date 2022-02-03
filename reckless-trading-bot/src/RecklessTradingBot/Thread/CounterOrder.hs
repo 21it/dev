@@ -28,7 +28,7 @@ import qualified RecklessTradingBot.Thread.Order as ThreadOrder
 -- procedures, and do simple insert/update instead.
 apply :: (Env m) => m ()
 apply = do
-  $(logTM) InfoS "Spawned"
+  $(logTM) DebugS "Spawned"
   xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 

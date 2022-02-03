@@ -26,7 +26,7 @@ import qualified RecklessTradingBot.Model.Price as Price
 -- procedures, and do simple insert/update instead.
 apply :: (Env m) => m ()
 apply = do
-  $(logTM) InfoS "Spawned"
+  $(logTM) DebugS "Spawned"
   xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 
@@ -54,7 +54,7 @@ loop varCfg = do
               )
               $ placeOrder cfg priceEnt
           else
-            $(logTM) InfoS $
+            $(logTM) DebugS $
               "Total investment "
                 <> show totalInvestment
                 <> " exceeded limit for "
@@ -79,7 +79,7 @@ cancelExpiredT ::
   ExceptT Error m ()
 cancelExpiredT [] = pure ()
 cancelExpiredT entities = do
-  $(logTM) InfoS $ show entities
+  $(logTM) DebugS $ show entities
   ids <-
     mapM
       ( \x ->
@@ -194,7 +194,7 @@ placeOrderT cfg priceEnt = do
   orderEnt@(Entity orderId order) <-
     lift $
       Order.create cfg priceEnt
-  $(logTM) InfoS . logStr $
+  $(logTM) DebugS . logStr $
     "Placing a new order " <> (show orderEnt :: Text)
   cid <- tryFromT orderId
   gid <- tryFromT orderId

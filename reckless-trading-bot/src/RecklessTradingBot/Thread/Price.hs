@@ -13,7 +13,7 @@ import qualified RecklessTradingBot.Model.Price as Price
 
 apply :: (Env m) => m ()
 apply = do
-  $(logTM) InfoS "Spawned"
+  $(logTM) DebugS "Spawned"
   xs <- mapM (spawnLink . loop) =<< getPairs
   liftIO . void $ waitAnyCancel xs
 

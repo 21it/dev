@@ -8,6 +8,7 @@ module BitfinexClient.Data.Metro
   ( -- | Primary money types
     Money,
     unMoney,
+    unMoney',
     SomeMoney (..),
     -- | Metrology compatible money type aliases
     MoneyBase',

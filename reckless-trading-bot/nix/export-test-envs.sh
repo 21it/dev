@@ -22,10 +22,12 @@ export RECKLESS_TRADING_BOT_ENV="
   },
   \"price_ttl\":300,
   \"order_ttl\":3600,
+  \"report_start_amt\":\"0.029\",
+  \"report_currency\":\"BTC\",
   \"libpq_conn_str\":\"postgresql://$USER@localhost/reckless-trading-bot\",
   \"log_env\":\"21it\",
   \"log_format\":\"Bracket\",
-  \"log_severity\":\"debug\",
+  \"log_severity\":\"info\",
   \"log_verbosity\":\"V3\"
 }
 "

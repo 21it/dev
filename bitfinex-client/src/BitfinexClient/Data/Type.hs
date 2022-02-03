@@ -383,6 +383,8 @@ newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
       TH.Lift
     )
 
+instance From (CurrencyCode crel0) (CurrencyCode crel1)
+
 instance (Typeable crel) => FromJSON (CurrencyCode crel) where
   parseJSON = withText
     (showType @(CurrencyCode crel))

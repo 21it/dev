@@ -50,6 +50,8 @@ instance (MonadUnliftIO m) => Env (AppM m) where
   withBfxT method args = do
     bfx <- asks EnvData.envBfx
     withExceptT ErrorBfx . args $ method bfx
+  getReportStartAmt = asks EnvData.envReportStartAmt
+  getReportCurrency = asks EnvData.envReportCurrency
   getPairs = asks EnvData.envPairs
   getExpiredOrders xs = do
     ct <- liftIO getCurrentTime

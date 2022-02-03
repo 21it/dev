@@ -78,6 +78,8 @@ spec = before sysEnv $ do
   itRight
     "wallets succeeds"
     (Bitfinex.wallets @'Base)
+  itRight "netWorth succeeds" $ \env ->
+    Bitfinex.netWorth env [ccQuote|BTC|]
 
 --  describe "End2End" $ do
 --    itRight "submitOrderMaker" $ \env -> do

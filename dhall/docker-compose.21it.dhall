@@ -67,12 +67,14 @@ in  { networks.global.external = True
                             )
                       , price_ttl = J.natural 300
                       , order_ttl = J.natural 3600
+                      , report_start_amt = J.string "0.029"
+                      , report_currency = J.string "BTC"
                       , libpq_conn_str =
                           J.string
                             "postgresql://user:user@postgres/reckless-trading-bot"
                       , log_env = J.string "21it"
                       , log_format = J.string "Bracket"
-                      , log_severity = J.string "error"
+                      , log_severity = J.string "info"
                       , log_verbosity = J.string "V3"
                       }
                   )

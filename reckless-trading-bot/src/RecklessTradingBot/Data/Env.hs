@@ -76,6 +76,8 @@ data Env = Env
     envPairs :: [MVar TradeEnv],
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
+    envReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
+    envReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
     envPriceChan :: TChan (Entity Price),
     -- storage
     envSqlPool :: Pool SqlBackend,
@@ -91,6 +93,8 @@ data RawEnv = RawEnv
     rawEnvPairs :: Map Bfx.CurrencyPair RawTradeEnv,
     rawEnvPriceTtl :: Seconds,
     rawEnvOrderTtl :: Seconds,
+    rawEnvReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
+    rawEnvReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
     -- storage
     rawEnvLibpqConnStr :: LibpqConnStr,
     -- logging
@@ -202,6 +206,8 @@ withEnv this = do
             envPairs = cfg,
             envPriceTtl = rawEnvPriceTtl rc,
             envOrderTtl = rawEnvOrderTtl rc,
+            envReportStartAmt = rawEnvReportStartAmt rc,
+            envReportCurrency = rawEnvReportCurrency rc,
             envPriceChan = priceChan,
             -- storage
             envSqlPool = pool,

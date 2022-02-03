@@ -11,15 +11,17 @@ import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.FeeSummary as BfxFeeSummary
 import qualified BitfinexClient.Math as BfxMath
 import qualified Data.Map as Map
+import Data.Metrology.Poly
 import RecklessTradingBot.Import
 
 apply :: (Env m) => m ()
 apply = do
-  $(logTM) InfoS "Spawned"
+  $(logTM) DebugS "Spawned"
   loop
 
 loop :: (Env m) => m ()
 loop = do
+  reportProfit
   xs <- getPairs
   withOperativeBfx $ do
     res <-
@@ -29,8 +31,23 @@ loop = do
         mapM_ (updateTradeConf syms fees) xs
     whenLeft res $
       $(logTM) ErrorS . show
-    sleep [seconds|300|]
+    sleep [seconds|86400|]
   loop
+
+reportProfit :: (Env m) => m ()
+reportProfit = do
+  cc <- getReportCurrency
+  startAmt <- Bfx.unMoney <$> getReportStartAmt
+  res <- runExceptT $ do
+    currentAmt <-
+      Bfx.unMoney <$> withBfxT Bfx.netWorth ($ cc)
+    $(logTM) InfoS . logStr $
+      "Total profit is "
+        <> showPercent
+          ((currentAmt |-| startAmt) |/| startAmt # Number)
+  whenLeft res $ \e ->
+    $(logTM) ErrorS . logStr $
+      "Profit report failed with " <> (show e :: Text)
 
 updateTradeConf ::
   ( MonadIO m

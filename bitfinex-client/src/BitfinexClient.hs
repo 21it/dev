@@ -23,6 +23,7 @@ module BitfinexClient
     submitCounterOrderMaker,
     dumpIntoQuote,
     dumpIntoQuoteMaker,
+    netWorth,
     module X,
   )
 where
@@ -454,3 +455,51 @@ dumpIntoQuoteMaker ::
   ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuoteMaker =
   dumpIntoQuote' submitOrderMaker
+
+netWorth ::
+  ( MonadIO m
+  ) =>
+  Env ->
+  CurrencyCode 'Quote ->
+  ExceptT Error m (Money 'Quote 'Sell)
+netWorth env ccq = do
+  -- Simplify fees (assume it's alwayus Maker and Crypto2Crypto)
+  fee <- FeeSummary.makerCrypto2CryptoFee <$> feeSummary env
+  xs0 <- wallets @'Quote env
+  res <-
+    foldrM
+      ( \(ccb, bs1) totalAcc -> do
+          let localAcc :: MoneyQuote' =
+                foldr
+                  ( \amt acc ->
+                      unMoney (Wallets.balance amt) |+| acc
+                  )
+                  (unMoney [moneyQuoteSell|0|])
+                  $ Map.elems bs1
+          if ccb == ccq
+            then
+              pure $
+                totalAcc |+| localAcc
+            else do
+              -- In this case we are dealing with Base
+              -- money, so we need transform from Quote
+              sym <-
+                tryErrorT $
+                  currencyPairCon (from ccb) ccq
+              baseMoney :: Money 'Base 'Sell <-
+                tryErrorT . roundMoney $
+                  unMoney' @'Quote localAcc
+              price <-
+                marketAveragePrice baseMoney sym
+              pure $
+                totalAcc
+                  |+| ( ( unMoney baseMoney
+                            |*| unQuotePerBase price
+                        )
+                          |* (1 - unFeeRate fee)
+                      )
+      )
+      (unMoney [moneyQuoteSell|0|])
+      $ Map.assocs xs0
+  tryErrorT $
+    roundMoney' @'Quote res

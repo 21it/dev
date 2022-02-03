@@ -35,13 +35,13 @@ migrateAfter =
 
 migrateAll :: (Storage m, KatipContext m) => m ()
 migrateAll = do
-  $(logTM) InfoS "Running Persistent BEFORE migrations..."
+  $(logTM) DebugS "Running Persistent BEFORE migrations..."
   runM migrateBefore
-  $(logTM) InfoS "Running Persistent AUTO migrations..."
+  $(logTM) DebugS "Running Persistent AUTO migrations..."
   runSql (runMigration migrateAuto)
-  $(logTM) InfoS "Running Persistent AFTER migrations..."
+  $(logTM) DebugS "Running Persistent AFTER migrations..."
   runM migrateAfter
-  $(logTM) InfoS "Persistent database migrated!"
+  $(logTM) DebugS "Persistent database migrated!"
   where
     runM [] = pure ()
     runM x = do
