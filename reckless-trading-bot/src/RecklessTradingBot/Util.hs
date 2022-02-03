@@ -45,6 +45,9 @@ showPercent x =
   T.pack
     ( F.showFixed
         True
-        (fromRational x :: F.Fixed F.E2)
+        ( fromRational $
+            x * 100 ::
+            F.Fixed F.E2
+        )
     )
     <> "%"
