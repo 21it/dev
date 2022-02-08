@@ -26,9 +26,6 @@ build_bitfinex_client () {
 
 build_reckless_trading_bot_bundle () {
   nix-bundle "(import $THIS_DIR/default.nix).reckless-trading-bot.components.exes.reckless-trading-bot-exe" "/bin/reckless-trading-bot-exe"
-  echo "==> DEBUG"
-  pwd
-  ls -la "$ROOT_DIR"
   mv "$ROOT_DIR/reckless-trading-bot-exe" \
      "$BUILD_DIR/reckless-trading-bot"
   #
@@ -83,7 +80,11 @@ case $1 in
     ;;
   all)
     build_bitfinex_client
-    build_reckless_trading_bot_bundle
+    #
+    # TODO : fix bundle builds on github ci
+    # https://github.com/matthewbauer/nix-bundle/issues/86
+    #
+    #build_reckless_trading_bot_bundle
     build_reckless_trading_bot_docker
     shift
     ;;

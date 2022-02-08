@@ -19,9 +19,7 @@ jobs:
           sh -c "tar -xvzf ./nix.tar.gz -C /" \
         || true
     - name: Release all
-      run: |
-        ./nix/release-github.sh \
-        || true
+      run: ./nix/release-github.sh
     - name: Save cache
       run: |
         docker run --rm \

@@ -7,3 +7,4 @@ dist*
 postgres.log
 result*
 core
+reckless-trading-bot-exe
