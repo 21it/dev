@@ -10,7 +10,7 @@ sh "$THIS_DIR/shell.sh" --mini --github \
    "--run './nix/release-native.sh all'"
 
 echo "==> Chown"
-chown -R $USER:$USER .
+sudo chown -R $USER:$USER "$BUILD_DIR"
 
 echo "==> Docker image verification"
 docker load -q -i \
@@ -24,7 +24,7 @@ sh "$THIS_DIR/shell.sh" --mini --github \
    "--run './nix/dhall-compile.sh'"
 
 echo "==> Chown"
-chown -R $USER:$USER .
+sudo chown -R $USER:$USER "$BUILD_DIR"
 
 echo "==> DEBUG ls "
 ls -la "$BUILD_DIR"
