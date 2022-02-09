@@ -9,6 +9,9 @@ echo "==> Binaries build"
 sh "$THIS_DIR/shell.sh" --mini --github \
    "--run './nix/release-native.sh all'"
 
+echo "==> Chown"
+chown -R $USER:$USER .
+
 echo "==> Docker image verification"
 docker load -q -i \
   "$BUILD_DIR/docker-image-reckless-trading-bot.tar.gz" \
@@ -17,12 +20,15 @@ docker load -q -i \
   > "$BUILD_DIR/docker-image-reckless-trading-bot.txt"
 
 echo "==> Dhall compilation"
-sh "$THIS_DIR/shell.sh" --mini \
+sh "$THIS_DIR/shell.sh" --mini --github \
    "--run './nix/dhall-compile.sh'"
 
-echo "==> DEBUG BUILD"
+echo "==> Chown"
+chown -R $USER:$USER .
+
+echo "==> DEBUG ls "
 ls -la "$BUILD_DIR"
-echo "==> Image name"
+echo "==> DEBUG image name"
 cat "$BUILD_DIR/docker-image-reckless-trading-bot.txt"
-echo "==> Swarm file"
+echo "==> DEBUG swarm file"
 cat "$BUILD_DIR/docker-compose.21it.yml"
