@@ -63,3 +63,19 @@ Run development daemon:
 ```sh
 ghcid
 ```
+
+## Release
+
+Create new release:
+
+```shell
+git tag v0.1.0
+git push --tags
+```
+
+Delete existing release:
+
+```shell
+git tag -d v0.1.0
+git push --delete origin v0.1.0
+```
