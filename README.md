@@ -1,6 +1,6 @@
 # 21it
 
-Executive Order 6102 was a presidential directive which forbade the hoarding of gold in the United States – citizens were instructed to deliver their gold to the Federal Reserve within a month of the signing of the order in April 1933. Violating the order carried a punishment of 10 years in prison, a $10,000 fine or both. The $10,000 fine is equivalent to almost $200,000 today due inflation of the US Dollar. Less than 100 years ago, in the United States of America, it was illegal to hoard gold. It was illegal to have a shiny rock in your home. I find that fact astonishing. (6102, June 4, 2020, SLP178)
+Open source projects monorepo.
 
 ## Packages
 
