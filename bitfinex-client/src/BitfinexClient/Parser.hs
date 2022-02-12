@@ -4,6 +4,7 @@
 module BitfinexClient.Parser
   ( parseOrder,
     parseOrderMap,
+    parseCandle,
   )
 where
 
@@ -96,10 +97,59 @@ parseOrderMap ::
 parseOrderMap raw = do
   xs <-
     maybeToRight
-      "Json is not an Array"
+      "Json is not an array"
       $ raw ^? _Array
   foldrM parser mempty xs
   where
     parser x acc = do
       someOrder@(SomeOrder _ order) <- parseOrder x
       pure $ Map.insert (orderId order) someOrder acc
+
+parseCandle ::
+  ( AsValue a
+  ) =>
+  a ->
+  Either Text Candle
+parseCandle x = do
+  at <-
+    posixSecondsToUTCTime
+      . (/ 1000)
+      . fromInteger
+      . from @Natural
+      <$> maybeToRight
+        "UTCTime is missing"
+        (x ^? nth 0 . _Integral)
+  open <-
+    first show . roundQuotePerBase
+      =<< maybeToRight
+        "Open is missing"
+        (toRational <$> x ^? nth 1 . _Number)
+  close <-
+    first show . roundQuotePerBase
+      =<< maybeToRight
+        "Close is missing"
+        (toRational <$> x ^? nth 2 . _Number)
+  high <-
+    first show . roundQuotePerBase
+      =<< maybeToRight
+        "High is missing"
+        (toRational <$> x ^? nth 3 . _Number)
+  low <-
+    first show . roundQuotePerBase
+      =<< maybeToRight
+        "Low is missing"
+        (toRational <$> x ^? nth 4 . _Number)
+  vol <-
+    first show . roundMoney
+      =<< maybeToRight
+        "Volume is missing"
+        (toRational <$> x ^? nth 5 . _Number)
+  pure
+    Candle
+      { candleAt = at,
+        candleOpen = open,
+        candleClose = close,
+        candleHigh = high,
+        candleLow = low,
+        candleVolume = vol
+      }

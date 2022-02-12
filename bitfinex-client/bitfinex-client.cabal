@@ -32,6 +32,7 @@ library
       BitfinexClient.Class.ToRequestMethod
       BitfinexClient.Class.ToRequestParam
       BitfinexClient.Data.CancelOrderMulti
+      BitfinexClient.Data.Candles
       BitfinexClient.Data.Env
       BitfinexClient.Data.FeeSummary
       BitfinexClient.Data.GetOrders

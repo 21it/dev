@@ -47,6 +47,7 @@ import Data.Time.Clock as X
     getCurrentTime,
     secondsToDiffTime,
   )
+import Data.Time.Clock.POSIX as X (posixSecondsToUTCTime)
 import Data.Type.Equality as X
   ( TestEquality (..),
     (:~:) (..),
@@ -63,6 +64,7 @@ import Database.Persist.Sql as X
 import Network.HTTP.Client as X (HttpException (..))
 import Universum as X hiding
   ( ByteString,
+    Last (..),
     bracket,
     catch,
     finally,

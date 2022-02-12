@@ -7,6 +7,7 @@ module BitfinexClient.Class.ToPathPieces
 where
 
 import BitfinexClient.Class.ToRequestParam
+import qualified BitfinexClient.Data.Candles as Candles
 import qualified BitfinexClient.Data.GetOrders as GetOrders
 import BitfinexClient.Data.Kind
 import BitfinexClient.Import.External
@@ -77,3 +78,25 @@ instance ToPathPieces 'Wallets req where
         "r",
         "wallets"
       ]
+
+instance ToPathPieces 'CandlesLast Candles.Request where
+  toPathPieces =
+    candlesPathPieces
+
+instance ToPathPieces 'CandlesHist Candles.Request where
+  toPathPieces =
+    candlesPathPieces
+
+candlesPathPieces :: Candles.Request -> [Text]
+candlesPathPieces x =
+  [ "v2",
+    "candles",
+    params,
+    toTextParam $ Candles.section x
+  ]
+  where
+    params =
+      "trade:"
+        <> toTextParam (Candles.timeFrame x)
+        <> ":"
+        <> toTextParam (Candles.symbol x)

@@ -8,6 +8,7 @@ module BitfinexClient.Class.ToRequestParam
   )
 where
 
+import BitfinexClient.Data.Web
 import BitfinexClient.Import.External
 import qualified Data.ByteString as BS
 import qualified Data.Text as T
@@ -38,3 +39,11 @@ instance ToRequestParam Rational where
   toTextParam x =
     T.pack $
       showFixed True (fromRational x :: Fixed E8)
+
+instance ToRequestParam Natural where
+  toTextParam =
+    T.pack . show
+
+instance ToRequestParam UTCTime where
+  toTextParam =
+    toTextParam . utcTimeToMicros

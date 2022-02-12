@@ -29,6 +29,8 @@ module BitfinexClient.Data.Type
     currencyPairQuote,
     newCurrencyPair,
     CurrencyPairConf (..),
+    Candle (..),
+    CandleTimeFrame (..),
 
     -- * Misc
     -- $misc
@@ -520,6 +522,47 @@ data CurrencyPairConf = CurrencyPairConf
       Show,
       Generic
     )
+
+data Candle = Candle
+  { candleAt :: UTCTime,
+    candleOpen :: QuotePerBase 'Buy,
+    candleClose :: QuotePerBase 'Buy,
+    candleHigh :: QuotePerBase 'Buy,
+    candleLow :: QuotePerBase 'Buy,
+    candleVolume :: Money 'Base 'Buy
+  }
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
+
+data CandleTimeFrame
+  = Ctf1m
+  | Ctf5m
+  | Ctf15m
+  | Ctf30m
+  | Ctf1h
+  | Ctf3h
+  | Ctf6h
+  | Ctf12h
+  | Ctf1D
+  | Ctf1W
+  | Ctf14D
+  | Ctf1M
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
+
+instance ToRequestParam CandleTimeFrame where
+  toTextParam =
+    T.pack
+      . drop 3
+      . show
 
 -- $misc
 -- General utility data used elsewhere.

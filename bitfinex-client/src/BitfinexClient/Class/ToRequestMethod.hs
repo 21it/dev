@@ -38,3 +38,9 @@ instance ToRequestMethod 'CancelOrderMulti where
 
 instance ToRequestMethod 'Wallets where
   toRequestMethod = POST
+
+instance ToRequestMethod 'CandlesLast where
+  toRequestMethod = GET
+
+instance ToRequestMethod 'CandlesHist where
+  toRequestMethod = GET

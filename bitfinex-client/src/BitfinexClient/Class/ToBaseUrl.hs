@@ -39,5 +39,14 @@ instance ToBaseUrl 'CancelOrderMulti where
 instance ToBaseUrl 'Wallets where
   toBaseUrl = base
 
+instance ToBaseUrl 'CandlesLast where
+  toBaseUrl = basePub
+
+instance ToBaseUrl 'CandlesHist where
+  toBaseUrl = basePub
+
 base :: BaseUrl
 base = "https://api.bitfinex.com"
+
+basePub :: BaseUrl
+basePub = "https://api-pub.bitfinex.com"

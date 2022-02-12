@@ -121,7 +121,7 @@ instance
   fromRpc (RawResponse raw) = do
     xs <-
       maybeToRight
-        "Json is not an Array"
+        "Json is not an array"
         $ raw ^? _Array
     res <-
       foldrM parser mempty $
@@ -214,7 +214,7 @@ instance
   fromRpc (RawResponse raw) = do
     xs <-
       maybeToRight
-        "Json is not an Array"
+        "Json is not an array"
         $ raw ^? _Array
     foldrM parser mempty xs
     where
@@ -264,3 +264,15 @@ instance
                 Wallets.lastChange = x ^? nth 5 . _String
               }
           )
+
+instance FromRpc 'CandlesLast Candle where
+  fromRpc (RawResponse raw) =
+    parseCandle raw
+
+instance FromRpc 'CandlesHist [Candle] where
+  fromRpc (RawResponse raw) = do
+    xs <-
+      maybeToRight "Json is not an array" $
+        raw ^? _Array
+    mapM parseCandle $
+      V.toList xs

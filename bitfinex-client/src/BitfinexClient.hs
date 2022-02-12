@@ -24,11 +24,14 @@ module BitfinexClient
     dumpIntoQuote,
     dumpIntoQuoteMaker,
     netWorth,
+    candlesLast,
+    candlesHist,
     module X,
   )
 where
 
 import qualified BitfinexClient.Data.CancelOrderMulti as CancelOrderMulti
+import qualified BitfinexClient.Data.Candles as Candles
 import qualified BitfinexClient.Data.FeeSummary as FeeSummary
 import qualified BitfinexClient.Data.GetOrders as GetOrders
 import qualified BitfinexClient.Data.MarketAveragePrice as MarketAveragePrice
@@ -503,3 +506,49 @@ netWorth env ccq = do
       $ Map.assocs xs0
   tryErrorT $
     roundMoney' @'Quote res
+
+candlesLast ::
+  ( MonadIO m
+  ) =>
+  CandleTimeFrame ->
+  CurrencyPair ->
+  Candles.Options ->
+  ExceptT Error m Candle
+candlesLast tf sym opts =
+  Generic.pub
+    @'CandlesLast
+    ( catMaybes
+        [ SomeQueryParam "limit" <$> Candles.limit opts,
+          SomeQueryParam "start" <$> Candles.start opts,
+          SomeQueryParam "end" <$> Candles.end opts
+        ]
+    )
+    Candles.Request
+      { Candles.timeFrame = tf,
+        Candles.symbol = sym,
+        Candles.section = Candles.Last,
+        Candles.options = opts
+      }
+
+candlesHist ::
+  ( MonadIO m
+  ) =>
+  CandleTimeFrame ->
+  CurrencyPair ->
+  Candles.Options ->
+  ExceptT Error m [Candle]
+candlesHist tf sym opts =
+  Generic.pub
+    @'CandlesHist
+    ( catMaybes
+        [ SomeQueryParam "limit" <$> Candles.limit opts,
+          SomeQueryParam "start" <$> Candles.start opts,
+          SomeQueryParam "end" <$> Candles.end opts
+        ]
+    )
+    Candles.Request
+      { Candles.timeFrame = tf,
+        Candles.symbol = sym,
+        Candles.section = Candles.Hist,
+        Candles.options = opts
+      }

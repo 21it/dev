@@ -7,6 +7,7 @@ module BitfinexClientSpec
 where
 
 import qualified BitfinexClient as Bitfinex
+import qualified BitfinexClient.Data.Candles as Candles
 import qualified BitfinexClient.Data.GetOrders as GetOrders
 import qualified BitfinexClient.Data.SubmitOrder as SubmitOrder
 import BitfinexClient.Import
@@ -80,6 +81,10 @@ spec = before sysEnv $ do
     (Bitfinex.wallets @'Base)
   itRight "netWorth succeeds" $ \env ->
     Bitfinex.netWorth env [ccQuote|BTC|]
+  itRight "candlesLast succeeds" . const $
+    Bitfinex.candlesLast Ctf1h [currencyPair|ADABTC|] Candles.optsDef
+  itRight "candlesHist succeeds" . const $
+    Bitfinex.candlesHist Ctf1h [currencyPair|ADABTC|] Candles.optsDef
 
 --  describe "End2End" $ do
 --    itRight "submitOrderMaker" $ \env -> do

@@ -21,6 +21,8 @@ $( singletons
          | RetrieveOrders
          | OrdersHistory
          | CancelOrderMulti
+         | CandlesLast
+         | CandlesHist
          deriving stock
            ( Eq,
              Ord,
