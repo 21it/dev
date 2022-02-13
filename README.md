@@ -1,6 +1,6 @@
 # 21it
 
-Open source projects monorepo.
+Open source projects
 
 ## Packages
 

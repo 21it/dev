@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      RecklessTradingBot.Chart
       RecklessTradingBot.Class.Env
       RecklessTradingBot.Class.Storage
       RecklessTradingBot.Data.AppM
@@ -97,6 +98,7 @@ library
     , errors
     , esqueleto
     , extra
+    , gnuplot
     , katip
     , monad-logger
     , persistent
@@ -166,6 +168,7 @@ test-suite reckless-trading-bot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      RecklessTradingBot.ChartSpec
       RecklessTradingBotSpec
       Paths_reckless_trading_bot
   hs-source-dirs:

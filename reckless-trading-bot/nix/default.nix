@@ -11,7 +11,7 @@ with pkgs;
 
 let callPackage = lib.callPackageWith haskellPackages;
     pkg = callPackage ./pkg.nix {inherit lib;};
-    systemDeps = [ makeWrapper cacert ];
+    systemDeps = [ makeWrapper cacert gnuplot ];
     testDeps = [ postgresql ];
 in
   haskell.lib.overrideCabal pkg (drv: {

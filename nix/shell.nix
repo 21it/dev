@@ -16,6 +16,7 @@ stdenv.mkDerivation {
   name = "shell21";
   buildInputs = [
     ide21
+    gnuplot
     postgresql
     nix-bundle
   ];

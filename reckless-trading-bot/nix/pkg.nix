@@ -1,6 +1,6 @@
 { mkDerivation, aeson, async, base, bitfinex-client, bytestring
-, containers, envparse, errors, esqueleto, extra, hpack, hspec
-, katip, lib, monad-logger, persistent, persistent-migration
+, containers, envparse, errors, esqueleto, extra, gnuplot, hpack
+, hspec, katip, lib, monad-logger, persistent, persistent-migration
 , persistent-postgresql, resource-pool, singletons, stm
 , template-haskell, text, time, transformers, unbounded-delays
 , units, universum, unliftio, witch
@@ -13,7 +13,7 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson async base bitfinex-client bytestring containers envparse
-    errors esqueleto extra katip monad-logger persistent
+    errors esqueleto extra gnuplot katip monad-logger persistent
     persistent-migration persistent-postgresql resource-pool singletons
     stm template-haskell text time transformers unbounded-delays units
     universum unliftio witch
