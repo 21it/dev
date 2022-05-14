@@ -4,7 +4,7 @@ set -e
 
 THIS_DIR="$(dirname "$(realpath "$0")")"
 BUILD_DIR="$THIS_DIR/../build"
-SETUP_MODE="source"
+SETUP_MODE="prebuilt"
 RESET_SWARM="false"
 GITHUB_RELEASE="v0.1.1"
 
@@ -68,6 +68,8 @@ else
     cd "$BUILD_DIR"
     wget "https://github.com/21it/src/releases/download/$GITHUB_RELEASE/docker-image-reckless-trading-bot.tar.gz"
     wget "https://github.com/21it/src/releases/download/$GITHUB_RELEASE/docker-compose.21it.yml"
+    docker load -q -i \
+      "$BUILD_DIR/docker-image-reckless-trading-bot.tar.gz"
   )
 fi
 
