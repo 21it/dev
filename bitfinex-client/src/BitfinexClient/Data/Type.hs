@@ -429,7 +429,7 @@ newCurrencyCode ::
     (CurrencyCode crel)
 newCurrencyCode raw =
   case T.strip raw of
-    x | length x == 3 -> Right . CurrencyCode $ T.toUpper x
+    x | length x >= 3 -> Right . CurrencyCode $ T.toUpper x
     _ -> Left $ TryFromException raw Nothing
 
 data CurrencyPair = CurrencyPair
@@ -483,25 +483,35 @@ instance ToRequestParam CurrencyPair where
       <> (coerce $ currencyPairBase x :: Text)
       <> (coerce $ currencyPairQuote x :: Text)
 
+--
+-- TODO : better parsing with advanced regex
+--
 newCurrencyPair ::
   Text ->
   Either (TryFromException Text CurrencyPair) CurrencyPair
-newCurrencyPair raw
-  | (length nakedRaw == 7) && (prefix == "t") = do
-    let (base0, quote0) = T.splitAt 3 postfix
-    base <- withFirst $ newCurrencyCode base0
-    quote <- withFirst $ newCurrencyCode quote0
-    withFirst $ currencyPairCon base quote
-  | length nakedRaw == 6 = do
-    let (base0, quote0) = T.splitAt 3 nakedRaw
-    base <- withFirst $ newCurrencyCode base0
-    quote <- withFirst $ newCurrencyCode quote0
-    withFirst $ currencyPairCon base quote
-  | otherwise =
-    Left $ TryFromException nakedRaw Nothing
+newCurrencyPair raw =
+  case T.splitOn ":" bq0 of
+    [bq1]
+      | length bq1 == 6 -> do
+        let (b1, q1) = T.splitAt 3 bq1
+        base <- withFirst $ newCurrencyCode b1
+        quote <- withFirst $ newCurrencyCode q1
+        withFirst $ currencyPairCon base quote
+    [b1, q1]
+      | length b1 >= 3 && length q1 >= 3 -> do
+        base <- withFirst $ newCurrencyCode b1
+        quote <- withFirst $ newCurrencyCode q1
+        withFirst $ currencyPairCon base quote
+    _ ->
+      Left $
+        TryFromException raw Nothing
   where
-    nakedRaw = T.strip raw
-    (prefix, postfix) = T.splitAt 1 nakedRaw
+    naked = T.strip raw
+    (pre, post) = T.splitAt 1 naked
+    bq0 =
+      if pre == "t" && length post >= 6
+        then post
+        else naked
     withFirst ::
       Either (TryFromException source target) a ->
       Either (TryFromException Text CurrencyPair) a
