@@ -58,3 +58,13 @@ jobs:
         asset_path: ./build/docker-compose.21it.yml
         asset_name: docker-compose.21it.yml
         asset_content_type: application/yaml
+    - name: Docker registry login
+      if: github.ref_type == 'tag'
+      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Docker registry push
+      if: github.ref_type == 'tag'
+      run: ./nix/github-package-push.sh ${{ github.ref_name }}

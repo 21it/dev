@@ -6,7 +6,7 @@ THIS_DIR="$(dirname "$(realpath "$0")")"
 BUILD_DIR="$THIS_DIR/../build"
 SETUP_MODE="source"
 RESET_SWARM="false"
-GITHUB_RELEASE="v0.1.0"
+GITHUB_RELEASE="v0.1.1"
 
 if [ -z "$*" ]; then
   echo "==> using defaults"
