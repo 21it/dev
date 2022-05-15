@@ -1,9 +1,9 @@
 { mkDerivation, aeson, base, base16-bytestring, bytestring
-, containers, cryptonite, envparse, hpack, hspec, http-client
-, http-client-tls, http-types, lens-aeson, lib, memory, persistent
-, siggy-chardust, singletons, singletons-base, singletons-th
-, template-haskell, text, time, transformers, units, universum
-, unliftio, unordered-containers, vector, witch
+, containers, cryptonite, envparse, gnuplot, hpack, hspec
+, http-client, http-client-tls, http-types, lens-aeson, lib, memory
+, persistent, siggy-chardust, singletons, singletons-base
+, singletons-th, template-haskell, text, time, transformers, units
+, universum, unliftio, unordered-containers, vector, witch
 }:
 mkDerivation {
   pname = "bitfinex-client";
@@ -11,10 +11,10 @@ mkDerivation {
   src = ./..;
   libraryHaskellDepends = [
     aeson base base16-bytestring bytestring containers cryptonite
-    envparse http-client http-client-tls http-types lens-aeson memory
-    persistent siggy-chardust singletons singletons-base singletons-th
-    template-haskell text time transformers units universum unliftio
-    unordered-containers vector witch
+    envparse gnuplot http-client http-client-tls http-types lens-aeson
+    memory persistent siggy-chardust singletons singletons-base
+    singletons-th template-haskell text time transformers units
+    universum unliftio unordered-containers vector witch
   ];
   libraryToolDepends = [ hpack ];
   testHaskellDepends = [
