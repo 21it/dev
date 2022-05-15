@@ -274,5 +274,5 @@ instance FromRpc 'CandlesHist [Candle] where
     xs <-
       maybeToRight "Json is not an array" $
         raw ^? _Array
-    mapM parseCandle $
-      V.toList xs
+    sortOn candleAt
+      <$> mapM parseCandle (V.toList xs)

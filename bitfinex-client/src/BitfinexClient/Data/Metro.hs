@@ -19,6 +19,7 @@ module BitfinexClient.Data.Metro
     SomeQuotePerBase (..),
     -- | Metrology compatible exchange rate type alias
     QuotePerBase',
+    unQuotePerBase',
     -- | Lossy primitive constructors
     roundMoney,
     roundQuotePerBase,

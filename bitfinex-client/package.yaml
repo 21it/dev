@@ -97,6 +97,7 @@ library:
   - memory
   - bytestring
   - base16-bytestring
+  - gnuplot
   # numbers
   - siggy-chardust
   # other

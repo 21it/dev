@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       BitfinexClient
+      BitfinexClient.Chart
       BitfinexClient.Class.FromRpc
       BitfinexClient.Class.ToBaseUrl
       BitfinexClient.Class.ToPathPieces
@@ -48,6 +49,7 @@ library
       BitfinexClient.Import.External
       BitfinexClient.Import.Internal
       BitfinexClient.Import.Witch
+      BitfinexClient.Indicator.Ma
       BitfinexClient.Math
       BitfinexClient.Orphan
       BitfinexClient.Parser
@@ -99,6 +101,7 @@ library
     , containers
     , cryptonite
     , envparse
+    , gnuplot
     , http-client
     , http-client-tls
     , http-types
