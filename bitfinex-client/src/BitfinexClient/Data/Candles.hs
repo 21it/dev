@@ -54,7 +54,7 @@ data Options = Options
 optsDef :: Options
 optsDef =
   Options
-    { limit = Nothing,
+    { limit = Just 10000,
       start = Nothing,
       end = Nothing
     }

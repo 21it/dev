@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 
@@ -50,6 +50,7 @@ library
       BitfinexClient.Import.Internal
       BitfinexClient.Import.Witch
       BitfinexClient.Indicator.Ma
+      BitfinexClient.Indicator.Mma
       BitfinexClient.Math
       BitfinexClient.Orphan
       BitfinexClient.Parser
@@ -98,9 +99,11 @@ library
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , combinat
     , containers
     , cryptonite
     , envparse
+    , extra
     , gnuplot
     , http-client
     , http-client-tls

@@ -269,10 +269,15 @@ instance FromRpc 'CandlesLast Candle where
   fromRpc (RawResponse raw) =
     parseCandle raw
 
-instance FromRpc 'CandlesHist [Candle] where
+instance FromRpc 'CandlesHist (NonEmpty Candle) where
   fromRpc (RawResponse raw) = do
-    xs <-
+    xs0 <-
       maybeToRight "Json is not an array" $
         raw ^? _Array
-    sortOn candleAt
-      <$> mapM parseCandle (V.toList xs)
+    xs1 <-
+      sortOn candleAt
+        <$> mapM parseCandle (V.toList xs0)
+    maybe
+      (Left "Empty CandlesHist")
+      pure
+      $ nonEmpty xs1

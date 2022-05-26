@@ -536,7 +536,7 @@ candlesHist ::
   CandleTimeFrame ->
   CurrencyPair ->
   Candles.Options ->
-  ExceptT Error m [Candle]
+  ExceptT Error m (NonEmpty Candle)
 candlesHist tf sym opts =
   Generic.pub
     @'CandlesHist

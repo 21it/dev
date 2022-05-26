@@ -24,7 +24,7 @@ newExample = do
   ecs <-
     runExceptT $
       Bfx.candlesHist
-        Bfx.Ctf6h
+        Bfx.Ctf30m
         [currencyPair|ADABTC|]
         Candles.optsDef
   case ecs of
@@ -37,7 +37,7 @@ newExample = do
         $ totalChart cs
 
 totalChart ::
-  [Bfx.Candle] ->
+  NonEmpty Bfx.Candle ->
   Frame.T (Graph2D.T UTCTime Rational)
 totalChart cs =
   Frame.cons
@@ -45,43 +45,26 @@ totalChart cs =
         Opts.boxwidthRelative 1 $
           Opts.deflt
     )
-    $ candleChart cs
-      <> maChart cs
-
-candleChart :: [Bfx.Candle] -> Plot2D.T UTCTime Rational
-candleChart cs =
-  Graph2D.lineSpec
-    (LineSpec.lineColor ColorSpec.black LineSpec.deflt)
-    <$> (Plot2D.list Graph2D.candleSticks $ candle2plot <$> cs)
-
-candle2plot ::
-  Bfx.Candle ->
-  (UTCTime, (Rational, Rational, Rational, Rational))
-candle2plot x =
-  ( Bfx.candleAt x,
-    ( unQ $ Bfx.candleOpen x,
-      unQ $ Bfx.candleLow x,
-      unQ $ Bfx.candleHigh x,
-      unQ $ Bfx.candleClose x
-    )
-  )
+    $ maChart ColorSpec.seaGreen 200 cs
+      <> maChart ColorSpec.darkRed 50 cs
+      <> maChart ColorSpec.black 20 cs
 
 maChart ::
-  [Bfx.Candle] ->
+  ColorSpec.T ->
+  Ma.MaPeriod ->
+  NonEmpty Bfx.Candle ->
   Plot2D.T UTCTime Rational
-maChart =
+maChart color maPeriod =
   ( Graph2D.lineSpec
-      (LineSpec.lineColor ColorSpec.cyan LineSpec.deflt)
+      ( LineSpec.lineWidth 0.7 $
+          LineSpec.lineColor color LineSpec.deflt
+      )
       <$>
   )
-    . Plot2D.list Graph2D.linesPoints
+    . Plot2D.list Graph2D.lines
     . (second unMa <$>)
     . Map.assocs
-    . Ma.ma20
-
-unQ :: Bfx.QuotePerBase 'Bfx.Buy -> Rational
-unQ =
-  from
+    . Ma.ma maPeriod
 
 unMa :: Ma.Ma -> Rational
 unMa =

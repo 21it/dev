@@ -11,7 +11,7 @@
                else ["dhall" "haskell"];
     in
       {
-        ide21 = import (fetchTarball "https://github.com/21it/ultimate-haskell-ide/tarball/86769387b5dc55d74f69b4566e46d966b2a9b166") {inherit bundle;};
+        ide21 = import (fetchTarball "https://github.com/21it/ultimate-haskell-ide/tarball/fb3b1c5dc98795daa4afca9b2ada68d08a730948") {inherit bundle;};
         haskellPackages = super.haskell.packages.ghc921.extend(
           self': super': {
             bitfinex-client =

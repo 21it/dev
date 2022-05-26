@@ -100,8 +100,10 @@ library:
   - gnuplot
   # numbers
   - siggy-chardust
+  - combinat
   # other
   - witch
+  - extra
   - persistent
   - unordered-containers
   - envparse

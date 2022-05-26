@@ -2,10 +2,8 @@
 
 module BitfinexClient.Indicator.Ma
   ( Ma (..),
+    MaPeriod (..),
     ma,
-    ma20,
-    ma50,
-    ma200,
   )
 where
 
@@ -41,14 +39,14 @@ newtype MaPeriod = MaPeriod
     ( Generic
     )
 
-ma :: MaPeriod -> [Candle] -> Map UTCTime Ma
+ma :: MaPeriod -> NonEmpty Candle -> Map UTCTime Ma
 ma period candles =
   if stopAtIdx < 0 || maPeriod < 1
     then mempty
     else
       unsafeMa
         maPeriod
-        (V.fromList candles)
+        (V.fromList $ from candles)
         stopAtIdx
         0
         mempty
@@ -77,12 +75,3 @@ unsafeMa maPeriod candles stopAtIdx currentIdx acc =
         . (|/ fromIntegral maPeriod)
         . V.foldl1 (|+|)
         $ V.map (unQuotePerBase . candleClose) chunk
-
-ma20 :: [Candle] -> Map UTCTime Ma
-ma20 = ma 20
-
-ma50 :: [Candle] -> Map UTCTime Ma
-ma50 = ma 50
-
-ma200 :: [Candle] -> Map UTCTime Ma
-ma200 = ma 200
