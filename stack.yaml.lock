@@ -5,57 +5,57 @@
 
 packages:
 - completed:
-    hackage: combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
     pantry-tree:
-      size: 4964
       sha256: 3633e40972d9b3bc12ae75fdeadff558d5bf8293f592245db8bfdbff8c9e22be
+      size: 4964
+    hackage: combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
   original:
     hackage: combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
 - completed:
-    hackage: compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
     pantry-tree:
-      size: 744
       sha256: 04bb169017c6d066518c6b90938839cf0f1b3352188a4800ffe7b04d79cb2b99
+      size: 744
+    hackage: compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
   original:
     hackage: compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
 - completed:
+    sha256: 27c7ec80766db7818d61652b0c485698063689f070dc68a7da7efb015cfc2e22
+    name: persistent-migration
     size: 28355
     url: https://github.com/21it/persistent-migration/archive/8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c.tar.gz
-    name: persistent-migration
-    version: 0.1.0
-    sha256: 27c7ec80766db7818d61652b0c485698063689f070dc68a7da7efb015cfc2e22
     pantry-tree:
-      size: 3798
       sha256: a581eccca3ef56f0b8eddc320ba791ef02e86a9d49c036c94af01b85b8968a95
+      size: 3798
+    version: 0.1.0
   original:
     url: https://github.com/21it/persistent-migration/archive/8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c.tar.gz
 - completed:
+    sha256: 49384ea55d3025cbdf1c3f3c2dabb89e6bc7ac6f04c2f34343e0e06898f7c243
+    name: witch
     size: 23662
     url: https://github.com/21it/witch/archive/efe4cdca31f90067edf7a09d0770a649d17a1c0b.tar.gz
-    name: witch
-    version: 0.3.4.0
-    sha256: 49384ea55d3025cbdf1c3f3c2dabb89e6bc7ac6f04c2f34343e0e06898f7c243
     pantry-tree:
-      size: 1882
       sha256: 9ddbcb53bb7e1bd12b245bd8bb555762c7d9f1fdc6a01e7eef8feda675ddec97
+      size: 1882
+    version: 0.3.4.0
   original:
     url: https://github.com/21it/witch/archive/efe4cdca31f90067edf7a09d0770a649d17a1c0b.tar.gz
 - completed:
-    size: 70837
-    subdir: units
-    url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
-    name: units
-    version: 2.4.1.4
     sha256: b9364e442a12d069b93645ba5255651800f58b6bd49263cf87acf4140f871159
+    name: units
+    subdir: units
+    size: 70837
+    url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
     pantry-tree:
-      size: 1472
       sha256: cef93d22028c0459c603568825c460c7b4d05a125a2cc5c92d64833c814bf238
+      size: 1472
+    version: 2.4.1.4
   original:
     subdir: units
     url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
 snapshots:
 - completed:
-    size: 618527
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/1/10.yaml
-    sha256: 7e864d058e2ca2f2cf4a43218352a888341eb11c9b94b7441ac4a0bccd91cef7
-  original: nightly-2022-01-10
+    sha256: f1c4aca9b9b81afbb9db55571acb0690cdc01ac97a178234de281f9dc075e95e
+    size: 618506
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/8.yaml
+  original: lts-19.8

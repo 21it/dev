@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Data.Model where

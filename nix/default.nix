@@ -50,5 +50,5 @@ in pkgs.haskell-nix.project {
   #   ];
   # }];
   # Specify the GHC version to use.
-  compiler-nix-name = "ghc901"; # Not required for `stack.yaml` based projects.
+  compiler-nix-name = "ghc902"; # Not required for `stack.yaml` based projects.
 }

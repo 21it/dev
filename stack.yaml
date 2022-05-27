@@ -1,4 +1,4 @@
-resolver: nightly-2022-01-10
+resolver: lts-19.8
 system-ghc: true
 packages:
   - bitfinex-client

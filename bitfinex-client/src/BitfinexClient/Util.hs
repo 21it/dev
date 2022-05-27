@@ -14,7 +14,7 @@ where
 
 import BitfinexClient.Import.External
 import qualified Data.Aeson as A
-import qualified Data.HashMap.Strict as HS
+import qualified Data.Aeson.KeyMap as A
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
 import Data.Typeable (typeRep)
@@ -26,7 +26,7 @@ showType =
 
 eradicateNull :: A.Value -> A.Value
 eradicateNull = \case
-  A.Object xs -> A.Object $ HS.mapMaybe devastateNull xs
+  A.Object xs -> A.Object $ A.mapMaybe devastateNull xs
   A.Array xs -> A.Array $ V.mapMaybe devastateNull xs
   x -> x
   where

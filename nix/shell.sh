@@ -45,6 +45,7 @@ docker run -i $USE_TTY --rm \
   -v "$THIS_DIR/..:/app" \
   -v "nix-$USER:/nix" \
   -v "nix-home-$USER:/home/$USER" \
+  --security-opt seccomp=unconfined \
   -w "/app" "$CONTAINER" \
   sh -c "
   echo '$CONTAINER ==> running as $USER' &&

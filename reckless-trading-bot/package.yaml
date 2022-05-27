@@ -112,7 +112,6 @@ library:
   - singletons
   - template-haskell
   - errors
-  - gnuplot
 
 executables:
   reckless-trading-bot-exe:

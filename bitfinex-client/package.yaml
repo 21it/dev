@@ -105,14 +105,12 @@ library:
   - witch
   - extra
   - persistent
-  - unordered-containers
   - envparse
   - cryptonite
   - unliftio
   - vector
   - template-haskell
   - singletons
-  - singletons-th
   - singletons-base
 
 tests:
