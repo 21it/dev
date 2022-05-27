@@ -1,7 +1,7 @@
 {
     "languageserver": {
         "haskell": {
-            "command": "haskell-language-server-9.0.1",
+            "command": "haskell-language-server",
             "args": ["--lsp"],
             "rootPatterns": [
                 "*.cabal",

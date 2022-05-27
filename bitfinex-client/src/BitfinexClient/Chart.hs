@@ -42,8 +42,7 @@ totalChart ::
 totalChart cs =
   Frame.cons
     ( Opts.key False $
-        Opts.boxwidthRelative 1 $
-          Opts.deflt
+        Opts.boxwidthRelative 1 Opts.deflt
     )
     $ maChart ColorSpec.seaGreen 200 cs
       <> maChart ColorSpec.darkRed 50 cs

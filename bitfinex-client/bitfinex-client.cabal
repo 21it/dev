@@ -177,7 +177,4 @@ test-suite bitfinex-client-test
     , bitfinex-client
     , containers
     , hspec
-    , time
-    , transformers
-    , units
   default-language: Haskell2010

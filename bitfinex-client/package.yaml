@@ -25,9 +25,6 @@ dependencies:
 - aeson
 # other
 - containers
-- transformers
-- time
-- units
 
 default-extensions:
 - NoImplicitPrelude
@@ -102,6 +99,9 @@ library:
   - siggy-chardust
   - combinat
   # other
+  - transformers
+  - time
+  - units
   - witch
   - extra
   - persistent

@@ -32,6 +32,8 @@ stdenv.mkDerivation {
     then ""
     else ''
 
+      mkdir -p /app/build
+
       (cd /app/bitfinex-client/nix/ && cabal2nix ./.. > ./pkg.nix)
       (cd /app/reckless-trading-bot/nix/ && cabal2nix ./.. > ./pkg.nix)
 
