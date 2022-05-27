@@ -9,6 +9,7 @@ import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.Candles as Candles
 import BitfinexClient.Import
 import qualified BitfinexClient.Indicator.Ma as Ma
+import qualified BitfinexClient.Indicator.Mma as Mma
 import qualified Data.Map as Map
 import qualified Graphics.Gnuplot.Advanced as GP
 import qualified Graphics.Gnuplot.ColorSpecification as ColorSpec
@@ -44,27 +45,66 @@ totalChart cs =
     ( Opts.key False $
         Opts.boxwidthRelative 1 Opts.deflt
     )
-    $ maChart ColorSpec.seaGreen 200 cs
-      <> maChart ColorSpec.darkRed 50 cs
-      <> maChart ColorSpec.black 20 cs
+    $ candleChart cs
+      <> mconcat
+        ( mmaChart <$> Map.assocs (Mma.mmaCurves mma)
+        )
+      <> tradeChart
+        ColorSpec.green
+        ( Mma.unTradeEntry . fst <$> Mma.mmaTrades mma
+        )
+      <> tradeChart
+        ColorSpec.red
+        ( Mma.unTradeExit . snd <$> Mma.mmaTrades mma
+        )
+  where
+    mma =
+      Mma.mma cs
 
-maChart ::
-  ColorSpec.T ->
-  Ma.MaPeriod ->
+candleChart ::
   NonEmpty Bfx.Candle ->
   Plot2D.T UTCTime Rational
-maChart color maPeriod =
+candleChart =
   ( Graph2D.lineSpec
-      ( LineSpec.lineWidth 0.7 $
-          LineSpec.lineColor color LineSpec.deflt
+      ( LineSpec.lineWidth 0.99 $
+          LineSpec.lineColor ColorSpec.beige LineSpec.deflt
       )
       <$>
   )
     . Plot2D.list Graph2D.lines
+    . ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleClose x)) <$>)
+    . toList
+
+mmaChart ::
+  (Ma.MaPeriod, Map UTCTime Ma.Ma) ->
+  Plot2D.T UTCTime Rational
+mmaChart (_, xs) =
+  ( Graph2D.lineSpec
+      (LineSpec.lineWidth 0.7 LineSpec.deflt)
+      <$>
+  )
+    . Plot2D.list Graph2D.lines
     . (second unMa <$>)
-    . Map.assocs
-    . Ma.ma maPeriod
+    $ Map.assocs xs
+
+tradeChart ::
+  ColorSpec.T ->
+  [Candle] ->
+  Plot2D.T UTCTime Rational
+tradeChart color cs =
+  Graph2D.lineSpec
+    ( LineSpec.pointSize 0.5
+        . LineSpec.pointType 2
+        $ LineSpec.lineColor color LineSpec.deflt
+    )
+    <$> Plot2D.list
+      Graph2D.points
+      ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleClose x)) <$> cs)
 
 unMa :: Ma.Ma -> Rational
 unMa =
   unQuotePerBase' . Ma.unMa
+
+unQ :: Bfx.QuotePerBase 'Bfx.Buy -> Rational
+unQ =
+  from

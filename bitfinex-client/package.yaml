@@ -60,6 +60,7 @@ default-extensions:
 - TypeFamilies
 - TypeOperators
 - UndecidableInstances
+- TupleSections
 
 ghc-options:
 # For details on warnings: https://downloads.haskell.org/~ghc/master/users-guide/using-warnings.html
