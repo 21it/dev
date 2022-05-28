@@ -119,11 +119,15 @@ combineMaPeriods cs qty =
             . nonEmpty
             . catMaybes
             . (nonEmpty <$>)
-            $ Math.choose (unCrvQty qty) [10, 50 .. 200]
+            . Math.choose (unCrvQty qty)
+            $ (\p -> (p, ma p cs)) <$> [10, 50 .. 200]
         )
 
-newMma :: NonEmpty Candle -> NonEmpty MaPeriod -> Mma
-newMma cs ps =
+newMma ::
+  NonEmpty Candle ->
+  NonEmpty (MaPeriod, Map UTCTime Ma) ->
+  Mma
+newMma cs curves =
   Mma
     { mmaCurves =
         Map.fromList $ from curves,
@@ -134,9 +138,10 @@ newMma cs ps =
       mmaProfit =
         profit,
       mmaEntry =
-        if length rawTrades == length mTrades + 1
-          then Just entry
-          else Nothing
+        traceShow (fst <$> curves) $
+          if length rawTrades == length mTrades + 1
+            then Just entry
+            else Nothing
     }
   where
     --
@@ -146,8 +151,6 @@ newMma cs ps =
       TradeEntry $ last cs
     profit =
       ApproxProfitRate $ 1 % 500
-    curves =
-      (\p -> (p, ma p cs)) <$> traceShowId ps
     rawTrades =
       newMmaTrades profit cs curves
     mTrades =
@@ -170,8 +173,8 @@ newMmaTrades profit cs curves =
             entry = TradeEntry c1
          in if (length curves == length mas0)
               && (length curves == length mas1)
-              && not (goodCandle mas0)
               && goodCandle mas1
+              && not (goodCandle mas0)
               then (entry, tryFindExit profit entry cs) : acc
               else acc
     )
@@ -187,7 +190,7 @@ newMmaTrades profit cs curves =
 
 goodCandle :: [(MaPeriod, Ma)] -> Bool
 goodCandle xs =
-  sortOn fst xs == sortOn (Ord.Down . snd) xs
+  xs == sortOn (Ord.Down . snd) xs
 
 tryFindExit ::
   ApproxProfitRate ->
