@@ -118,8 +118,9 @@ entryChart ::
   Plot2D.T UTCTime Rational
 entryChart (Mma.TradeEntry x) =
   Graph2D.lineSpec
-    ( LineSpec.pointSize 0.5
-        . LineSpec.pointType 63
+    ( LineSpec.pointSize 0.99
+        . LineSpec.pointType 13
+        . LineSpec.title "Now"
         $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
     )
     <$> Plot2D.list

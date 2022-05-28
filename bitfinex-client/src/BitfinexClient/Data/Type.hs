@@ -548,6 +548,8 @@ data Candle = Candle
       Generic
     )
 
+instance NFData Candle
+
 data CandleTimeFrame
   = Ctf1m
   | Ctf5m

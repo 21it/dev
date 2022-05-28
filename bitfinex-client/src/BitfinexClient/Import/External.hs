@@ -26,6 +26,7 @@ import Data.Aeson as X
 import Data.ByteString.Lazy as X (ByteString)
 import Data.Coerce as X (coerce)
 import Data.Fixed as X (Fixed, HasResolution (..), showFixed)
+import Data.List.Extra as X (notNull)
 import Data.Metrology.Poly as X
   ( quOf,
     (*|),

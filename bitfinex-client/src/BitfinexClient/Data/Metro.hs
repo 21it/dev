@@ -94,6 +94,9 @@ newtype
   { unMoney ::
       MkQu_DLN (MoneyDim crel) LCSU' Rational
   }
+  deriving newtype
+    ( NFData
+    )
   deriving stock
     ( Eq,
       Ord
@@ -269,6 +272,9 @@ type QuotePerBase' = MoneyQuote' %/ MoneyBase'
 newtype QuotePerBase (act :: ExchangeAction) = QuotePerBase
   { unQuotePerBase :: QuotePerBase'
   }
+  deriving newtype
+    ( NFData
+    )
   deriving stock
     ( Eq,
       Ord

@@ -21,7 +21,8 @@ newtype ApproxProfitRate = ApproxProfitRate
   }
   deriving newtype
     ( Eq,
-      Ord
+      Ord,
+      NFData
     )
   deriving stock
     ( Generic,
@@ -55,7 +56,8 @@ newtype TradeEntry = TradeEntry
   }
   deriving newtype
     ( Eq,
-      Ord
+      Ord,
+      NFData
     )
   deriving stock
     ( Generic,
@@ -67,7 +69,8 @@ newtype TradeExit = TradeExit
   }
   deriving newtype
     ( Eq,
-      Ord
+      Ord,
+      NFData
     )
   deriving stock
     ( Generic,
@@ -88,6 +91,8 @@ data Mma = Mma
     ( Eq,
       Generic
     )
+
+instance NFData Mma
 
 instance Ord Mma where
   compare lhs rhs =
@@ -110,18 +115,14 @@ mma cs =
 
 combineMaPeriods :: NonEmpty Candle -> CrvQty -> NonEmpty Mma
 combineMaPeriods cs qty =
-  --
-  -- TODO : pre-calculate all MAs!!!
-  --
-  newMma cs
-    <$> ( fromMaybe
-            (error "Impossible empty combineMaPeriods")
-            . nonEmpty
-            . catMaybes
-            . (nonEmpty <$>)
-            . Math.choose (unCrvQty qty)
-            $ (\p -> (p, ma p cs)) <$> [10, 50 .. 200]
-        )
+  fromMaybe
+    (error "Impossible empty combineMaPeriods")
+    . nonEmpty
+    . fmap (newMma cs)
+    . catMaybes
+    . (nonEmpty <$>)
+    . Math.choose (unCrvQty qty)
+    $ (\p -> (p, ma p cs)) <$> [5, 20 .. 200]
 
 newMma ::
   NonEmpty Candle ->
@@ -129,17 +130,13 @@ newMma ::
   Mma
 newMma cs curves =
   Mma
-    { mmaCurves =
-        Map.fromList $ from curves,
-      mmaTrades =
-        if length mTrades == length trades
-          then trades
-          else mempty,
-      mmaProfit =
-        profit,
+    { mmaCurves = Map.fromList $ from curves,
+      mmaTrades = trades,
+      mmaProfit = profit,
       mmaEntry =
         traceShow (fst <$> curves) $
-          if length rawTrades == length mTrades + 1
+          if notNull trades
+            && (length rawTrades == length mTrades + 1)
             then Just entry
             else Nothing
     }
@@ -155,8 +152,12 @@ newMma cs curves =
       newMmaTrades profit cs curves
     mTrades =
       filter ((/= entry) . fst) rawTrades
-    trades =
+    closedTrades =
       mapMaybe (\(x, y) -> (x,) <$> y) mTrades
+    trades =
+      if length mTrades == length closedTrades
+        then closedTrades
+        else mempty
 
 newMmaTrades ::
   ApproxProfitRate ->

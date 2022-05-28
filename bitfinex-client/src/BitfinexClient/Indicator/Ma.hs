@@ -23,6 +23,8 @@ newtype Ma = Ma
     ( Generic
     )
 
+instance NFData Ma
+
 newtype MaPeriod = MaPeriod
   { unMaPeriod :: Natural
   }
@@ -38,6 +40,8 @@ newtype MaPeriod = MaPeriod
   deriving stock
     ( Generic
     )
+
+instance NFData MaPeriod
 
 ma :: MaPeriod -> NonEmpty Candle -> Map UTCTime Ma
 ma period candles =
