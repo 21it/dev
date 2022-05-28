@@ -542,7 +542,7 @@ data Candle = Candle
     candleClose :: QuotePerBase 'Buy,
     candleHigh :: QuotePerBase 'Buy,
     candleLow :: QuotePerBase 'Buy,
-    candleVolume :: Money 'Base 'Buy
+    candleVolume :: Money 'Quote 'Buy
   }
   deriving stock
     ( Eq,

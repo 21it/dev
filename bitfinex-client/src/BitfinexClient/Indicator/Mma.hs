@@ -184,8 +184,8 @@ newMmaTrades profit cs curves =
             entry = TradeEntry c1
          in if (length curves == length mas0)
               && (length curves == length mas1)
-              && goodCandle mas1
-              && not (goodCandle mas0)
+              && goodCandle c0 c1 mas1
+              && not (goodCandle c0 c1 mas0)
               then (entry, tryFindExit profit entry cs) : acc
               else acc
     )
@@ -199,9 +199,18 @@ newMmaTrades profit cs curves =
         (\(p, curve) -> (p,) <$> Map.lookup t curve)
         $ toList curves
 
-goodCandle :: [(MaPeriod, Ma)] -> Bool
-goodCandle xs =
-  xs == sortOn (Ord.Down . snd) xs
+goodCandle ::
+  Candle ->
+  Candle ->
+  [(MaPeriod, Ma)] ->
+  Bool
+goodCandle x0 x1 xs =
+  (c1 > c0)
+    && all ((unQuotePerBase c1 >) . unMa . snd) xs
+    && (xs == sortOn (Ord.Down . snd) xs)
+  where
+    c0 = candleClose x0
+    c1 = candleClose x1
 
 tryFindExit ::
   ApproxProfitRate ->
