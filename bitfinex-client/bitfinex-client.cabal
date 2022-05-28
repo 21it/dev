@@ -111,6 +111,7 @@ library
     , http-types
     , lens-aeson
     , memory
+    , parallel
     , persistent
     , siggy-chardust
     , singletons

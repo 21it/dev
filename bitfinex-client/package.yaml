@@ -100,6 +100,7 @@ library:
   - siggy-chardust
   - combinat
   # other
+  - parallel
   - transformers
   - time
   - units

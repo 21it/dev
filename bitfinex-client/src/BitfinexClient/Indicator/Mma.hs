@@ -78,7 +78,9 @@ newtype TradeExit = TradeExit
     )
 
 data Mma = Mma
-  { mmaCurves :: Map MaPeriod (Map UTCTime Ma),
+  { mmaSymbol :: CurrencyPair,
+    mmaCandles :: NonEmpty Candle,
+    mmaCurves :: Map MaPeriod (Map UTCTime Ma),
     mmaTrades :: [(TradeEntry, TradeExit)],
     mmaProfit :: ApproxProfitRate,
     --
@@ -107,30 +109,38 @@ instance Ord Mma where
           (length $ mmaTrades lhs)
           (length $ mmaTrades rhs)
 
-mma :: NonEmpty Candle -> Mma
-mma cs =
+mma :: CurrencyPair -> NonEmpty Candle -> Mma
+mma sym cs =
   maximum $
     [3 .. 5]
-      >>= combineMaPeriods cs
+      >>= combineMaPeriods sym cs
 
-combineMaPeriods :: NonEmpty Candle -> CrvQty -> NonEmpty Mma
-combineMaPeriods cs qty =
+combineMaPeriods ::
+  CurrencyPair ->
+  NonEmpty Candle ->
+  CrvQty ->
+  NonEmpty Mma
+combineMaPeriods sym cs qty =
   fromMaybe
     (error "Impossible empty combineMaPeriods")
     . nonEmpty
-    . fmap (newMma cs)
+    . fmap (newMma sym cs)
     . catMaybes
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
-    $ (\p -> (p, ma p cs)) <$> [5, 20 .. 200]
+    -- <$> [5, 20 .. 200]
+    $ (\p -> (p, ma p cs)) <$> [5, 25 .. 200]
 
 newMma ::
+  CurrencyPair ->
   NonEmpty Candle ->
   NonEmpty (MaPeriod, Map UTCTime Ma) ->
   Mma
-newMma cs curves =
+newMma sym cs curves =
   Mma
-    { mmaCurves = Map.fromList $ from curves,
+    { mmaSymbol = sym,
+      mmaCandles = cs,
+      mmaCurves = Map.fromList $ from curves,
       mmaTrades = trades,
       mmaProfit = profit,
       mmaEntry =

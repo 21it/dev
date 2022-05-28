@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Chart
@@ -10,6 +11,7 @@ import qualified BitfinexClient.Data.Candles as Candles
 import BitfinexClient.Import
 import qualified BitfinexClient.Indicator.Ma as Ma
 import qualified BitfinexClient.Indicator.Mma as Mma
+import qualified Control.Parallel.Strategies as Par
 import qualified Data.Map as Map
 import qualified Graphics.Gnuplot.Advanced as GP
 import qualified Graphics.Gnuplot.ColorSpecification as ColorSpec
@@ -23,31 +25,52 @@ import qualified Graphics.Gnuplot.Terminal.SVG as SVG
 
 newExample :: (MonadIO m) => m ()
 newExample = do
-  ecs <-
-    runExceptT $
-      Bfx.candlesHist
-        Bfx.Ctf1m
-        [currencyPair|XMRBTC|]
-        Candles.optsDef
-  case ecs of
+  eMma <-
+    runExceptT $ do
+      syms <-
+        Bfx.symbolsDetails
+      cs <-
+        mapM
+          ( \sym ->
+              (sym,)
+                <$> Bfx.candlesHist
+                  Bfx.Ctf1m
+                  sym
+                  Candles.optsDef
+                    { Candles.limit = Just 10000
+                    }
+          )
+          . traceShowId
+          . take 15
+          . filter ((== CurrencyCode "BTC") . currencyPairQuote)
+          $ Map.keys syms
+      case nonEmpty cs of
+        Nothing ->
+          error "Can not find BTC-quoted symbols"
+        Just ncs ->
+          pure
+            . maximum
+            . Par.withStrategy (Par.parTraversable Par.rdeepseq)
+            $ uncurry Mma.mma <$> ncs
+  case eMma of
     Left e ->
       error $ show e
-    Right cs ->
+    Right mma ->
       void
         . liftIO
         . GP.plotSync (SVG.cons "/app/build/output.svg")
-        $ totalChart cs
+        $ totalChart mma
 
 totalChart ::
-  NonEmpty Bfx.Candle ->
+  Mma.Mma ->
   Frame.T (Graph2D.T UTCTime Rational)
-totalChart cs =
+totalChart mma =
   Frame.cons
     ( Opts.key True
-        . Opts.add (Option.key "position") ["left", "reverse"]
+        . Opts.add (Option.key "position") [pos, "reverse"]
         $ Opts.boxwidthRelative 1 Opts.deflt
     )
-    $ candleChart cs
+    $ candleChart (Mma.mmaCandles mma)
       <> mconcat
         ( mmaChart <$> Map.assocs (Mma.mmaCurves mma)
         )
@@ -63,8 +86,11 @@ totalChart cs =
         )
       <> maybe mempty entryChart (Mma.mmaEntry mma)
   where
-    mma =
-      Mma.mma cs
+    cs = Mma.mmaCandles mma
+    pos =
+      if candleClose (head cs) > candleClose (last cs)
+        then "right"
+        else "left"
 
 candleChart ::
   NonEmpty Bfx.Candle ->
@@ -86,7 +112,7 @@ mmaChart ::
   Plot2D.T UTCTime Rational
 mmaChart (period, xs) =
   ( Graph2D.lineSpec
-      ( LineSpec.lineWidth 0.7
+      ( LineSpec.lineWidth 0.4
           . LineSpec.title
             ("MA " <> show (Ma.unMaPeriod period))
           $ LineSpec.deflt
@@ -118,10 +144,10 @@ entryChart ::
   Plot2D.T UTCTime Rational
 entryChart (Mma.TradeEntry x) =
   Graph2D.lineSpec
-    ( LineSpec.pointSize 0.99
+    ( LineSpec.pointSize 0.5
         . LineSpec.pointType 13
         . LineSpec.title "Now"
-        $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.goldenrod LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points

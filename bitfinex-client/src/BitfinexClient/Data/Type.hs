@@ -378,7 +378,8 @@ newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
     ( Eq,
       Ord,
       Show,
-      ToJSON
+      ToJSON,
+      NFData
     )
   deriving stock
     ( Generic,
@@ -443,6 +444,8 @@ data CurrencyPair = CurrencyPair
       Generic,
       TH.Lift
     )
+
+instance NFData CurrencyPair
 
 instance FromJSON CurrencyPair where
   parseJSON = withText
