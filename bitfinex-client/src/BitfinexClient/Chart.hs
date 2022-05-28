@@ -14,6 +14,7 @@ import qualified Data.Map as Map
 import qualified Graphics.Gnuplot.Advanced as GP
 import qualified Graphics.Gnuplot.ColorSpecification as ColorSpec
 import qualified Graphics.Gnuplot.Frame as Frame
+import qualified Graphics.Gnuplot.Frame.Option as Option
 import qualified Graphics.Gnuplot.Frame.OptionSet as Opts
 import qualified Graphics.Gnuplot.Graph.TwoDimensional as Graph2D
 import qualified Graphics.Gnuplot.LineSpecification as LineSpec
@@ -25,8 +26,8 @@ newExample = do
   ecs <-
     runExceptT $
       Bfx.candlesHist
-        Bfx.Ctf30m
-        [currencyPair|ADABTC|]
+        Bfx.Ctf1m
+        [currencyPair|XMRBTC|]
         Candles.optsDef
   case ecs of
     Left e ->
@@ -42,21 +43,25 @@ totalChart ::
   Frame.T (Graph2D.T UTCTime Rational)
 totalChart cs =
   Frame.cons
-    ( Opts.key False $
-        Opts.boxwidthRelative 1 Opts.deflt
+    ( Opts.key True
+        . Opts.add (Option.key "position") ["left", "reverse"]
+        $ Opts.boxwidthRelative 1 Opts.deflt
     )
     $ candleChart cs
       <> mconcat
         ( mmaChart <$> Map.assocs (Mma.mmaCurves mma)
         )
       <> tradeChart
-        ColorSpec.green
+        "Entry"
+        ColorSpec.darkGreen
         ( Mma.unTradeEntry . fst <$> Mma.mmaTrades mma
         )
       <> tradeChart
+        "Exit"
         ColorSpec.red
         ( Mma.unTradeExit . snd <$> Mma.mmaTrades mma
         )
+      <> maybe mempty entryChart (Mma.mmaEntry mma)
   where
     mma =
       Mma.mma cs
@@ -66,8 +71,9 @@ candleChart ::
   Plot2D.T UTCTime Rational
 candleChart =
   ( Graph2D.lineSpec
-      ( LineSpec.lineWidth 0.99 $
-          LineSpec.lineColor ColorSpec.beige LineSpec.deflt
+      ( LineSpec.lineWidth 1.5
+          . LineSpec.title "Close"
+          $ LineSpec.lineColor ColorSpec.gray80 LineSpec.deflt
       )
       <$>
   )
@@ -78,9 +84,13 @@ candleChart =
 mmaChart ::
   (Ma.MaPeriod, Map UTCTime Ma.Ma) ->
   Plot2D.T UTCTime Rational
-mmaChart (_, xs) =
+mmaChart (period, xs) =
   ( Graph2D.lineSpec
-      (LineSpec.lineWidth 0.7 LineSpec.deflt)
+      ( LineSpec.lineWidth 0.7
+          . LineSpec.title
+            ("MA " <> show (Ma.unMaPeriod period))
+          $ LineSpec.deflt
+      )
       <$>
   )
     . Plot2D.list Graph2D.lines
@@ -88,18 +98,33 @@ mmaChart (_, xs) =
     $ Map.assocs xs
 
 tradeChart ::
+  String ->
   ColorSpec.T ->
   [Candle] ->
   Plot2D.T UTCTime Rational
-tradeChart color cs =
+tradeChart title color cs =
   Graph2D.lineSpec
-    ( LineSpec.pointSize 0.5
-        . LineSpec.pointType 2
+    ( LineSpec.pointSize 0.24
+        . LineSpec.pointType 7
+        . LineSpec.title title
         $ LineSpec.lineColor color LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points
       ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleClose x)) <$> cs)
+
+entryChart ::
+  Mma.TradeEntry ->
+  Plot2D.T UTCTime Rational
+entryChart (Mma.TradeEntry x) =
+  Graph2D.lineSpec
+    ( LineSpec.pointSize 0.5
+        . LineSpec.pointType 63
+        $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
+    )
+    <$> Plot2D.list
+      Graph2D.points
+      [(Bfx.candleAt x, unQ $ Bfx.candleClose x)]
 
 unMa :: Ma.Ma -> Rational
 unMa =

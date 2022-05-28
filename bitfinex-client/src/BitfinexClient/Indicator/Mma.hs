@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Indicator.Mma
@@ -23,7 +24,8 @@ newtype ApproxProfitRate = ApproxProfitRate
       Ord
     )
   deriving stock
-    ( Generic
+    ( Generic,
+      Show
     )
 
 newtype CrvQty = CrvQty
@@ -56,7 +58,8 @@ newtype TradeEntry = TradeEntry
       Ord
     )
   deriving stock
-    ( Generic
+    ( Generic,
+      Show
     )
 
 newtype TradeExit = TradeExit
@@ -67,7 +70,8 @@ newtype TradeExit = TradeExit
       Ord
     )
   deriving stock
-    ( Generic
+    ( Generic,
+      Show
     )
 
 data Mma = Mma
@@ -76,6 +80,7 @@ data Mma = Mma
     mmaProfit :: ApproxProfitRate,
     --
     -- TODO : mmaPower (from profit rate and trades)
+    -- use this in Ord instance!!!
     --
     mmaEntry :: Maybe TradeEntry
   }
@@ -100,18 +105,21 @@ instance Ord Mma where
 mma :: NonEmpty Candle -> Mma
 mma cs =
   maximum $
-    [1 .. 2]
+    [3 .. 5]
       >>= combineMaPeriods cs
 
 combineMaPeriods :: NonEmpty Candle -> CrvQty -> NonEmpty Mma
 combineMaPeriods cs qty =
+  --
+  -- TODO : pre-calculate all MAs!!!
+  --
   newMma cs
     <$> ( fromMaybe
             (error "Impossible empty combineMaPeriods")
             . nonEmpty
             . catMaybes
             . (nonEmpty <$>)
-            $ Math.choose (unCrvQty qty) [1, 20 .. 200]
+            $ Math.choose (unCrvQty qty) [10, 50 .. 200]
         )
 
 newMma :: NonEmpty Candle -> NonEmpty MaPeriod -> Mma
@@ -137,9 +145,9 @@ newMma cs ps =
     entry =
       TradeEntry $ last cs
     profit =
-      ApproxProfitRate $ 1 % 100
+      ApproxProfitRate $ 1 % 500
     curves =
-      (\p -> (p, ma p cs)) <$> ps
+      (\p -> (p, ma p cs)) <$> traceShowId ps
     rawTrades =
       newMmaTrades profit cs curves
     mTrades =
