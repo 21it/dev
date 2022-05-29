@@ -109,7 +109,6 @@ library
     , http-client
     , http-client-tls
     , http-types
-    , ilist
     , lens-aeson
     , memory
     , parallel

@@ -42,7 +42,6 @@ newExample = do
           )
           . traceShowId
           -- . take 15
-          . take 30
           . filter ((== CurrencyCode "BTC") . currencyPairQuote)
           $ Map.keys syms
       case nonEmpty cs of
@@ -57,10 +56,14 @@ newExample = do
     Left e ->
       error $ show e
     Right mma ->
-      void
-        . liftIO
-        . GP.plotSync (SVG.cons "/app/build/output.svg")
-        $ totalChart mma
+      maybeM
+        (putStrLn ("Mo Mma!!!" :: Text))
+        ( void
+            . liftIO
+            . GP.plotSync (SVG.cons "/app/build/output.svg")
+            . totalChart
+        )
+        $ pure mma
 
 totalChart ::
   Mma.Mma ->
@@ -68,6 +71,7 @@ totalChart ::
 totalChart mma =
   Frame.cons
     ( Opts.key True
+        . Opts.title (show $ Mma.mmaSymbol mma)
         . Opts.add (Option.key "position") [pos, "reverse"]
         $ Opts.boxwidthRelative 1 Opts.deflt
     )
@@ -85,7 +89,7 @@ totalChart mma =
         ColorSpec.red
         ( Mma.unTradeExit . snd <$> Mma.mmaTrades mma
         )
-      <> maybe mempty entryChart (Mma.mmaEntry mma)
+      <> entryChart (Mma.mmaEntry mma)
   where
     cs = Mma.mmaCandles mma
     pos =
@@ -148,7 +152,7 @@ entryChart (Mma.TradeEntry x) =
     ( LineSpec.pointSize 0.3
         . LineSpec.pointType 13
         . LineSpec.title "Now"
-        $ LineSpec.lineColor ColorSpec.plum LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.magenta LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points

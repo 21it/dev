@@ -100,7 +100,6 @@ library:
   - siggy-chardust
   - combinat
   # other
-  - ilist
   - parallel
   - transformers
   - time
