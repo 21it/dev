@@ -41,7 +41,8 @@ newExample = do
                     }
           )
           . traceShowId
-          . take 15
+          -- . take 15
+          . take 30
           . filter ((== CurrencyCode "BTC") . currencyPairQuote)
           $ Map.keys syms
       case nonEmpty cs of
@@ -144,10 +145,10 @@ entryChart ::
   Plot2D.T UTCTime Rational
 entryChart (Mma.TradeEntry x) =
   Graph2D.lineSpec
-    ( LineSpec.pointSize 0.5
+    ( LineSpec.pointSize 0.3
         . LineSpec.pointType 13
         . LineSpec.title "Now"
-        $ LineSpec.lineColor ColorSpec.goldenrod LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.aquamarine LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points
