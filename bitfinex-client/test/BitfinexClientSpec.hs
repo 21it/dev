@@ -8,6 +8,7 @@ where
 
 import qualified BitfinexClient as Bitfinex
 import qualified BitfinexClient.Chart as Chart
+--import qualified BitfinexClient.Data.CancelOrderMulti as CancelOrderMulti
 import qualified BitfinexClient.Data.Candles as Candles
 import qualified BitfinexClient.Data.GetOrders as GetOrders
 import qualified BitfinexClient.Data.SubmitOrder as SubmitOrder
@@ -105,8 +106,12 @@ spec = before sysEnv $ do
 --        [feeRateMakerQuote| 0.001 |]
 --        [profitRate| 0.001 |]
 --        SubmitOrder.optsPostOnly
---    itRight "dumpIntoQuoteMaker" $ \env ->
---      Bitfinex.dumpIntoQuoteMaker
---        env
---        [currencyPair|ADABTC|]
---        SubmitOrder.optsPostOnly
+-- focus . itRight "cancelOrderMulti" $ \env ->
+--   Bitfinex.cancelOrderMulti
+--     env
+--     CancelOrderMulti.Everything
+-- focus . itRight "dumpIntoQuoteMaker" $ \env ->
+--   Bitfinex.dumpIntoQuoteMaker
+--     env
+--     [currencyPair|ADABTC|]
+--     SubmitOrder.optsPostOnly

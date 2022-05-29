@@ -41,7 +41,6 @@ newExample = do
                     }
           )
           . traceShowId
-          -- . take 15
           . filter ((== CurrencyCode "BTC") . currencyPairQuote)
           $ Map.keys syms
       case nonEmpty cs of
@@ -82,14 +81,14 @@ totalChart mma =
       <> tradeChart
         "Entry"
         ColorSpec.darkGreen
-        ( Mma.unTradeEntry . fst <$> Mma.mmaTrades mma
+        ( Mma.unTradeEntry (Mma.mmaEntry mma) :
+          (Mma.unTradeEntry . fst <$> Mma.mmaTrades mma)
         )
       <> tradeChart
         "Exit"
         ColorSpec.red
         ( Mma.unTradeExit . snd <$> Mma.mmaTrades mma
         )
-      <> entryChart (Mma.mmaEntry mma)
   where
     cs = Mma.mmaCandles mma
     pos =
@@ -143,20 +142,6 @@ tradeChart title color cs =
     <$> Plot2D.list
       Graph2D.points
       ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleClose x)) <$> cs)
-
-entryChart ::
-  Mma.TradeEntry ->
-  Plot2D.T UTCTime Rational
-entryChart (Mma.TradeEntry x) =
-  Graph2D.lineSpec
-    ( LineSpec.pointSize 0.24
-        . LineSpec.pointType 7
-        . LineSpec.title "Now"
-        $ LineSpec.lineColor ColorSpec.black LineSpec.deflt
-    )
-    <$> Plot2D.list
-      Graph2D.points
-      [(Bfx.candleAt x, unQ $ Bfx.candleClose x)]
 
 unMa :: Ma.Ma -> Rational
 unMa =
