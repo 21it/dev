@@ -12,6 +12,7 @@ where
 
 import BitfinexClient.Import
 import BitfinexClient.Indicator.Ma
+import qualified Data.List.Index as Index
 import qualified Data.Map as Map
 import qualified Data.Ord as Ord
 import qualified Math.Combinat.Sets as Math
@@ -176,7 +177,7 @@ newMmaTrades ::
   [(TradeEntry, Maybe TradeExit)]
 newMmaTrades profit cs curves =
   foldl
-    ( \acc (c0, c1) ->
+    ( \acc (idx, (c0, c1)) ->
         let at0 = candleAt c0
             mas0 = newMas at0
             at1 = candleAt c1
@@ -186,10 +187,11 @@ newMmaTrades profit cs curves =
               && (length curves == length mas1)
               && goodCandle c0 c1 mas1
               && not (goodCandle c0 c1 mas0)
-              then (entry, tryFindExit profit entry cs) : acc
+              then (entry, tryFindExit idx profit entry cs) : acc
               else acc
     )
     mempty
+    . Index.indexed
     . zip (toList cs)
     $ tail cs
   where
@@ -213,14 +215,19 @@ goodCandle x0 x1 xs =
     c1 = candleClose x1
 
 tryFindExit ::
+  Int ->
   ApproxProfitRate ->
   TradeEntry ->
   NonEmpty Candle ->
   Maybe TradeExit
-tryFindExit profit entry =
+tryFindExit idx profit entry =
   (TradeExit <$>)
-    . find ((> sell) . unQuotePerBase . candleClose)
-    . filter ((> entryAt) . candleAt)
+    . find
+      ( \x ->
+          (unQuotePerBase (candleClose x) > sell)
+            && candleAt x > entryAt
+      )
+    . drop idx
     . toList
   where
     entryCandle = unTradeEntry entry

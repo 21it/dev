@@ -148,7 +148,7 @@ entryChart (Mma.TradeEntry x) =
     ( LineSpec.pointSize 0.3
         . LineSpec.pointType 13
         . LineSpec.title "Now"
-        $ LineSpec.lineColor ColorSpec.aquamarine LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.plum LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points
