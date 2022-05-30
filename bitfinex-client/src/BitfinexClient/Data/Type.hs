@@ -56,6 +56,7 @@ import qualified Database.Persist as P
 import qualified Database.Persist.Sql as P
 import Language.Haskell.TH.Syntax as TH (Lift)
 import qualified Network.HTTP.Client as Web
+import qualified Text.PrettyPrint as PrettyPrint
 import qualified Witch
 
 -- $orders
@@ -447,6 +448,16 @@ data CurrencyPair = CurrencyPair
 
 instance NFData CurrencyPair
 
+instance Out CurrencyPair where
+  docPrec = const currencyPairDoc
+  doc = currencyPairDoc
+
+currencyPairDoc :: CurrencyPair -> PrettyPrint.Doc
+currencyPairDoc x =
+  PrettyPrint.text . T.unpack $
+    unCurrencyCode (currencyPairBase x)
+      <> unCurrencyCode (currencyPairQuote x)
+
 instance FromJSON CurrencyPair where
   parseJSON = withText
     (showType @CurrencyPair)
@@ -591,6 +602,8 @@ data PltStatus
       Show,
       Generic
     )
+
+instance Out PltStatus
 
 data Error
   = ErrorWebException HttpException

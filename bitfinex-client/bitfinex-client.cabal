@@ -97,7 +97,8 @@ library
       TupleSections
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -fprint-potential-instances
   build-depends:
-      aeson
+      GenericPretty
+    , aeson
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
@@ -106,6 +107,7 @@ library
     , cryptonite
     , envparse
     , extra
+    , generic-pretty-instances
     , gnuplot
     , http-client
     , http-client-tls
@@ -114,6 +116,7 @@ library
     , memory
     , parallel
     , persistent
+    , pretty
     , siggy-chardust
     , singletons
     , singletons-base

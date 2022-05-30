@@ -100,8 +100,12 @@ instance NFData Mma
 instance Ord Mma where
   compare lhs rhs =
     compare
-      (length $ mmaTrades lhs)
-      (length $ mmaTrades rhs)
+      ( via @Integer (length $ mmaTrades lhs)
+          * unApproxProfitRate (mmaProfit lhs)
+      )
+      ( via @Integer (length $ mmaTrades rhs)
+          * unApproxProfitRate (mmaProfit rhs)
+      )
 
 mma :: CurrencyPair -> NonEmpty Candle -> Maybe Mma
 mma sym cs =
@@ -132,25 +136,25 @@ newMma sym cs0 cs curves = do
   (_, cPrev) <- V.unsnoc csHistory
   entry <-
     newMmaEntries [cPrev, cLast] curves V.!? 0
-  let entryHistory =
-        newMmaEntries csHistory curves
-  trades <-
-    V.imapM (tryFindExit profit csHistory entryHistory) entryHistory
-  pure
-    Mma
-      { mmaSymbol = sym,
-        mmaCandles = cs0,
-        mmaCurves = Map.fromList $ from curves,
-        mmaTrades = V.toList trades,
-        mmaProfit = profit,
-        mmaEntry = entry
-      }
-  where
-    --
-    -- TODO : make profit rate various
-    --
-    profit =
-      ApproxProfitRate $ 1 % 500
+  (maximum <$>)
+    . nonEmpty
+    . catMaybes
+    $ ( \den -> do
+          let profit = ApproxProfitRate $ 1 % den
+          trades <-
+            V.imapM (tryFindExit profit csHistory) $
+              newMmaEntries csHistory curves
+          pure
+            Mma
+              { mmaSymbol = sym,
+                mmaCandles = cs0,
+                mmaCurves = Map.fromList $ from curves,
+                mmaTrades = V.toList trades,
+                mmaProfit = profit,
+                mmaEntry = entry
+              }
+      )
+      <$> [50, 100 .. 500]
 
 newMmaEntries ::
   Vector Candle ->
@@ -194,25 +198,22 @@ goodCandle x0 x1 xs =
 tryFindExit ::
   ApproxProfitRate ->
   Vector Candle ->
-  Vector TradeEntry ->
   Int ->
   TradeEntry ->
   Maybe (TradeEntry, TradeExit)
-tryFindExit profit cs entryHistory idx entry =
+tryFindExit profit cs idx entry =
   ((entry,) . TradeExit <$>)
     . find
       ( \x ->
-          (unQuotePerBase (candleClose x) > sell)
+          (candleAt x < exitUntil)
+            && unQuotePerBase (candleClose x) > sell
             && candleAt x > entryAt
-            && maybe
-              True
-              ((candleAt x <) . candleAt . unTradeEntry)
-              (entryHistory V.!? (idx + 1))
       )
     . drop idx
     $ toList cs
   where
     entryCandle = unTradeEntry entry
     entryAt = candleAt entryCandle
+    exitUntil = addUTCTime nominalDay entryAt
     buy = candleClose entryCandle
     sell = unQuotePerBase buy |* (1 + unApproxProfitRate profit)

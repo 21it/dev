@@ -53,6 +53,19 @@ packages:
   original:
     subdir: units
     url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
+- completed:
+    sha256: f35093b3d4ca7d7988b4efb9d4aa2779f675a7c4ecbb9ee13f135663cea71e28
+    name: generic-pretty-instances
+    subdir: generic-pretty-instances
+    size: 418740
+    url: https://github.com/coingaming/src/archive/359acd74b5c1f3900b7645fd3adb0521001a6d23.tar.gz
+    pantry-tree:
+      sha256: a387604fe0ef2f09f107bbe5418b0e0aeb05ec855d6ea5e3ddc083e0b68a42f5
+      size: 986
+    version: 0.1.0.0
+  original:
+    subdir: generic-pretty-instances
+    url: https://github.com/coingaming/src/archive/359acd74b5c1f3900b7645fd3adb0521001a6d23.tar.gz
 snapshots:
 - completed:
     sha256: f1c4aca9b9b81afbb9db55571acb0690cdc01ac97a178234de281f9dc075e95e

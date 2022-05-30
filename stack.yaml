@@ -14,3 +14,7 @@ extra-deps:
     commit: 8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990
     subdirs:
     - units
+  - github: coingaming/src
+    commit: 359acd74b5c1f3900b7645fd3adb0521001a6d23
+    subdirs:
+    - generic-pretty-instances

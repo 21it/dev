@@ -12,6 +12,7 @@ import qualified BitfinexClient.Indicator.Ma as Ma
 import qualified BitfinexClient.Indicator.Mma as Mma
 import qualified BitfinexClient.Trading as Trading
 import qualified Data.Map as Map
+import qualified Data.Text as T
 import qualified Graphics.Gnuplot.Advanced as GP
 import qualified Graphics.Gnuplot.ColorSpecification as ColorSpec
 import qualified Graphics.Gnuplot.Frame as Frame
@@ -26,7 +27,7 @@ newExample :: (MonadIO m) => m ()
 newExample = do
   eMma <-
     runExceptT
-      . Trading.theBestMma
+      . Trading.theBestMma ctf
       $ CurrencyCode "BTC"
   case eMma of
     Left e ->
@@ -35,15 +36,28 @@ newExample = do
       void
         . liftIO
         . GP.plotSync (SVG.cons "/app/build/output.svg")
-        $ totalChart mma
+        $ totalChart ctf mma
+  where
+    ctf = Ctf1m
 
 totalChart ::
+  CandleTimeFrame ->
   Mma.Mma ->
   Frame.T (Graph2D.T UTCTime Rational)
-totalChart mma =
+totalChart ctf mma =
   Frame.cons
     ( Opts.key True
-        . Opts.title (show $ Mma.mmaSymbol mma)
+        . Opts.title
+          ( inspectStrPlain (Mma.mmaSymbol mma)
+              <> " "
+              <> T.unpack (toTextParam ctf)
+              <> " candles, approx. profit rate = "
+              <> ( T.unpack
+                     . showPercent
+                     . Mma.unApproxProfitRate
+                     $ Mma.mmaProfit mma
+                 )
+          )
         . Opts.add (Option.key "position") [pos, "reverse"]
         $ Opts.boxwidthRelative 1 Opts.deflt
     )

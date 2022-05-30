@@ -17,9 +17,10 @@ import qualified Data.Map as Map
 theBestMma ::
   ( MonadIO m
   ) =>
+  CandleTimeFrame ->
   CurrencyCode 'Quote ->
   ExceptT Error m Mma
-theBestMma quote = do
+theBestMma ctf quote = do
   syms <-
     Bfx.symbolsDetails
   cs <-
@@ -27,7 +28,7 @@ theBestMma quote = do
       ( \sym ->
           (sym,)
             <$> Bfx.candlesHist
-              Bfx.Ctf1m
+              ctf
               sym
               Candles.optsDef
                 { Candles.limit = Just 7500

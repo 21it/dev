@@ -4,6 +4,7 @@
 
 module BitfinexClient.Util
   ( showType,
+    showPercent,
     eradicateNull,
     readVia,
     tryReadVia,
@@ -15,6 +16,7 @@ where
 import BitfinexClient.Import.External
 import qualified Data.Aeson as A
 import qualified Data.Aeson.KeyMap as A
+import qualified Data.Fixed as F
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
 import Data.Typeable (typeRep)
@@ -23,6 +25,18 @@ import qualified Data.Vector as V
 showType :: forall a b. (Typeable a, IsString b) => b
 showType =
   show . typeRep $ Proxy @a
+
+showPercent :: Rational -> Text
+showPercent x =
+  T.pack
+    ( F.showFixed
+        True
+        ( fromRational $
+            x * 100 ::
+            F.Fixed F.E2
+        )
+    )
+    <> "%"
 
 eradicateNull :: A.Value -> A.Value
 eradicateNull = \case

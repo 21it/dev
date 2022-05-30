@@ -19,6 +19,8 @@ stdenv.mkDerivation {
     gnuplot
     postgresql
     nix-bundle
+    secp256k1
+    pkg-config
   ];
   TERM="xterm-256color";
   LC_ALL="C.UTF-8";

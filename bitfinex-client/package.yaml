@@ -114,6 +114,10 @@ library:
   - template-haskell
   - singletons
   - singletons-base
+  # pretty
+  - pretty
+  - GenericPretty
+  - generic-pretty-instances
 
 tests:
   bitfinex-client-test:
