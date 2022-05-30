@@ -7,11 +7,10 @@ module BitfinexClient.Chart
 where
 
 import qualified BitfinexClient as Bfx
-import qualified BitfinexClient.Data.Candles as Candles
 import BitfinexClient.Import
 import qualified BitfinexClient.Indicator.Ma as Ma
 import qualified BitfinexClient.Indicator.Mma as Mma
-import qualified Control.Parallel.Strategies as Par
+import qualified BitfinexClient.Trading as Trading
 import qualified Data.Map as Map
 import qualified Graphics.Gnuplot.Advanced as GP
 import qualified Graphics.Gnuplot.ColorSpecification as ColorSpec
@@ -26,43 +25,17 @@ import qualified Graphics.Gnuplot.Terminal.SVG as SVG
 newExample :: (MonadIO m) => m ()
 newExample = do
   eMma <-
-    runExceptT $ do
-      syms <-
-        Bfx.symbolsDetails
-      cs <-
-        mapM
-          ( \sym ->
-              (sym,)
-                <$> Bfx.candlesHist
-                  Bfx.Ctf1m
-                  sym
-                  Candles.optsDef
-                    { Candles.limit = Just 10000
-                    }
-          )
-          . traceShowId
-          . filter ((== CurrencyCode "BTC") . currencyPairQuote)
-          $ Map.keys syms
-      case nonEmpty cs of
-        Nothing ->
-          error "Can not find BTC-quoted symbols"
-        Just ncs ->
-          pure
-            . maximum
-            . Par.withStrategy (Par.parTraversable Par.rdeepseq)
-            $ uncurry Mma.mma <$> ncs
+    runExceptT
+      . Trading.theBestMma
+      $ CurrencyCode "BTC"
   case eMma of
     Left e ->
       error $ show e
     Right mma ->
-      maybeM
-        (putStrLn ("Mo Mma!!!" :: Text))
-        ( void
-            . liftIO
-            . GP.plotSync (SVG.cons "/app/build/output.svg")
-            . totalChart
-        )
-        $ pure mma
+      void
+        . liftIO
+        . GP.plotSync (SVG.cons "/app/build/output.svg")
+        $ totalChart mma
 
 totalChart ::
   Mma.Mma ->

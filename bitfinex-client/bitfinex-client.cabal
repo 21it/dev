@@ -55,6 +55,7 @@ library
       BitfinexClient.Orphan
       BitfinexClient.Parser
       BitfinexClient.Rpc.Generic
+      BitfinexClient.Trading
       BitfinexClient.Util
   other-modules:
       Paths_bitfinex_client

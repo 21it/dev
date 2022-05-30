@@ -602,6 +602,7 @@ data Error
   | ErrorMissingOrder OrderId
   | ErrorUnverifiedOrder (SomeOrder 'Local) (SomeOrder 'Remote)
   | ErrorOrderState (SomeOrder 'Remote)
+  | ErrorTrading (CurrencyCode 'Quote) Text
   deriving stock
     --
     -- TODO : implement Eq/Ord?
