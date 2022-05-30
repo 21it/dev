@@ -132,9 +132,10 @@ newMma sym cs0 cs curves = do
   (_, cPrev) <- V.unsnoc csHistory
   entry <-
     newMmaEntries [cPrev, cLast] curves V.!? 0
+  let entryHistory =
+        newMmaEntries csHistory curves
   trades <-
-    V.imapM (tryFindExit profit csHistory) $
-      newMmaEntries csHistory curves
+    V.imapM (tryFindExit profit csHistory entryHistory) entryHistory
   pure
     Mma
       { mmaSymbol = sym,
@@ -193,15 +194,20 @@ goodCandle x0 x1 xs =
 tryFindExit ::
   ApproxProfitRate ->
   Vector Candle ->
+  Vector TradeEntry ->
   Int ->
   TradeEntry ->
   Maybe (TradeEntry, TradeExit)
-tryFindExit profit cs idx entry =
+tryFindExit profit cs entryHistory idx entry =
   ((entry,) . TradeExit <$>)
     . find
       ( \x ->
           (unQuotePerBase (candleClose x) > sell)
             && candleAt x > entryAt
+            && maybe
+              True
+              ((candleAt x <) . candleAt . unTradeEntry)
+              (entryHistory V.!? (idx + 1))
       )
     . drop idx
     $ toList cs

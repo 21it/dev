@@ -30,7 +30,7 @@ theBestMma quote = do
               Bfx.Ctf1m
               sym
               Candles.optsDef
-                { Candles.limit = Just 10000
+                { Candles.limit = Just 7500
                 }
       )
       . traceShowId
