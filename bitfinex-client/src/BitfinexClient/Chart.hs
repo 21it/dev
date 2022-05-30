@@ -58,7 +58,14 @@ totalChart ctf mma =
                      $ Mma.mmaProfit mma
                  )
           )
-        . Opts.add (Option.key "position") [pos, "reverse"]
+        . Opts.add
+          ( Option.key "position"
+          )
+          [ pos,
+            "reverse",
+            "box",
+            "opaque"
+          ]
         $ Opts.boxwidthRelative 1 Opts.deflt
     )
     $ candleChart (Mma.mmaCandles mma)
