@@ -90,7 +90,7 @@ spec = before sysEnv $ do
     Bitfinex.candlesLast Ctf1h [currencyPair|ADABTC|] Candles.optsDef
   itRight "candlesHist succeeds" . const $ do
     Bitfinex.candlesHist Ctf1h [currencyPair|ADABTC|] Candles.optsDef
-  xit "chart" . const $ do
+  focus . it "chart" . const $ do
     Chart.newExample
     True `shouldBe` True
 

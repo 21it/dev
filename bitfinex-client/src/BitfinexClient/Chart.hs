@@ -61,7 +61,7 @@ totalChart ctf mma =
         . Opts.add
           ( Option.key "position"
           )
-          [ pos,
+          [ "left",
             "reverse",
             "box",
             "opaque"
@@ -83,12 +83,6 @@ totalChart ctf mma =
         ColorSpec.red
         ( Mma.unTradeExit . snd <$> Mma.mmaTrades mma
         )
-  where
-    cs = Mma.mmaCandles mma
-    pos =
-      if candleClose (head cs) > candleClose (last cs)
-        then "right"
-        else "left"
 
 candleChart ::
   NonEmpty Bfx.Candle ->

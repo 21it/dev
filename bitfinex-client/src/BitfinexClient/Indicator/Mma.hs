@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Indicator.Mma
@@ -11,6 +10,8 @@ module BitfinexClient.Indicator.Mma
 where
 
 import BitfinexClient.Import
+import BitfinexClient.Indicator.Atr (Atr)
+import qualified BitfinexClient.Indicator.Atr as Atr
 import BitfinexClient.Indicator.Ma
 import qualified Data.Map as Map
 import qualified Data.Ord as Ord
@@ -46,12 +47,6 @@ newtype CrvQty = CrvQty
       Show
     )
 
---
--- TODO : Introduce trade entry delay
--- to cover more possibilities of trade entry
--- X candles after indicator.
---
-
 newtype TradeEntry = TradeEntry
   { unTradeEntry :: Candle
   }
@@ -78,6 +73,59 @@ newtype TradeExit = TradeExit
       Show
     )
 
+newtype PrevSwingLow = PrevSwingLow
+  { unPrevSwingLow :: Candle
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      NFData
+    )
+  deriving stock
+    ( Generic,
+      Show
+    )
+
+newtype TakeProfit = TakeProfit
+  { unTakeProfit :: QuotePerBase'
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      NFData
+    )
+  deriving stock
+    ( Generic
+    )
+
+newtype StopLoss = StopLoss
+  { unStopLoss :: QuotePerBase'
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      NFData
+    )
+  deriving stock
+    ( Generic
+    )
+
+data Trade = Trade
+  { tradeEntry :: TradeEntry,
+    tradeExit :: TradeExit,
+    tradePrevSwingLow :: Candle,
+    tradeAtr :: Atr,
+    tradeStopLoss :: StopLoss,
+    tradeTakeProfit :: TakeProfit
+  }
+  deriving stock
+    ( Eq,
+      Ord,
+      Generic
+    )
+
+instance NFData Trade
+
 data Mma = Mma
   { mmaSymbol :: CurrencyPair,
     mmaCandles :: NonEmpty Candle,
@@ -88,7 +136,9 @@ data Mma = Mma
     -- TODO : mmaPower (from profit rate and trades)
     -- use this in Ord instance!!!
     --
-    mmaEntry :: TradeEntry
+    mmaEntry :: TradeEntry,
+    mmaStopLoss :: StopLoss,
+    mmaTakeProfit :: TakeProfit
   }
   deriving stock
     ( Eq,
@@ -111,15 +161,19 @@ mma :: CurrencyPair -> NonEmpty Candle -> Maybe Mma
 mma sym cs =
   (maximum <$>) . nonEmpty $
     [3 .. 5]
-      >>= combineMaPeriods sym cs
+      >>= combineMaPeriods sym cs atr
+  where
+    atr =
+      Atr.atr cs
 
 combineMaPeriods ::
   CurrencyPair ->
   NonEmpty Candle ->
+  Map UTCTime Atr ->
   CrvQty ->
   [Mma]
-combineMaPeriods sym cs qty =
-  mapMaybe (newMma sym cs . V.fromList $ toList cs)
+combineMaPeriods sym cs atrs qty =
+  mapMaybe (newMma sym cs atrs . V.fromList $ toList cs)
     . catMaybes
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
@@ -128,14 +182,23 @@ combineMaPeriods sym cs qty =
 newMma ::
   CurrencyPair ->
   NonEmpty Candle ->
+  Map UTCTime Atr ->
   Vector Candle ->
   NonEmpty (MaPeriod, Map UTCTime Ma) ->
   Maybe Mma
-newMma sym cs0 cs curves = do
+newMma sym cs0 atrs cs curves = do
   (csHistory, cLast) <- V.unsnoc cs
   (_, cPrev) <- V.unsnoc csHistory
   entry <-
     newMmaEntries [cPrev, cLast] curves V.!? 0
+  prevSwingLow <-
+    tryFindPrevSwingLow csHistory cLast
+  atr <-
+    Map.lookup (candleAt $ unTradeEntry entry) atrs
+  stopLoss <-
+    tryFindStopLoss prevSwingLow atr
+  takeProfit <-
+    tryFindTakeProfit entry stopLoss
   (maximum <$>)
     . nonEmpty
     . catMaybes
@@ -151,7 +214,9 @@ newMma sym cs0 cs curves = do
                 mmaCurves = Map.fromList $ from curves,
                 mmaTrades = V.toList trades,
                 mmaProfit = profit,
-                mmaEntry = entry
+                mmaEntry = entry,
+                mmaStopLoss = stopLoss,
+                mmaTakeProfit = takeProfit
               }
       )
       <$> [50, 100 .. 500]
@@ -195,6 +260,44 @@ goodCandle x0 x1 xs =
     c0 = candleClose x0
     c1 = candleClose x1
 
+tryFindPrevSwingLow ::
+  Vector Candle ->
+  Candle ->
+  Maybe PrevSwingLow
+tryFindPrevSwingLow cs cur = do
+  (hist, prev) <- V.unsnoc cs
+  if candleLow prev <= candleLow cur
+    then tryFindPrevSwingLow hist prev
+    else pure $ PrevSwingLow cur
+
+tryFindStopLoss :: PrevSwingLow -> Atr -> Maybe StopLoss
+tryFindStopLoss prevLow0 atr0 =
+  if prevLow <= atr
+    then Nothing
+    else
+      Just . StopLoss $
+        prevLow |-| atr
+  where
+    atr =
+      Atr.unAtr atr0
+    prevLow =
+      unQuotePerBase . candleLow $
+        unPrevSwingLow prevLow0
+
+tryFindTakeProfit :: TradeEntry -> StopLoss -> Maybe TakeProfit
+tryFindTakeProfit entryPoint stopLoss =
+  if current <= stop
+    then Nothing
+    else
+      Just . TakeProfit $
+        current |+| ((current |-| stop) |* 2)
+  where
+    stop =
+      unStopLoss stopLoss
+    current =
+      unQuotePerBase . candleClose $
+        unTradeEntry entryPoint
+
 tryFindExit ::
   ApproxProfitRate ->
   Vector Candle ->
@@ -209,8 +312,8 @@ tryFindExit profit cs idx entry =
             && unQuotePerBase (candleClose x) > sell
             && candleAt x > entryAt
       )
-    . drop idx
-    $ toList cs
+    . toList
+    $ V.drop idx cs
   where
     entryCandle = unTradeEntry entry
     entryAt = candleAt entryCandle
