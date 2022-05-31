@@ -20,6 +20,7 @@ module BitfinexClient.Data.Metro
     -- | Metrology compatible exchange rate type alias
     QuotePerBase',
     unQuotePerBase',
+    mkQuotePerBase',
     -- | Lossy primitive constructors
     roundMoney,
     roundQuotePerBase,
@@ -286,8 +287,15 @@ unQuotePerBase' ::
 unQuotePerBase' =
   (# quotePerBaseAmt)
 
+mkQuotePerBase' ::
+  Rational ->
+  QuotePerBase'
+mkQuotePerBase' =
+  (% quotePerBaseAmt)
+
 quotePerBaseAmt :: MoneyQuoteAmt :/ MoneyBaseAmt
-quotePerBaseAmt = MoneyQuoteAmt :/ MoneyBaseAmt
+quotePerBaseAmt =
+  MoneyQuoteAmt :/ MoneyBaseAmt
 
 instance (SingI act) => Prelude.Show (QuotePerBase act) where
   show (QuotePerBase x) =

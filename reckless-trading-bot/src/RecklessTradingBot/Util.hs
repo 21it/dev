@@ -5,7 +5,6 @@
 module RecklessTradingBot.Util
   ( spawnLink,
     withOperativeBfx,
-    showPercent,
   )
 where
 
@@ -15,8 +14,6 @@ import Control.Concurrent.Async
     async,
     link,
   )
-import qualified Data.Fixed as F
-import qualified Data.Text as T
 import RecklessTradingBot.Data.Time (seconds, sleep)
 import RecklessTradingBot.Import.External
 
@@ -39,15 +36,3 @@ withOperativeBfx action = do
     e -> do
       $(logTM) ErrorS $ logStr (show e :: Text)
       sleep [seconds|30|]
-
-showPercent :: Rational -> Text
-showPercent x =
-  T.pack
-    ( F.showFixed
-        True
-        ( fromRational $
-            x * 100 ::
-            F.Fixed F.E2
-        )
-    )
-    <> "%"

@@ -49,8 +49,10 @@ library
       BitfinexClient.Import.External
       BitfinexClient.Import.Internal
       BitfinexClient.Import.Witch
+      BitfinexClient.Indicator.Atr
       BitfinexClient.Indicator.Ma
       BitfinexClient.Indicator.Mma
+      BitfinexClient.Indicator.Tr
       BitfinexClient.Math
       BitfinexClient.Orphan
       BitfinexClient.Parser
