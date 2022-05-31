@@ -168,12 +168,11 @@ getOrders' attempt env opts = do
   xs0 <- retrieveOrders env opts
   xs1 <- ordersHistory env opts
   let xs = xs1 <> xs0
-  if ( ( all (\x -> Map.member x xs)
-           . toList
-           $ GetOrders.orderIds opts
-       )
-         || (attempt > 7)
+  if ( all (`Map.member` xs)
+         . toList
+         $ GetOrders.orderIds opts
      )
+    || (attempt > 7)
     then pure xs
     else do
       liftIO $ threadDelay 250000
@@ -244,7 +243,7 @@ submitOrder ::
   Money 'Base act ->
   CurrencyPair ->
   QuotePerBase act ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options act ->
   ExceptT Error m (Order act 'Remote)
 submitOrder env amt sym rate opts = do
   let req =
@@ -269,7 +268,7 @@ submitOrderMaker ::
   Money 'Base act ->
   CurrencyPair ->
   QuotePerBase act ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options act ->
   ExceptT Error m (Order act 'Remote)
 submitOrderMaker env amt sym rate0 opts0 =
   this 0 rate0
@@ -355,7 +354,7 @@ submitCounterOrder ::
   FeeRate mrel0 'Base ->
   FeeRate mrel1 'Quote ->
   ProfitRate ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options 'Sell ->
   ExceptT Error m (Order 'Sell 'Remote)
 submitCounterOrder =
   submitCounterOrder' submitOrder
@@ -368,7 +367,7 @@ submitCounterOrderMaker ::
   FeeRate 'Maker 'Base ->
   FeeRate 'Maker 'Quote ->
   ProfitRate ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options 'Sell ->
   ExceptT Error m (Order 'Sell 'Remote)
 submitCounterOrderMaker =
   submitCounterOrder' submitOrderMaker
@@ -380,7 +379,7 @@ submitCounterOrder' ::
     Money 'Base 'Sell ->
     CurrencyPair ->
     QuotePerBase 'Sell ->
-    SubmitOrder.Options ->
+    SubmitOrder.Options 'Sell ->
     ExceptT Error m (Order 'Sell 'Remote)
   ) ->
   Env ->
@@ -388,7 +387,7 @@ submitCounterOrder' ::
   FeeRate mrel0 'Base ->
   FeeRate mrel1 'Quote ->
   ProfitRate ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options 'Sell ->
   ExceptT Error m (Order 'Sell 'Remote)
 submitCounterOrder' submit env id0 feeB feeQ prof opts = do
   someRemOrd@(SomeOrder remSing remOrder) <- getOrder env id0
@@ -422,12 +421,12 @@ dumpIntoQuote' ::
     Money 'Base 'Sell ->
     CurrencyPair ->
     QuotePerBase 'Sell ->
-    SubmitOrder.Options ->
+    SubmitOrder.Options 'Sell ->
     ExceptT Error m (Order 'Sell 'Remote)
   ) ->
   Env ->
   CurrencyPair ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options 'Sell ->
   ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuote' submit env sym opts = do
   amt <- spendableExchangeBalance env (currencyPairBase sym)
@@ -444,7 +443,7 @@ dumpIntoQuote ::
   ) =>
   Env ->
   CurrencyPair ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options 'Sell ->
   ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuote =
   dumpIntoQuote' submitOrder
@@ -454,7 +453,7 @@ dumpIntoQuoteMaker ::
   ) =>
   Env ->
   CurrencyPair ->
-  SubmitOrder.Options ->
+  SubmitOrder.Options 'Sell ->
   ExceptT Error m (Order 'Sell 'Remote)
 dumpIntoQuoteMaker =
   dumpIntoQuote' submitOrderMaker
@@ -468,6 +467,7 @@ netWorth ::
 netWorth env ccq = do
   -- Simplify fees (assume it's alwayus Maker and Crypto2Crypto)
   fee <- FeeSummary.makerCrypto2CryptoFee <$> feeSummary env
+  syms <- symbolsDetails
   xs0 <- wallets @'Quote env
   res <-
     foldrM
@@ -503,6 +503,15 @@ netWorth env ccq = do
                       )
       )
       (unMoney [moneyQuoteSell|0|])
+      . filter
+        ( \(cc, _) ->
+            fromRight
+              False
+              ( flip Map.member syms
+                  <$> currencyPairCon (from cc) ccq
+              )
+              || (cc == ccq)
+        )
       $ Map.assocs xs0
   tryErrorT $
     roundMoney' @'Quote res

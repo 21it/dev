@@ -56,7 +56,10 @@ spec = before sysEnv $ do
     let amt = testAmt :: Money 'Base 'Buy
     let sym = [currencyPair|ADABTC|]
     let opts = SubmitOrder.optsPostOnly
-    rate <- Bitfinex.marketAveragePrice amt sym
+    curRate <- Bitfinex.marketAveragePrice amt sym
+    rate <-
+      tryErrorT . roundQuotePerBase' $
+        unQuotePerBase curRate |* 0.5
     order <- Bitfinex.submitOrderMaker env amt sym rate opts
     Bitfinex.cancelOrderById env $ orderId order
   itRight "retrieveOrders succeeds" $ \env ->
@@ -87,7 +90,7 @@ spec = before sysEnv $ do
     Bitfinex.candlesLast Ctf1h [currencyPair|ADABTC|] Candles.optsDef
   itRight "candlesHist succeeds" . const $ do
     Bitfinex.candlesHist Ctf1h [currencyPair|ADABTC|] Candles.optsDef
-  focus . it "chart" . const $ do
+  xit "chart" . const $ do
     Chart.newExample
     True `shouldBe` True
 

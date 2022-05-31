@@ -5,6 +5,7 @@ module BitfinexClient.Data.SubmitOrder
     Options (..),
     optsDef,
     optsPostOnly,
+    optsPostOnlyStopLoss,
   )
 where
 
@@ -15,31 +16,43 @@ data Request (act :: ExchangeAction) = Request
   { amount :: Money 'Base act,
     symbol :: CurrencyPair,
     rate :: QuotePerBase act,
-    options :: Options
+    options :: Options act
   }
   deriving stock (Eq, Ord, Show)
 
-data Options = Options
-  { clientId :: Maybe OrderClientId,
+data Options (act :: ExchangeAction) = Options
+  { stopLoss :: Maybe (QuotePerBase act),
+    clientId :: Maybe OrderClientId,
     groupId :: Maybe OrderGroupId,
     flags :: Set OrderFlag
   }
   deriving stock (Eq, Ord, Show)
 
-optsDef :: Options
+optsDef :: Options act
 optsDef =
   Options
-    { clientId = Nothing,
+    { stopLoss = Nothing,
+      clientId = Nothing,
       groupId = Nothing,
       flags = mempty
     }
 
-optsPostOnly :: Options
+optsPostOnly :: Options act
 optsPostOnly =
   Options
-    { clientId = Nothing,
+    { stopLoss = Nothing,
+      clientId = Nothing,
       groupId = Nothing,
       flags = [PostOnly]
+    }
+
+optsPostOnlyStopLoss :: QuotePerBase act -> Options act
+optsPostOnlyStopLoss sl =
+  Options
+    { stopLoss = Just sl,
+      clientId = Nothing,
+      groupId = Nothing,
+      flags = [PostOnly, Oco]
     }
 
 instance
