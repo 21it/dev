@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Chart
@@ -51,11 +50,11 @@ totalChart ctf mma =
           ( inspectStrPlain (Mma.mmaSymbol mma)
               <> " "
               <> T.unpack (toTextParam ctf)
-              <> " candles, approx. profit rate = "
+              <> " candles, approx. reward/risk = "
               <> ( T.unpack
                      . showPercent
-                     . Mma.unApproxProfitRate
-                     $ Mma.mmaProfit mma
+                     . Mma.unRewardToRisk
+                     $ Mma.mmaRewardToRisk mma
                  )
           )
         . Opts.add
@@ -72,11 +71,8 @@ totalChart ctf mma =
       <> mconcat
         ( mmaChart <$> Map.assocs (Mma.mmaCurves mma)
         )
-      <> tradeChart
-        "Entry"
-        ColorSpec.darkGreen
-        ( Mma.unTradeEntry (Mma.mmaEntry mma) :
-          (Mma.unTradeEntry . fst <$> Mma.mmaTrades mma)
+      <> takeProfitChart
+        ( Mma.mmaEntry mma : (fst <$> Mma.mmaTrades mma)
         )
       <> tradeChart
         "Exit"
@@ -90,13 +86,13 @@ candleChart ::
 candleChart =
   ( Graph2D.lineSpec
       ( LineSpec.lineWidth 1.5
-          . LineSpec.title "Close"
+          . LineSpec.title "High"
           $ LineSpec.lineColor ColorSpec.gray80 LineSpec.deflt
       )
       <$>
   )
     . Plot2D.list Graph2D.lines
-    . ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleClose x)) <$>)
+    . ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleHigh x)) <$>)
     . toList
 
 mmaChart ::
@@ -114,6 +110,29 @@ mmaChart (period, xs) =
     . Plot2D.list Graph2D.lines
     . (second unMa <$>)
     $ Map.assocs xs
+
+takeProfitChart ::
+  [Mma.TradeEntry] ->
+  Plot2D.T UTCTime Rational
+takeProfitChart xs =
+  Graph2D.lineSpec
+    ( LineSpec.pointSize 0.24
+        . LineSpec.title "Entry"
+        $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
+    )
+    <$> Plot2D.list
+      Graph2D.financeBars
+      ( ( \x ->
+            ( Bfx.candleAt $ Mma.tradeEntryCandle x,
+              ( unQ . Bfx.candleClose $ Mma.tradeEntryCandle x,
+                unQ' . Mma.unStopLoss $ Mma.tradeEntryStopLoss x,
+                unQ' . Mma.unTakeProfit $ Mma.tradeEntryTakeProfit x,
+                unQ . Bfx.candleClose $ Mma.tradeEntryCandle x
+              )
+            )
+        )
+          <$> xs
+      )
 
 tradeChart ::
   String ->
@@ -138,3 +157,7 @@ unMa =
 unQ :: Bfx.QuotePerBase 'Bfx.Buy -> Rational
 unQ =
   from
+
+unQ' :: Bfx.QuotePerBase' -> Rational
+unQ' =
+  unQuotePerBase'

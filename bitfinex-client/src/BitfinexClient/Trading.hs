@@ -31,7 +31,7 @@ theBestMma ctf quote = do
               ctf
               sym
               Candles.optsDef
-                { Candles.limit = Just 7500
+                { Candles.limit = Just 3000
                 }
       )
       . traceShowId
