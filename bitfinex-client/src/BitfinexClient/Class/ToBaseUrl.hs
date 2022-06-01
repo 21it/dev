@@ -45,6 +45,9 @@ instance ToBaseUrl 'CandlesLast where
 instance ToBaseUrl 'CandlesHist where
   toBaseUrl = basePub
 
+instance ToBaseUrl 'Tickers where
+  toBaseUrl = basePub
+
 base :: BaseUrl
 base = "https://api.bitfinex.com"
 

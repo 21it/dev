@@ -26,11 +26,13 @@ newExample :: (MonadIO m) => m ()
 newExample = do
   eMma <-
     runExceptT
-      . Trading.theBestMma ctf
+      . Trading.theBestMma ctf [moneyQuoteBuy|10|]
       $ CurrencyCode "BTC"
   case eMma of
-    Left e ->
-      error $ show e
+    Left e -> do
+      putStrLn (show e :: Text)
+      liftIO $ threadDelay 30000000
+      newExample
     Right mma ->
       void
         . liftIO

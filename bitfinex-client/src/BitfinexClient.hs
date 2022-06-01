@@ -26,6 +26,7 @@ module BitfinexClient
     netWorth,
     candlesLast,
     candlesHist,
+    tickers,
     module X,
   )
 where
@@ -561,3 +562,13 @@ candlesHist tf sym opts =
         Candles.section = Candles.Hist,
         Candles.options = opts
       }
+
+tickers ::
+  ( MonadIO m
+  ) =>
+  ExceptT Error m (Map CurrencyPair Ticker)
+tickers =
+  Generic.pub @'Tickers
+    [ SomeQueryParam "symbols" ("ALL" :: Text)
+    ]
+    ()

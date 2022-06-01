@@ -18,13 +18,31 @@ theBestMma ::
   ( MonadIO m
   ) =>
   CandleTimeFrame ->
+  Money 'Quote 'Buy ->
   CurrencyCode 'Quote ->
   ExceptT Error m Mma
-theBestMma ctf quote = do
-  --
-  -- TODO : filter symbols, trade high
-  -- volume symbols only!!!
-  --
+theBestMma ctf vol quote = do
+  tickers <-
+    Bfx.tickers
+  let goodTickers =
+        Map.filter
+          ( \x ->
+              ( ( unQuotePerBase (tickerBid x)
+                    |*| unMoney @'Base (tickerVolume x)
+                )
+                  > unMoney vol
+              )
+                && ( currencyPairQuote
+                       (tickerSymbol x)
+                       == quote
+                   )
+          )
+          tickers
+  putStrLn
+    ( "High Volume Pairs = "
+        <> show (length goodTickers) ::
+        Text
+    )
   syms <-
     Bfx.symbolsDetails
   cs <-
@@ -36,11 +54,10 @@ theBestMma ctf quote = do
               ctf
               sym
               Candles.optsDef
-                { Candles.limit = Just 1500
+                { Candles.limit = Just 1250
                 }
       )
-      . traceShowId
-      . filter ((== quote) . currencyPairQuote)
+      . filter (`Map.member` goodTickers)
       $ Map.keys syms
   case nonEmpty cs of
     Nothing ->

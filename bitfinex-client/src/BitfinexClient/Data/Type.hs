@@ -31,6 +31,7 @@ module BitfinexClient.Data.Type
     CurrencyPairConf (..),
     Candle (..),
     CandleTimeFrame (..),
+    Ticker (..),
 
     -- * Misc
     -- $misc
@@ -589,6 +590,21 @@ instance ToRequestParam CandleTimeFrame where
     T.pack
       . drop 3
       . show
+
+data Ticker = Ticker
+  { tickerSymbol :: CurrencyPair,
+    tickerVolume :: Money 'Base 'Buy,
+    tickerBid :: QuotePerBase 'Buy,
+    tickerAsk :: QuotePerBase 'Sell
+  }
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
+
+instance NFData Ticker
 
 -- $misc
 -- General utility data used elsewhere.

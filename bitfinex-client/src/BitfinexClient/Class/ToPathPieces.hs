@@ -100,3 +100,10 @@ candlesPathPieces x =
         <> toTextParam (Candles.timeFrame x)
         <> ":"
         <> toTextParam (Candles.symbol x)
+
+instance ToPathPieces 'Tickers () where
+  toPathPieces =
+    const
+      [ "v2",
+        "tickers"
+      ]

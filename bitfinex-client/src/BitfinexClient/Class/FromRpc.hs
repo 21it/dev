@@ -18,6 +18,7 @@ import BitfinexClient.Parser
 import BitfinexClient.Util
 import Data.Aeson.Lens
 import qualified Data.Map as Map
+import qualified Data.Text as T
 import qualified Data.Vector as V
 
 class FromRpc (method :: Method) res where
@@ -281,3 +282,61 @@ instance FromRpc 'CandlesHist (NonEmpty Candle) where
       (Left "Empty CandlesHist")
       pure
       $ nonEmpty xs1
+
+instance FromRpc 'Tickers (Map CurrencyPair Ticker) where
+  fromRpc (RawResponse raw) = do
+    xs <-
+      maybeToRight
+        "Json is not an array"
+        $ raw ^? _Array
+    res <-
+      foldrM parser mempty $
+        V.filter
+          ( \x ->
+              maybe
+                False
+                ((== "t") . fst . T.splitAt 1)
+                (x ^? nth 0 . _String)
+                && maybe
+                  False
+                  (>= 0)
+                  (toRational <$> x ^? nth 8 . _Number)
+          )
+          xs
+    if null res
+      then Left "Tickers are empty"
+      else pure res
+    where
+      parser x acc = do
+        (k, v) <- parseEntry x
+        pure $ Map.insert k v acc
+      parseEntry x = do
+        sym <-
+          first show . newCurrencyPair
+            =<< maybeToRight
+              "CurrencyPair is missing"
+              (x ^? nth 0 . _String)
+        bid <-
+          first show . roundQuotePerBase
+            =<< maybeToRight
+              "Bid is missing"
+              (toRational <$> x ^? nth 1 . _Number)
+        ask0 <-
+          first show . roundQuotePerBase
+            =<< maybeToRight
+              "Ask is missing"
+              (toRational <$> x ^? nth 3 . _Number)
+        vol <-
+          first show . roundMoney
+            =<< maybeToRight
+              "Volume is missing"
+              (toRational <$> x ^? nth 8 . _Number)
+        pure
+          ( sym,
+            Ticker
+              { tickerSymbol = sym,
+                tickerVolume = vol,
+                tickerBid = bid,
+                tickerAsk = ask0
+              }
+          )

@@ -44,3 +44,6 @@ instance ToRequestMethod 'CandlesLast where
 
 instance ToRequestMethod 'CandlesHist where
   toRequestMethod = GET
+
+instance ToRequestMethod 'Tickers where
+  toRequestMethod = GET

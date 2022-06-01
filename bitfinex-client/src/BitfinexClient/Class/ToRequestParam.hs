@@ -47,3 +47,7 @@ instance ToRequestParam Natural where
 instance ToRequestParam UTCTime where
   toTextParam =
     toTextParam . utcTimeToMicros
+
+instance ToRequestParam Text where
+  toTextParam =
+    id

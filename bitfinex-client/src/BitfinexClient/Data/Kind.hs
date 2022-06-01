@@ -23,6 +23,7 @@ $( singletons
          | CancelOrderMulti
          | CandlesLast
          | CandlesHist
+         | Tickers
          deriving stock
            ( Eq,
              Ord,
