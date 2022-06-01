@@ -141,7 +141,7 @@ instance Ord Mma where
 mma :: CurrencyPair -> NonEmpty Candle -> Maybe Mma
 mma sym cs =
   (maximum <$>) . nonEmpty $
-    [3 .. 5]
+    [1 .. 8]
       >>= combineMaPeriods sym cs atr
   where
     atr =
@@ -163,7 +163,11 @@ combineMaPeriods sym cs atrs qty =
     . catMaybes
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
-    $ (\p -> (p, ma p cs)) <$> [5, 25 .. 200]
+    . ((\p -> (p, ma p cs)) <$>)
+    $ [3]
+      <> [5, 10, 15, 20]
+      <> [30, 60]
+      <> [90, 180, 270]
 
 newMma ::
   CurrencyPair ->
@@ -175,33 +179,42 @@ newMma ::
 newMma sym cs0 atrs cs curves = do
   (csPrev, cLast) <- V.unsnoc cs
   (_, cPrev) <- V.unsnoc csPrev
+  let newEntry r2r =
+        tryFindEntries
+          r2r
+          cs
+          [cPrev, cLast]
+          atrs
+          curves
+          V.!? 0
+  dummyEntry <-
+    newEntry $ RewardToRisk 1
+  maxMma <-
+    (maximum <$>)
+      . nonEmpty
+      . catMaybes
+      $ ( \rate -> do
+            let r2r = RewardToRisk $ rate % 5
+            trades <-
+              V.mapM (tryFindExit csPrev) $
+                tryFindEntries r2r cs csPrev atrs curves
+            pure
+              Mma
+                { mmaSymbol = sym,
+                  mmaCandles = cs0,
+                  mmaCurves = Map.fromList $ from curves,
+                  mmaTrades = V.toList trades,
+                  mmaRewardToRisk = r2r,
+                  mmaEntry = snd dummyEntry
+                }
+        )
+        <$> [10, 9 .. 5]
   entry <-
-    tryFindEntries
-      (RewardToRisk $ 3 % 2)
-      cs
-      [cPrev, cLast]
-      atrs
-      curves
-      V.!? 0
-  (maximum <$>)
-    . nonEmpty
-    . catMaybes
-    $ ( \rate -> do
-          let r2r = RewardToRisk $ rate % 200
-          trades <-
-            V.mapM (tryFindExit csPrev) $
-              tryFindEntries r2r cs csPrev atrs curves
-          pure
-            Mma
-              { mmaSymbol = sym,
-                mmaCandles = cs0,
-                mmaCurves = Map.fromList $ from curves,
-                mmaTrades = V.toList trades,
-                mmaRewardToRisk = r2r,
-                mmaEntry = snd entry
-              }
-      )
-      <$> [400, 380 .. 200]
+    newEntry $ mmaRewardToRisk maxMma
+  pure
+    maxMma
+      { mmaEntry = snd entry
+      }
 
 tryFindEntries ::
   RewardToRisk ->
@@ -278,7 +291,7 @@ tryFindStopLoss prevLow0 atr0 =
         prevLow |-| volatility
   where
     volatility =
-      Atr.unAtr atr0 |* 0.5
+      Atr.unAtr atr0
     prevLow =
       unQuotePerBase . candleLow $
         unPrevSwingLow prevLow0

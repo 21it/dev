@@ -21,6 +21,10 @@ theBestMma ::
   CurrencyCode 'Quote ->
   ExceptT Error m Mma
 theBestMma ctf quote = do
+  --
+  -- TODO : filter symbols, trade high
+  -- volume symbols only!!!
+  --
   syms <-
     Bfx.symbolsDetails
   cs <-
@@ -31,7 +35,7 @@ theBestMma ctf quote = do
               ctf
               sym
               Candles.optsDef
-                { Candles.limit = Just 3000
+                { Candles.limit = Just 2000
                 }
       )
       . traceShowId
