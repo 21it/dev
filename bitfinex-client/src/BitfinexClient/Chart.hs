@@ -77,7 +77,7 @@ totalChart ctf mma =
         )
       <> exitChart
         "Exit"
-        ColorSpec.blue
+        ColorSpec.darkOrange
         ( Mma.mmaTrades mma
         )
 
