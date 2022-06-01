@@ -141,7 +141,7 @@ instance Ord Mma where
 mma :: CurrencyPair -> NonEmpty Candle -> Maybe Mma
 mma sym cs =
   (maximum <$>) . nonEmpty $
-    [1 .. 9]
+    [1 .. 8]
       >>= combineMaPeriods sym cs atr
   where
     atr =
@@ -164,9 +164,10 @@ combineMaPeriods sym cs atrs qty =
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
     . ((\p -> (p, ma p cs)) <$>)
-    $ [2, 4 .. 10]
-      <> [15, 30 .. 60]
-      <> [70, 100 .. 360]
+    $ [2, 3, 4]
+      <> [5, 10, 15, 20]
+      <> [30, 50, 60]
+      <> [90, 180, 270, 360]
 
 newMma ::
   CurrencyPair ->
