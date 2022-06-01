@@ -209,12 +209,15 @@ newMma sym cs0 atrs cs curves = do
                 }
         )
         <$> [10, 9 .. 5]
-  entry <-
-    newEntry $ mmaRewardToRisk maxMma
-  pure
-    maxMma
-      { mmaEntry = snd entry
-      }
+  if length (mmaTrades maxMma) < 4
+    then Nothing
+    else do
+      entry <-
+        newEntry $ mmaRewardToRisk maxMma
+      pure
+        maxMma
+          { mmaEntry = snd entry
+          }
 
 tryFindEntries ::
   RewardToRisk ->

@@ -54,7 +54,7 @@ theBestMma ctf vol quote = do
               ctf
               sym
               Candles.optsDef
-                { Candles.limit = Just 1250
+                { Candles.limit = Just 1000
                 }
       )
       . filter (`Map.member` goodTickers)
