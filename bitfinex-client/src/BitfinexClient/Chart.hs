@@ -63,21 +63,18 @@ totalChart ctf mma =
           )
           [ "left",
             "opaque",
-            "box",
-            "3"
+            "box"
           ]
         $ Opts.boxwidthRelative 1 Opts.deflt
     )
     $ candleChart (Mma.mmaCandles mma)
       <> mconcat
-        ( mmaChart <$> Map.assocs (Mma.mmaCurves mma)
+        ( maChart <$> Map.assocs (Mma.mmaCurves mma)
         )
       <> entryChart
         ( Mma.mmaEntry mma : (fst <$> Mma.mmaTrades mma)
         )
       <> exitChart
-        "Exit"
-        ColorSpec.darkOrange
         ( Mma.mmaTrades mma
         )
 
@@ -96,10 +93,10 @@ candleChart =
     . ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleHigh x)) <$>)
     . toList
 
-mmaChart ::
+maChart ::
   (Ma.MaPeriod, Map UTCTime Ma.Ma) ->
   Plot2D.T UTCTime Rational
-mmaChart (period, xs) =
+maChart (period, xs) =
   ( Graph2D.lineSpec
       ( LineSpec.lineWidth lineSize
           . LineSpec.title
@@ -136,16 +133,14 @@ entryChart xs =
       )
 
 exitChart ::
-  String ->
-  ColorSpec.T ->
   [(Mma.TradeEntry, Mma.TradeExit)] ->
   Plot2D.T UTCTime Rational
-exitChart title color cs =
+exitChart cs =
   Graph2D.lineSpec
     ( LineSpec.pointSize 0.2
-        . LineSpec.pointType 7
-        . LineSpec.title title
-        $ LineSpec.lineColor color LineSpec.deflt
+        . LineSpec.pointType 9
+        . LineSpec.title "Exit"
+        $ LineSpec.lineColor ColorSpec.navy LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points
