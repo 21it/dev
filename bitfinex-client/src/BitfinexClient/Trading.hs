@@ -29,13 +29,14 @@ theBestMma ctf quote = do
     Bfx.symbolsDetails
   cs <-
     mapM
-      ( \sym ->
+      ( \sym -> do
+          liftIO $ threadDelay 100000
           (sym,)
             <$> Bfx.candlesHist
               ctf
               sym
               Candles.optsDef
-                { Candles.limit = Just 2000
+                { Candles.limit = Just 1500
                 }
       )
       . traceShowId

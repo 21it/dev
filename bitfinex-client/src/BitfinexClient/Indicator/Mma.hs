@@ -135,8 +135,8 @@ instance NFData Mma
 instance Ord Mma where
   compare lhs rhs =
     compare
-      (length $ mmaTrades lhs)
-      (length $ mmaTrades rhs)
+      (length $ mmaTrades lhs, mmaRewardToRisk lhs)
+      (length $ mmaTrades rhs, mmaRewardToRisk rhs)
 
 mma :: CurrencyPair -> NonEmpty Candle -> Maybe Mma
 mma sym cs =
@@ -164,10 +164,10 @@ combineMaPeriods sym cs atrs qty =
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
     . ((\p -> (p, ma p cs)) <$>)
-    $ [3]
+    $ [2, 3, 4]
       <> [5, 10, 15, 20]
       <> [30, 60]
-      <> [90, 180, 270]
+      <> [90, 180, 270, 360]
 
 newMma ::
   CurrencyPair ->

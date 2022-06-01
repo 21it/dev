@@ -118,7 +118,7 @@ takeProfitChart xs =
   Graph2D.lineSpec
     ( LineSpec.pointSize 0.24
         . LineSpec.title "Entry"
-        $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.darkMagenta LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.financeBars
