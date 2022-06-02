@@ -116,7 +116,7 @@ entryChart xs =
   Graph2D.lineSpec
     ( LineSpec.lineWidth entrySize
         . LineSpec.title "Entry"
-        $ LineSpec.lineColor ColorSpec.black LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.darkMagenta LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.financeBars
@@ -140,7 +140,7 @@ exitChart cs =
     ( LineSpec.pointSize 0.2
         . LineSpec.pointType 9
         . LineSpec.title "Exit"
-        $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.darkMagenta LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points
