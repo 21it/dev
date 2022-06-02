@@ -67,9 +67,10 @@ totalChart ctf mma =
           ]
         $ Opts.boxwidthRelative 1 Opts.deflt
     )
-    $ candleChart (Mma.mmaCandles mma)
+    $ candleChart start (Mma.mmaCandles mma)
       <> mconcat
-        ( maChart <$> Map.assocs (Mma.mmaCurves mma)
+        ( uncurry (maChart start)
+            <$> Map.assocs (Mma.mmaCurves mma)
         )
       <> entryChart
         ( Mma.mmaEntry mma : (fst <$> Mma.mmaTrades mma)
@@ -77,11 +78,14 @@ totalChart ctf mma =
       <> exitChart
         ( Mma.mmaTrades mma
         )
+  where
+    start = Mma.mmaDataFrom mma
 
 candleChart ::
+  UTCTime ->
   NonEmpty Bfx.Candle ->
   Plot2D.T UTCTime Rational
-candleChart =
+candleChart start =
   ( Graph2D.lineSpec
       ( LineSpec.lineWidth lineSize
           . LineSpec.title "High"
@@ -91,12 +95,15 @@ candleChart =
   )
     . Plot2D.list Graph2D.lines
     . ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleHigh x)) <$>)
+    . filter ((>= start) . Bfx.candleAt)
     . toList
 
 maChart ::
-  (Ma.MaPeriod, Map UTCTime Ma.Ma) ->
+  UTCTime ->
+  Ma.MaPeriod ->
+  Map UTCTime Ma.Ma ->
   Plot2D.T UTCTime Rational
-maChart (period, xs) =
+maChart start period xs =
   ( Graph2D.lineSpec
       ( LineSpec.lineWidth lineSize
           . LineSpec.title
@@ -107,6 +114,7 @@ maChart (period, xs) =
   )
     . Plot2D.list Graph2D.lines
     . (second unMa <$>)
+    . filter ((>= start) . fst)
     $ Map.assocs xs
 
 entryChart ::

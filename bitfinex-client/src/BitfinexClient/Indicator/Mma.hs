@@ -120,7 +120,8 @@ data Mma = Mma
     mmaCurves :: Map MaPeriod (Map UTCTime Ma),
     mmaTrades :: [(TradeEntry, TradeExit)],
     mmaRewardToRisk :: RewardToRisk,
-    mmaEntry :: TradeEntry
+    mmaEntry :: TradeEntry,
+    mmaDataFrom :: UTCTime
   }
   deriving stock
     ( Eq,
@@ -198,6 +199,8 @@ newMma sym cs0 atrs cs curves = do
             trades <-
               V.mapM (tryFindExit csPrev) $
                 tryFindEntries r2r cs csPrev atrs curves
+            mas <-
+              nonEmpty $ Map.assocs shortestCurve
             pure
               Mma
                 { mmaSymbol = sym,
@@ -205,7 +208,8 @@ newMma sym cs0 atrs cs curves = do
                   mmaCurves = Map.fromList $ from curves,
                   mmaTrades = V.toList trades,
                   mmaRewardToRisk = r2r,
-                  mmaEntry = snd dummyEntry
+                  mmaEntry = snd dummyEntry,
+                  mmaDataFrom = minimum $ fst <$> mas
                 }
         )
         <$> [10, 9 .. 5]
@@ -218,6 +222,14 @@ newMma sym cs0 atrs cs curves = do
         maxMma
           { mmaEntry = snd entry
           }
+  where
+    shortestCurve =
+      snd $
+        maximumBy
+          ( \lhs rhs ->
+              compare (fst lhs) (fst rhs)
+          )
+          curves
 
 tryFindEntries ::
   RewardToRisk ->
