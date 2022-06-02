@@ -8,13 +8,17 @@ extra-deps:
   - compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
   - github: 21it/persistent-migration
     commit: 8d5d50204eec2d3d4bd9bb1f61e79ece2035ff8c
+    # nix-sha256: 1v993ckrhgm7v3f1km174r2r93scpxhc5v1ckfhmqay391jf5qzv
   - github: 21it/witch
     commit: efe4cdca31f90067edf7a09d0770a649d17a1c0b
+    # nix-sha256: 1bskm1qz74wcvmckfw5fvq93mx2hykll61v2hw734gf0l7a6bpl7
   - github: 21it/units
     commit: 8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990
     subdirs:
     - units
+    # nix-sha256: 0r7vwwcda06qq87blbyvnkcap8a0ahlj7gj6xwxlh626ibiz0v0g
   - github: coingaming/src
     commit: 359acd74b5c1f3900b7645fd3adb0521001a6d23
     subdirs:
     - generic-pretty-instances
+    # nix-sha256: 0z2jdrzrxll3xfc86w4wygmvsg6jbgm0k2yy7jxi3qm7y2amqvfr

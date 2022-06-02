@@ -7,8 +7,8 @@ CONTAINER="nixos/nix:2.3.12"
 USER="${USER:-user}"
 NIX_CONF="http2 = false
 trusted-users = root $USER
-extra-substituters = https://cache.nixos.org https://hydra.iohk.io https://all-hies.cachix.org
-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= all-hies.cachix.org-1:JjrzAOEUsD9ZMt8fdFbzo3jNAyEWlPAwdVuHw4RD43k=
+extra-substituters = https://cache.nixos.org https://hydra.iohk.io
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 "
 BITFINEX_API_KEY="${BITFINEX_API_KEY:-TODO}"
 BITFINEX_PRV_KEY="${BITFINEX_PRV_KEY:-TODO}"

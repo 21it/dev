@@ -12,7 +12,7 @@
     in
       {
         ide21 = import (fetchTarball "https://github.com/21it/ultimate-haskell-ide/tarball/ba6c0091debe147b1a23ecdae97efd42312f9b4f") {inherit bundle;};
-        haskellPackages = super.haskell.packages.ghc921.extend(
+        haskellPackages = super.haskell.packages.ghc902.extend(
           self': super': {
             bitfinex-client =
               callPackage ../bitfinex-client/nix/default.nix {

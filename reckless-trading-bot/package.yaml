@@ -94,7 +94,6 @@ library:
   - monad-logger
   # bytes
   - bytestring
-  - text
   - aeson
   # threads
   - async

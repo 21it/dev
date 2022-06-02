@@ -2,8 +2,8 @@
 , containers, envparse, errors, esqueleto, extra, hpack, hspec
 , katip, lib, monad-logger, persistent, persistent-migration
 , persistent-postgresql, resource-pool, singletons, stm
-, template-haskell, text, time, transformers, unbounded-delays
-, units, universum, unliftio, witch
+, template-haskell, time, transformers, unbounded-delays, units
+, universum, unliftio, witch
 }:
 mkDerivation {
   pname = "reckless-trading-bot";
@@ -15,7 +15,7 @@ mkDerivation {
     aeson async base bitfinex-client bytestring containers envparse
     errors esqueleto extra katip monad-logger persistent
     persistent-migration persistent-postgresql resource-pool singletons
-    stm template-haskell text time transformers unbounded-delays units
+    stm template-haskell time transformers unbounded-delays units
     universum unliftio witch
   ];
   libraryToolDepends = [ hpack ];

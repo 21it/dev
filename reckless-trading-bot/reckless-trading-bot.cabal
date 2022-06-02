@@ -106,7 +106,6 @@ library
     , singletons
     , stm
     , template-haskell
-    , text
     , time
     , transformers
     , unbounded-delays
