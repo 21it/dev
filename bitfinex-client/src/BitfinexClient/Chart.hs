@@ -140,7 +140,7 @@ exitChart cs =
     ( LineSpec.pointSize 0.2
         . LineSpec.pointType 9
         . LineSpec.title "Exit"
-        $ LineSpec.lineColor ColorSpec.navy LineSpec.deflt
+        $ LineSpec.lineColor ColorSpec.darkGreen LineSpec.deflt
     )
     <$> Plot2D.list
       Graph2D.points
