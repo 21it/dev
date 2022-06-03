@@ -27,7 +27,7 @@ newExample :: (MonadIO m) => m ()
 newExample = do
   eMma <-
     runExceptT
-      . Trading.theBestMma ctf [moneyQuoteBuy|300000|]
+      . Trading.theBestMma ctf [moneyQuoteBuy|30000|]
       $ CurrencyCode "USD"
   case eMma of
     Left e -> do
