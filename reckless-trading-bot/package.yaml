@@ -103,6 +103,7 @@ library:
   - witch
   - transformers
   - bitfinex-client
+  - telegram-bot-simple
   - unliftio
   - containers
   - envparse

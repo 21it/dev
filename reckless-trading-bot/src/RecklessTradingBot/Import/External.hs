@@ -120,6 +120,8 @@ import Universum as X hiding
   )
 import UnliftIO as X
   ( MonadUnliftIO,
+    UnliftIO (..),
     bracket,
     withRunInIO,
+    withUnliftIO,
   )

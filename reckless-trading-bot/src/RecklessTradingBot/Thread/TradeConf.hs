@@ -42,7 +42,7 @@ reportProfit = do
     currentAmt <-
       Bfx.unMoney <$> withBfxT Bfx.netWorth ($ cc)
     $(logTM) InfoS . logStr $
-      "Total profit is "
+      ("Total profit is " :: Text)
         <> showPercent
           ((currentAmt |-| startAmt) |/| startAmt # Number)
   whenLeft res $ \e ->

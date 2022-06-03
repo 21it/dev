@@ -45,6 +45,7 @@ library
       RecklessTradingBot.Thread.Main
       RecklessTradingBot.Thread.Order
       RecklessTradingBot.Thread.Price
+      RecklessTradingBot.Thread.TelegramBot
       RecklessTradingBot.Thread.TradeConf
       RecklessTradingBot.Util
   other-modules:
@@ -105,6 +106,7 @@ library
     , resource-pool
     , singletons
     , stm
+    , telegram-bot-simple
     , template-haskell
     , time
     , transformers
