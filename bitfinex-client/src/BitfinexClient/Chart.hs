@@ -92,7 +92,7 @@ newChartHeader ctf mma =
           Mma.tradeEntryStopLoss tradeEntry
       )
     <> ",\n"
-    <> "possible profit = "
+    <> "profit = "
     <> showPercent
       ( unProfitRate $
           Mma.tradeEntryProfitRate tradeEntry
@@ -101,14 +101,14 @@ newChartHeader ctf mma =
     <> inspectStrPlain (denominator r2r)
     <> "/"
     <> inspectStrPlain (numerator r2r)
+    <> ", candle timeframe = "
+    <> T.unpack (toTextParam ctf)
     <> ", time = "
     <> T.unpack
       ( formatAsLogTime $
           candleAt entryCandle
       )
     <> " UTC"
-    <> ", candle timeframe = "
-    <> T.unpack (toTextParam ctf)
   where
     r2r = Mma.unRewardToRisk $ Mma.mmaRewardToRisk mma
     tradeEntry = Mma.mmaEntry mma
