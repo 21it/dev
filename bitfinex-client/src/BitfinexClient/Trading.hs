@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Trading
@@ -48,7 +47,7 @@ theBestMma ctf vol quote = do
   cs <-
     mapM
       ( \sym -> do
-          liftIO $ threadDelay 100000
+          liftIO $ threadDelay 250000
           (sym,)
             <$> Bfx.candlesHist
               ctf

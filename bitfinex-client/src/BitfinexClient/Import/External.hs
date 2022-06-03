@@ -1,6 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE TypeApplications #-}
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Import.External
@@ -65,6 +62,9 @@ import Database.Persist as X
   )
 import Database.Persist.Sql as X
   ( PersistFieldSql (..),
+  )
+import Katip.Format.Time as X
+  ( formatAsLogTime,
   )
 import Network.HTTP.Client as X (HttpException (..))
 import Text.PrettyPrint.GenericPretty as X (Out (..))

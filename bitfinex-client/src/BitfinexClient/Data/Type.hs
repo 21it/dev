@@ -351,7 +351,8 @@ newtype ProfitRate = ProfitRate
   deriving newtype
     ( Eq,
       Ord,
-      Show
+      Show,
+      NFData
     )
   deriving stock
     ( Generic,

@@ -115,6 +115,7 @@ library:
   - singletons
   - singletons-base
   # pretty
+  - katip
   - pretty
   - GenericPretty
   - generic-pretty-instances

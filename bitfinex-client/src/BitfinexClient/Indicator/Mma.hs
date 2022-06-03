@@ -54,7 +54,8 @@ data TradeEntry = TradeEntry
     tradeEntryAtr :: Atr,
     tradeEntryPrevSwingLow :: PrevSwingLow,
     tradeEntryStopLoss :: StopLoss,
-    tradeEntryTakeProfit :: TakeProfit
+    tradeEntryTakeProfit :: TakeProfit,
+    tradeEntryProfitRate :: ProfitRate
   }
   deriving stock
     ( Eq,
@@ -260,7 +261,13 @@ tryFindEntries r2r csHist cs atrs curves =
                       tradeEntryAtr = atr,
                       tradeEntryPrevSwingLow = prv,
                       tradeEntryStopLoss = stopLoss,
-                      tradeEntryTakeProfit = takeProfit
+                      tradeEntryTakeProfit = takeProfit,
+                      tradeEntryProfitRate =
+                        ProfitRate . unUnitless $
+                          ( unTakeProfit takeProfit
+                              |-| unQuotePerBase (candleClose c1)
+                          )
+                            |/| unQuotePerBase (candleClose c1)
                     }
                 )
             else mempty

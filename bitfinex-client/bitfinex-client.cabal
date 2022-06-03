@@ -114,6 +114,7 @@ library
     , http-client
     , http-client-tls
     , http-types
+    , katip
     , lens-aeson
     , memory
     , parallel

@@ -5,6 +5,8 @@
 module BitfinexClient.Util
   ( showType,
     showPercent,
+    displaySats,
+    displayRational,
     eradicateNull,
     readVia,
     tryReadVia,
@@ -21,14 +23,15 @@ import qualified Data.Text as T
 import qualified Data.Text.Read as T
 import Data.Typeable (typeRep)
 import qualified Data.Vector as V
+import qualified Prelude
 
 showType :: forall a b. (Typeable a, IsString b) => b
 showType =
   show . typeRep $ Proxy @a
 
-showPercent :: Rational -> Text
+showPercent :: (IsString a, Semigroup a) => Rational -> a
 showPercent x =
-  T.pack
+  fromString
     ( F.showFixed
         True
         ( fromRational $
@@ -37,6 +40,27 @@ showPercent x =
         )
     )
     <> "%"
+
+displaySats :: (IsString a) => Rational -> a
+displaySats =
+  displayRational 8
+
+displayRational :: (IsString a) => Int -> Rational -> a
+displayRational len rat =
+  fromString $
+    (if num < 0 then "-" else "")
+      ++ Prelude.shows d ("." ++ right)
+  where
+    right = case take len (go next) of
+      "" -> "0"
+      x -> x
+    (d, next) = abs num `quotRem` den
+    num = numerator rat
+    den = denominator rat
+    go 0 = ""
+    go x =
+      let (d', next') = (10 * x) `quotRem` den
+       in Prelude.shows d' (go next')
 
 eradicateNull :: A.Value -> A.Value
 eradicateNull = \case

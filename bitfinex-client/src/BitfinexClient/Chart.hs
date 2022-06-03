@@ -8,6 +8,7 @@ where
 import qualified BitfinexClient as Bfx
 import BitfinexClient.Import
 import qualified BitfinexClient.Indicator.Ma as Ma
+import BitfinexClient.Indicator.Mma (Mma)
 import qualified BitfinexClient.Indicator.Mma as Mma
 import qualified BitfinexClient.Trading as Trading
 import qualified Data.Map as Map
@@ -26,11 +27,12 @@ newExample :: (MonadIO m) => m ()
 newExample = do
   eMma <-
     runExceptT
-      . Trading.theBestMma ctf [moneyQuoteBuy|10|]
-      $ CurrencyCode "BTC"
+      . Trading.theBestMma ctf [moneyQuoteBuy|300000|]
+      $ CurrencyCode "USD"
   case eMma of
     Left e -> do
       putStrLn (show e :: Text)
+      liftIO $ threadDelay 30000000
       newExample
     Right mma ->
       void
@@ -47,17 +49,7 @@ totalChart ::
 totalChart ctf mma =
   Frame.cons
     ( Opts.key True
-        . Opts.title
-          ( inspectStrPlain (Mma.mmaSymbol mma)
-              <> " "
-              <> T.unpack (toTextParam ctf)
-              <> " candles, approx. reward/risk = "
-              <> ( T.unpack
-                     . showPercent
-                     . Mma.unRewardToRisk
-                     $ Mma.mmaRewardToRisk mma
-                 )
-          )
+        . Opts.title (newChartHeader ctf mma)
         . Opts.add
           ( Option.key "position"
           )
@@ -81,6 +73,47 @@ totalChart ctf mma =
   where
     start = Mma.mmaDataFrom mma
 
+newChartHeader :: CandleTimeFrame -> Mma -> String
+newChartHeader ctf mma =
+  inspectStrPlain (Mma.mmaSymbol mma)
+    <> ", trade entry = "
+    <> displaySats
+      ( from $
+          candleClose entryCandle
+      )
+    <> ", take profit = "
+    <> displaySats
+      ( unQ' . Mma.unTakeProfit $
+          Mma.tradeEntryTakeProfit tradeEntry
+      )
+    <> ", stop loss = "
+    <> displaySats
+      ( unQ' . Mma.unStopLoss $
+          Mma.tradeEntryStopLoss tradeEntry
+      )
+    <> ",\n"
+    <> "possible profit = "
+    <> showPercent
+      ( unProfitRate $
+          Mma.tradeEntryProfitRate tradeEntry
+      )
+    <> ", risk/reward = "
+    <> inspectStrPlain (denominator r2r)
+    <> "/"
+    <> inspectStrPlain (numerator r2r)
+    <> ", time = "
+    <> T.unpack
+      ( formatAsLogTime $
+          candleAt entryCandle
+      )
+    <> " UTC"
+    <> ", candle timeframe = "
+    <> T.unpack (toTextParam ctf)
+  where
+    r2r = Mma.unRewardToRisk $ Mma.mmaRewardToRisk mma
+    tradeEntry = Mma.mmaEntry mma
+    entryCandle = Mma.tradeEntryCandle tradeEntry
+
 candleChart ::
   UTCTime ->
   NonEmpty Bfx.Candle ->
@@ -88,13 +121,23 @@ candleChart ::
 candleChart start =
   ( Graph2D.lineSpec
       ( LineSpec.lineWidth lineSize
-          . LineSpec.title "High"
+          . LineSpec.title "OHLC"
           $ LineSpec.lineColor ColorSpec.gray80 LineSpec.deflt
       )
       <$>
   )
-    . Plot2D.list Graph2D.lines
-    . ((\x -> (Bfx.candleAt x, unQ $ Bfx.candleHigh x)) <$>)
+    . Plot2D.list Graph2D.candleSticks
+    . ( ( \x ->
+            ( Bfx.candleAt x,
+              ( unQ $ Bfx.candleOpen x,
+                unQ $ Bfx.candleLow x,
+                unQ $ Bfx.candleHigh x,
+                unQ $ Bfx.candleClose x
+              )
+            )
+        )
+          <$>
+      )
     . filter ((>= start) . Bfx.candleAt)
     . toList
 

@@ -21,6 +21,7 @@ module BitfinexClient.Data.Metro
     QuotePerBase',
     unQuotePerBase',
     mkQuotePerBase',
+    unUnitless,
     -- | Lossy primitive constructors
     roundMoney,
     roundQuotePerBase,
@@ -292,6 +293,12 @@ mkQuotePerBase' ::
   QuotePerBase'
 mkQuotePerBase' =
   (% quotePerBaseAmt)
+
+unUnitless ::
+  MkQu_DLN Dimensionless LCSU' Rational ->
+  Rational
+unUnitless =
+  (# Number)
 
 quotePerBaseAmt :: MoneyQuoteAmt :/ MoneyBaseAmt
 quotePerBaseAmt =
