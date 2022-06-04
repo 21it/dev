@@ -6,6 +6,7 @@ export RECKLESS_TRADING_BOT_ENV="
     \"api_key\":\"$BITFINEX_API_KEY\",
     \"prv_key\":\"$BITFINEX_PRV_KEY\"
   },
+  \"tele\":\"$TELEGRAM_BOT_KEY\",
   \"pairs\":{
     \"ADABTC\":{
       \"currency_kind\":\"Crypto\",

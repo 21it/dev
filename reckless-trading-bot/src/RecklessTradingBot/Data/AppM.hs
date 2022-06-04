@@ -53,6 +53,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
   getReportStartAmt = asks EnvData.envReportStartAmt
   getReportCurrency = asks EnvData.envReportCurrency
   getPairs = asks EnvData.envPairs
+  getTeleEnv = asks EnvData.envTele
   getExpiredOrders xs = do
     ct <- liftIO getCurrentTime
     ttl <- asks EnvData.envOrderTtl

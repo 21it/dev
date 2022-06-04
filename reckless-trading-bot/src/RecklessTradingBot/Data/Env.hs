@@ -3,6 +3,7 @@
 
 module RecklessTradingBot.Data.Env
   ( TradeEnv (..),
+    TeleEnv (..),
     Env (..),
     withEnv,
   )
@@ -70,9 +71,29 @@ data TradeEnv = TradeEnv
   }
   deriving stock (Eq)
 
+newtype TeleEnv = TeleEnv
+  { unTeleEnv :: Text
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      Read,
+      FromJSON,
+      ToJSON,
+      NFData
+    )
+  deriving stock
+    ( Generic
+    )
+
+instance Prelude.Show TeleEnv where
+  show =
+    const "SECRET"
+
 data Env = Env
   { -- app
     envBfx :: Bfx.Env,
+    envTele :: TeleEnv,
     envPairs :: [MVar TradeEnv],
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
@@ -90,6 +111,7 @@ data Env = Env
 data RawEnv = RawEnv
   { -- app
     rawEnvBfx :: Bfx.RawEnv,
+    rawEnvTele :: TeleEnv,
     rawEnvPairs :: Map Bfx.CurrencyPair RawTradeEnv,
     rawEnvPriceTtl :: Seconds,
     rawEnvOrderTtl :: Seconds,
@@ -203,6 +225,7 @@ withEnv this = do
         Env
           { -- app
             envBfx = bfx,
+            envTele = rawEnvTele rc,
             envPairs = cfg,
             envPriceTtl = rawEnvPriceTtl rc,
             envOrderTtl = rawEnvOrderTtl rc,

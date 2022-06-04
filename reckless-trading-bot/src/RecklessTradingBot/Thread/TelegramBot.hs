@@ -93,6 +93,10 @@ teleJob ::
   Model ->
   Eff Action Model
 teleJob (UnliftIO run) =
+  --
+  -- TODO : use separate thread for this because
+  -- cron jobs are overlapping
+  --
   const
     . eff
     . liftIO
@@ -119,10 +123,11 @@ teleBot run =
 apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
-  --
-  -- TODO : use Env class method
-  --
-  teleToken <- liftIO $ getEnvToken "TELEGRAM_BOT_TOKEN"
-  teleEnv <- liftIO $ defaultTelegramClientEnv teleToken
+  teleEnv <- getTeleEnv
+  teleClientEnv <-
+    liftIO
+      . defaultTelegramClientEnv
+      . coerce
+      $ unTeleEnv teleEnv
   withUnliftIO $ \run ->
-    startBot_ (teleBot run) teleEnv
+    startBot_ (teleBot run) teleClientEnv

@@ -9,6 +9,7 @@ in
   minishell ? false,
   bitfinexApiKey ? "TODO",
   bitfinexPrvKey ? "TODO",
+  telegramBotKey ? "TODO"
 }:
 with pkgs;
 
@@ -29,6 +30,7 @@ stdenv.mkDerivation {
   NIX_PATH="/nix/var/nix/profiles/per-user/root/channels";
   BITFINEX_API_KEY=bitfinexApiKey;
   BITFINEX_PRV_KEY=bitfinexPrvKey;
+  TELEGRAM_BOT_KEY=telegramBotKey;
   shellHook =
     if minishell
     then ""

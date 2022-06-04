@@ -32,7 +32,9 @@ newExample = do
   case eMma of
     Left e -> do
       putStrLn (show e :: Text)
+      putStrLn ("Sleeping 30 seconds..." :: Text)
       liftIO $ threadDelay 30000000
+      putStrLn ("Trying again..." :: Text)
       newExample
     Right mma ->
       void
@@ -126,7 +128,7 @@ candleChart start =
       )
       <$>
   )
-    . Plot2D.list Graph2D.candleSticks
+    . Plot2D.list Graph2D.financeBars
     . ( ( \x ->
             ( Bfx.candleAt x,
               ( unQ $ Bfx.candleOpen x,

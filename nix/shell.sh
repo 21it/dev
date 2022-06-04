@@ -12,6 +12,7 @@ trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDS
 "
 BITFINEX_API_KEY="${BITFINEX_API_KEY:-TODO}"
 BITFINEX_PRV_KEY="${BITFINEX_PRV_KEY:-TODO}"
+TELEGRAM_BOT_KEY="${TELEGRAM_BOT_KEY:-TODO}"
 
 MINISHELL="false"
 CHOWN_CMD="true"
@@ -61,5 +62,6 @@ docker run -i $USE_TTY --rm \
       --arg minishell $MINISHELL \
       --argstr bitfinexApiKey $BITFINEX_API_KEY \
       --argstr bitfinexPrvKey $BITFINEX_PRV_KEY \
+      --argstr telegramBotKey $TELEGRAM_BOT_KEY \
       $NIX_EXTRA_ARGS\"
   "
