@@ -43,6 +43,7 @@ library
       RecklessTradingBot.Storage.Migration
       RecklessTradingBot.Thread.CounterOrder
       RecklessTradingBot.Thread.Main
+      RecklessTradingBot.Thread.Mma
       RecklessTradingBot.Thread.Order
       RecklessTradingBot.Thread.Price
       RecklessTradingBot.Thread.TelegramBot

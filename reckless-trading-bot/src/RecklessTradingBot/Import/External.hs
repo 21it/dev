@@ -111,6 +111,14 @@ import Katip as X
     registerScribe,
     runKatipContextT,
   )
+import Text.PrettyPrint.GenericPretty as X (Out (..))
+import Text.PrettyPrint.GenericPretty.Import as X
+  ( inspect,
+    inspectGenPlain,
+    inspectPlain,
+    inspectStr,
+    inspectStrPlain,
+  )
 import Universum as X hiding
   ( atomically,
     bracket,

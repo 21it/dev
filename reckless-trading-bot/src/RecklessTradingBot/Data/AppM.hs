@@ -91,6 +91,19 @@ instance (MonadUnliftIO m) => Env (AppM m) where
              )
           then pure ent
           else waitForPrice chan
+  putCurrMma x = do
+    ch <- asks EnvData.envMmaChan
+    liftIO . atomically $ writeTChan ch x
+  rcvNextMma = do
+    ch0 <- asks EnvData.envMmaChan
+    --
+    -- 'dupTChan' and 'readTChan' should not
+    -- be used under the same 'atomically'
+    -- because it will cause deadlock
+    --
+    liftIO $
+      (atomically . readTChan)
+        =<< atomically (dupTChan ch0)
   sleepPriceTtl sym = do
     wantedTtl <- asks EnvData.envPriceTtl
     mPrice <- Price.getLatest sym

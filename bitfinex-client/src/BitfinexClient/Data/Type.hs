@@ -634,9 +634,6 @@ data Error
   | ErrorOrderState (SomeOrder 'Remote)
   | ErrorTrading (CurrencyCode 'Quote) Text
   deriving stock
-    --
-    -- TODO : implement Eq/Ord?
-    --
     ( Show,
       Generic
     )

@@ -39,7 +39,11 @@ import qualified BitfinexClient.Data.MarketAveragePrice as MarketAveragePrice
 import qualified BitfinexClient.Data.SubmitOrder as SubmitOrder
 import qualified BitfinexClient.Data.Wallets as Wallets
 import BitfinexClient.Import
-import qualified BitfinexClient.Import.Internal as X
+import BitfinexClient.Import.Internal as X
+import BitfinexClient.Indicator.Atr as X
+import BitfinexClient.Indicator.Ma as X
+import BitfinexClient.Indicator.Mma as X
+import BitfinexClient.Indicator.Tr as X
 import qualified BitfinexClient.Math as Math
 import qualified BitfinexClient.Rpc.Generic as Generic
 import qualified Data.Map as Map

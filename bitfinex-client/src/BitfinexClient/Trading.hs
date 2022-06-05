@@ -37,11 +37,6 @@ theBestMma ctf vol quote = do
                    )
           )
           tickers
-  putStrLn
-    ( "High Volume Pairs = "
-        <> show (length goodTickers) ::
-        Text
-    )
   syms <-
     Bfx.symbolsDetails
   cs <-
