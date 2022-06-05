@@ -2,6 +2,7 @@
 
 module BitfinexClient.Chart
   ( newExample,
+    newMmaHeader,
   )
 where
 
@@ -22,6 +23,20 @@ import qualified Graphics.Gnuplot.Graph.TwoDimensional as Graph2D
 import qualified Graphics.Gnuplot.LineSpecification as LineSpec
 import qualified Graphics.Gnuplot.Plot.TwoDimensional as Plot2D
 import qualified Graphics.Gnuplot.Terminal.SVG as SVG
+
+newtype MmaHeader = MmaHeader
+  { unMmaHeader :: Text
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      Read,
+      NFData
+    )
+  deriving stock
+    ( Generic
+    )
 
 newExample :: (MonadIO m) => m ()
 newExample = do
@@ -51,7 +66,10 @@ totalChart ::
 totalChart ctf mma =
   Frame.cons
     ( Opts.key True
-        . Opts.title (newChartHeader ctf mma)
+        . Opts.title
+          ( T.unpack . unMmaHeader $
+              newMmaHeader ctf mma
+          )
         . Opts.add
           ( Option.key "position"
           )
@@ -75,42 +93,40 @@ totalChart ctf mma =
   where
     start = Mma.mmaDataFrom mma
 
-newChartHeader :: CandleTimeFrame -> Mma -> String
-newChartHeader ctf mma =
-  inspectStrPlain (Mma.mmaSymbol mma)
-    <> ", trade entry = "
-    <> displaySats
-      ( from $
-          candleClose entryCandle
-      )
-    <> ", take profit = "
-    <> displaySats
-      ( unQ' . Mma.unTakeProfit $
-          Mma.tradeEntryTakeProfit tradeEntry
-      )
-    <> ", stop loss = "
-    <> displaySats
-      ( unQ' . Mma.unStopLoss $
-          Mma.tradeEntryStopLoss tradeEntry
-      )
-    <> ",\n"
-    <> "profit = "
-    <> showPercent
-      ( unProfitRate $
-          Mma.tradeEntryProfitRate tradeEntry
-      )
-    <> ", risk/reward = "
-    <> inspectStrPlain (denominator r2r)
-    <> "/"
-    <> inspectStrPlain (numerator r2r)
-    <> ", candle timeframe = "
-    <> T.unpack (toTextParam ctf)
-    <> ", time = "
-    <> T.unpack
-      ( formatAsLogTime $
-          candleAt entryCandle
-      )
-    <> " UTC"
+newMmaHeader :: CandleTimeFrame -> Mma -> MmaHeader
+newMmaHeader ctf mma =
+  MmaHeader $
+    inspectPlain (Mma.mmaSymbol mma)
+      <> ", trade entry = "
+      <> displaySats
+        ( from $
+            candleClose entryCandle
+        )
+      <> ", take profit = "
+      <> displaySats
+        ( unQ' . Mma.unTakeProfit $
+            Mma.tradeEntryTakeProfit tradeEntry
+        )
+      <> ", stop loss = "
+      <> displaySats
+        ( unQ' . Mma.unStopLoss $
+            Mma.tradeEntryStopLoss tradeEntry
+        )
+      <> ",\n"
+      <> "profit = "
+      <> showPercent
+        ( unProfitRate $
+            Mma.tradeEntryProfitRate tradeEntry
+        )
+      <> ", risk/reward = "
+      <> inspectPlain (denominator r2r)
+      <> "/"
+      <> inspectPlain (numerator r2r)
+      <> ", candle timeframe = "
+      <> toTextParam ctf
+      <> ", time = "
+      <> formatAsLogTime (candleAt entryCandle)
+      <> " UTC"
   where
     r2r = Mma.unRewardToRisk $ Mma.mmaRewardToRisk mma
     tradeEntry = Mma.mmaEntry mma

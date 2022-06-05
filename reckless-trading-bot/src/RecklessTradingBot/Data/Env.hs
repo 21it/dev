@@ -101,6 +101,7 @@ data Env = Env
     envReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
     envPriceChan :: TChan (Entity Price),
     envMmaChan :: TChan Bfx.Mma,
+    envLastMma :: TMVar Bfx.Mma,
     -- storage
     envSqlPool :: Pool SqlBackend,
     -- logging
@@ -219,6 +220,9 @@ withEnv this = do
       mmaChan <-
         liftIO $
           atomically newBroadcastTChan
+      mmaVar <-
+        liftIO $
+          atomically newEmptyTMVar
       --
       -- TODO : separate thread to update Bfx.symbolsDetails
       --
@@ -237,6 +241,7 @@ withEnv this = do
             envReportCurrency = rawEnvReportCurrency rc,
             envPriceChan = priceChan,
             envMmaChan = mmaChan,
+            envLastMma = mmaVar,
             -- storage
             envSqlPool = pool,
             -- logging

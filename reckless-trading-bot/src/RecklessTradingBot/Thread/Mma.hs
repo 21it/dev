@@ -22,8 +22,7 @@ apply = do
     case eMma of
       Right mma -> do
         $(logTM) DebugS . logStr $
-          "Found good Mma for "
-            <> inspect (Bfx.mmaSymbol mma)
+          "Found good Mma for " <> inspect (Bfx.mmaSymbol mma)
         putCurrMma mma
         sleep normalCoolDown
       Left e@Bfx.ErrorTrading {} -> do

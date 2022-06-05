@@ -89,7 +89,8 @@ library
       UndecidableInstances
   ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -fprint-potential-instances
   build-depends:
-      aeson
+      GenericPretty
+    , aeson
     , async
     , base >=4.15 && <5
     , bitfinex-client
@@ -99,6 +100,7 @@ library
     , errors
     , esqueleto
     , extra
+    , generic-pretty-instances
     , katip
     , monad-logger
     , persistent

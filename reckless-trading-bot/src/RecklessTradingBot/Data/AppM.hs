@@ -93,7 +93,11 @@ instance (MonadUnliftIO m) => Env (AppM m) where
           else waitForPrice chan
   putCurrMma x = do
     ch <- asks EnvData.envMmaChan
-    liftIO . atomically $ writeTChan ch x
+    var <- asks EnvData.envLastMma
+    liftIO . atomically $ do
+      writeTChan ch x
+      void $ tryTakeTMVar var
+      putTMVar var x
   rcvNextMma = do
     ch0 <- asks EnvData.envMmaChan
     --
@@ -104,6 +108,9 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     liftIO $
       (atomically . readTChan)
         =<< atomically (dupTChan ch0)
+  getLastMma = do
+    var <- asks EnvData.envLastMma
+    liftIO . atomically $ tryReadTMVar var
   sleepPriceTtl sym = do
     wantedTtl <- asks EnvData.envPriceTtl
     mPrice <- Price.getLatest sym

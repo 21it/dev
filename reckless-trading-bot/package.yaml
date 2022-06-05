@@ -92,6 +92,8 @@ library:
   # logging
   - katip
   - monad-logger
+  - GenericPretty
+  - generic-pretty-instances
   # bytes
   - bytestring
   - aeson

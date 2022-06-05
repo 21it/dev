@@ -29,6 +29,7 @@ class (Storage m, KatipContext m) => Env m where
   rcvNextPrice :: Bfx.CurrencyPair -> m (Entity Price)
   putCurrMma :: Bfx.Mma -> m ()
   rcvNextMma :: m Bfx.Mma
+  getLastMma :: m (Maybe Bfx.Mma)
   sleepPriceTtl :: Bfx.CurrencyPair -> m ()
   getReportStartAmt :: m (Bfx.Money 'Bfx.Quote 'Bfx.Sell)
   getReportCurrency :: m (Bfx.CurrencyCode 'Bfx.Quote)

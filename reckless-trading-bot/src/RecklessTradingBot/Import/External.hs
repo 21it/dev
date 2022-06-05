@@ -21,6 +21,13 @@ import Control.Concurrent.STM.TChan as X
     readTChan,
     writeTChan,
   )
+import Control.Concurrent.STM.TMVar as X
+  ( TMVar,
+    newEmptyTMVar,
+    putTMVar,
+    tryReadTMVar,
+    tryTakeTMVar,
+  )
 import Control.Concurrent.Thread.Delay as X (delay)
 import Control.Error.Safe as X (tryJust)
 import Control.Monad.Trans.Except as X
