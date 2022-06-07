@@ -2,6 +2,7 @@
 
 module BitfinexClient.Chart
   ( newExample,
+    MmaHeader (..),
     newMmaHeader,
   )
 where

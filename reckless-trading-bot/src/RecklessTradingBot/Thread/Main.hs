@@ -8,6 +8,7 @@ where
 
 import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Storage.Migration as Migration
+import qualified RecklessTradingBot.Thread.Mma as Mma
 import qualified RecklessTradingBot.Thread.TelegramBot as TelegramBot
 
 -- import qualified RecklessTradingBot.Thread.CounterOrder as ThreadCounterOrder
@@ -25,6 +26,7 @@ apply = do
         -- ThreadPrice.apply,
         -- ThreadOrder.apply,
         -- ThreadCounterOrder.apply
+        Mma.apply,
         TelegramBot.apply
       ]
   liftIO
