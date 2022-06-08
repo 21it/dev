@@ -586,6 +586,8 @@ data CandleTimeFrame
       Generic
     )
 
+instance NFData CandleTimeFrame
+
 instance ToRequestParam CandleTimeFrame where
   toTextParam =
     T.pack

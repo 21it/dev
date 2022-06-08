@@ -1,8 +1,9 @@
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module BitfinexClient.Chart
-  ( newExample,
-    MmaHeader (..),
+  ( MmaHeader (..),
+    newExample,
+    withMmaSvg,
     newMmaHeader,
   )
 where
@@ -43,7 +44,7 @@ newExample :: (MonadIO m) => m ()
 newExample = do
   eMma <-
     runExceptT
-      . Trading.theBestMma ctf [moneyQuoteBuy|30000|]
+      . Trading.theBestMma Ctf1m [moneyQuoteBuy|30000|]
       $ CurrencyCode "USD"
   case eMma of
     Left e -> do
@@ -56,20 +57,31 @@ newExample = do
       void
         . liftIO
         . GP.plotSync (SVG.cons "/app/build/output.svg")
-        $ totalChart ctf mma
-  where
-    ctf = Ctf1m
+        $ totalChart mma
+
+withMmaSvg ::
+  (MonadIO m, MonadMask m) =>
+  Mma.Mma ->
+  (FilePath -> Handle -> m a) ->
+  m a
+withMmaSvg mma action =
+  withSystemTempFile "gnuplot.svg" $
+    \path handle -> do
+      void
+        . liftIO
+        . GP.plotSync (SVG.cons path)
+        $ totalChart mma
+      action path handle
 
 totalChart ::
-  CandleTimeFrame ->
   Mma.Mma ->
   Frame.T (Graph2D.T UTCTime Rational)
-totalChart ctf mma =
+totalChart mma =
   Frame.cons
     ( Opts.key True
         . Opts.title
           ( T.unpack . unMmaHeader $
-              newMmaHeader ctf mma
+              newMmaHeader mma
           )
         . Opts.add
           ( Option.key "position"
@@ -94,8 +106,8 @@ totalChart ctf mma =
   where
     start = Mma.mmaDataFrom mma
 
-newMmaHeader :: CandleTimeFrame -> Mma -> MmaHeader
-newMmaHeader ctf mma =
+newMmaHeader :: Mma -> MmaHeader
+newMmaHeader mma =
   MmaHeader $
     inspectPlain (Mma.mmaSymbol mma)
       <> ", trade entry = "
@@ -124,7 +136,7 @@ newMmaHeader ctf mma =
       <> "/"
       <> inspectPlain (numerator r2r)
       <> ", candle timeframe = "
-      <> toTextParam ctf
+      <> toTextParam (Mma.mmaCtf mma)
       <> ", time = "
       <> formatAsLogTime (candleAt entryCandle)
       <> " UTC"

@@ -3,8 +3,8 @@
 , generic-pretty-instances, GenericPretty, gnuplot, hpack, hspec
 , http-client, http-client-tls, http-types, katip, lens-aeson, lib
 , memory, parallel, persistent, pretty, siggy-chardust, singletons
-, singletons-base, template-haskell, text, time, transformers
-, units, universum, unliftio, vector, witch
+, singletons-base, template-haskell, temporary, text, time
+, transformers, units, universum, unliftio, vector, witch
 }:
 mkDerivation {
   pname = "bitfinex-client";
@@ -15,8 +15,8 @@ mkDerivation {
     cryptonite envparse extra generic-pretty-instances GenericPretty
     gnuplot http-client http-client-tls http-types katip lens-aeson
     memory parallel persistent pretty siggy-chardust singletons
-    singletons-base template-haskell text time transformers units
-    universum unliftio vector witch
+    singletons-base template-haskell temporary text time transformers
+    units universum unliftio vector witch
   ];
   libraryToolDepends = [ hpack ];
   testHaskellDepends = [ aeson base containers hspec ];

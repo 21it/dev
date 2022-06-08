@@ -12,8 +12,9 @@ import qualified BitfinexClient.Chart as Chart
 import Data.Maybe
 import RecklessTradingBot.Import
 import Telegram.Bot.API
+import qualified Telegram.Bot.API.Methods as Api
+import qualified Telegram.Bot.API.Types as Api
 import Telegram.Bot.Simple
-import qualified Telegram.Bot.Simple.Reply as Reply
 
 newtype TeleState = TeleState
   { unTeleState :: Maybe Bfx.Mma
@@ -66,12 +67,28 @@ teleJob (UnliftIO run) prv = do
   prv <# do
     new <- liftIO $ run getLastMma
     whenJust new $ \mma ->
-      when (new /= unTeleState prv) $
-        Reply.replyTo
-          (SomeChatUsername "TODO")
-          . Reply.toReplyMessage
-          . Chart.unMmaHeader
-          $ Chart.newMmaHeader Bfx.Ctf1m mma
+      when (new /= unTeleState prv)
+        . void
+        . liftClientM
+        . Chart.withMmaSvg mma
+        $ \svg ->
+          const . Api.sendPhoto $
+            Api.SendPhotoRequest
+              { Api.sendPhotoChatId =
+                  SomeChatUsername "",
+                Api.sendPhotoPhoto =
+                  Api.MakePhotoFile $
+                    Api.InputFile svg "image/svg+xml",
+                Api.sendPhotoThumb = Nothing,
+                Api.sendPhotoCaption = Nothing,
+                Api.sendPhotoParseMode = Nothing,
+                Api.sendPhotoCaptionEntities = Nothing,
+                Api.sendPhotoDisableNotification = Nothing,
+                Api.sendPhotoProtectContent = Nothing,
+                Api.sendPhotoReplyToMessageId = Nothing,
+                Api.sendPhotoAllowSendingWithoutReply = Nothing,
+                Api.sendPhotoReplyMarkup = Nothing
+              }
     pure new
 
 teleBot ::

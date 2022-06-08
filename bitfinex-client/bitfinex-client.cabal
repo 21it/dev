@@ -124,6 +124,7 @@ library
     , singletons
     , singletons-base
     , template-haskell
+    , temporary
     , text
     , time
     , transformers

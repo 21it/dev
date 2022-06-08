@@ -101,6 +101,7 @@ library:
   - combinat
   # other
   - parallel
+  - temporary
   - transformers
   - time
   - units

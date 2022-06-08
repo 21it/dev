@@ -122,7 +122,8 @@ data Mma = Mma
     mmaTrades :: [(TradeEntry, TradeExit)],
     mmaRewardToRisk :: RewardToRisk,
     mmaEntry :: TradeEntry,
-    mmaDataFrom :: UTCTime
+    mmaDataFrom :: UTCTime,
+    mmaCtf :: CandleTimeFrame
   }
   deriving stock
     ( Eq,
@@ -140,24 +141,29 @@ instance Ord Mma where
       (length $ mmaTrades lhs, mmaRewardToRisk lhs)
       (length $ mmaTrades rhs, mmaRewardToRisk rhs)
 
-mma :: CurrencyPair -> NonEmpty Candle -> Maybe Mma
-mma sym cs =
+mma ::
+  CandleTimeFrame ->
+  CurrencyPair ->
+  NonEmpty Candle ->
+  Maybe Mma
+mma ctf sym cs =
   (maximum <$>) . nonEmpty $
     [1 .. 8]
-      >>= combineMaPeriods sym cs atr
+      >>= combineMaPeriods ctf sym cs atr
   where
     atr =
       Atr.atr cs
 
 combineMaPeriods ::
+  CandleTimeFrame ->
   CurrencyPair ->
   NonEmpty Candle ->
   Map UTCTime Atr ->
   CrvQty ->
   [Mma]
-combineMaPeriods sym cs atrs qty =
+combineMaPeriods ctf sym cs atrs qty =
   mapMaybe
-    ( newMma sym cs atrs
+    ( newMma ctf sym cs atrs
         . V.indexed
         . V.fromList
         $ toList cs
@@ -172,13 +178,14 @@ combineMaPeriods sym cs atrs qty =
       <> [90, 180, 270, 360]
 
 newMma ::
+  CandleTimeFrame ->
   CurrencyPair ->
   NonEmpty Candle ->
   Map UTCTime Atr ->
   Vector (Int, Candle) ->
   NonEmpty (MaPeriod, Map UTCTime Ma) ->
   Maybe Mma
-newMma sym cs0 atrs cs curves = do
+newMma ctf sym cs0 atrs cs curves = do
   (csPrev, cLast) <- V.unsnoc cs
   (_, cPrev) <- V.unsnoc csPrev
   let newEntry r2r =
@@ -210,7 +217,8 @@ newMma sym cs0 atrs cs curves = do
                   mmaTrades = V.toList trades,
                   mmaRewardToRisk = r2r,
                   mmaEntry = snd dummyEntry,
-                  mmaDataFrom = minimum $ fst <$> mas
+                  mmaDataFrom = minimum $ fst <$> mas,
+                  mmaCtf = ctf
                 }
         )
         <$> [10, 9 .. 5]

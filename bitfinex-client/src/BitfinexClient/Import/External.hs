@@ -67,6 +67,7 @@ import Katip.Format.Time as X
   ( formatAsLogTime,
   )
 import Network.HTTP.Client as X (HttpException (..))
+import System.IO.Temp as X (withSystemTempFile)
 import Text.PrettyPrint.GenericPretty as X (Out (..))
 import Text.PrettyPrint.GenericPretty.Import as X
   ( inspect,

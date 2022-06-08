@@ -65,4 +65,4 @@ theBestMma ctf vol quote = do
         . nonEmpty
         . catMaybes
         . Par.withStrategy (Par.parTraversable Par.rdeepseq)
-        $ uncurry Mma.mma <$> toList ncs
+        $ uncurry (Mma.mma ctf) <$> toList ncs

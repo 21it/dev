@@ -19,6 +19,19 @@ packages:
   original:
     hackage: compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
 - completed:
+    sha256: ee3eebb54d365ffa83f320b568fa36a8ab392a8ded1d559feda5a44894b7f6a0
+    name: servant-client
+    subdir: servant-client
+    size: 403539
+    url: https://github.com/haskell-servant/servant/archive/1fba9dc6048cea6184964032b861b052cd54878c.tar.gz
+    pantry-tree:
+      sha256: c37445bd27aa2f7234b3c5ef73533b0952b979f005d38ca5ebfc8230e2712f92
+      size: 1481
+    version: '0.19'
+  original:
+    subdir: servant-client
+    url: https://github.com/haskell-servant/servant/archive/1fba9dc6048cea6184964032b861b052cd54878c.tar.gz
+- completed:
     sha256: 27c7ec80766db7818d61652b0c485698063689f070dc68a7da7efb015cfc2e22
     name: persistent-migration
     size: 28355
