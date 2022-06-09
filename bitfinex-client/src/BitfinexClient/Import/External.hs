@@ -67,6 +67,9 @@ import Katip.Format.Time as X
   ( formatAsLogTime,
   )
 import Network.HTTP.Client as X (HttpException (..))
+import System.Exit as X
+  ( ExitCode (..),
+  )
 import System.IO.Temp as X (withSystemTempFile)
 import Text.PrettyPrint.GenericPretty as X (Out (..))
 import Text.PrettyPrint.GenericPretty.Import as X
@@ -91,4 +94,8 @@ import UnliftIO as X
     catch,
     catches,
     finally,
+  )
+import UnliftIO.Directory as X
+  ( copyFile,
+    removeFile,
   )

@@ -120,6 +120,7 @@ library
     , parallel
     , persistent
     , pretty
+    , reanimate
     , siggy-chardust
     , singletons
     , singletons-base

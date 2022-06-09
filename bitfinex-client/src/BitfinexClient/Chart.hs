@@ -4,6 +4,7 @@ module BitfinexClient.Chart
   ( MmaHeader (..),
     newExample,
     withMmaSvg,
+    withMmaPng,
     newMmaHeader,
   )
 where
@@ -25,6 +26,7 @@ import qualified Graphics.Gnuplot.Graph.TwoDimensional as Graph2D
 import qualified Graphics.Gnuplot.LineSpecification as LineSpec
 import qualified Graphics.Gnuplot.Plot.TwoDimensional as Plot2D
 import qualified Graphics.Gnuplot.Terminal.SVG as SVG
+import qualified Reanimate.Raster as Reanimate
 
 newtype MmaHeader = MmaHeader
   { unMmaHeader :: Text
@@ -53,25 +55,54 @@ newExample = do
       liftIO $ threadDelay 30000000
       putStrLn ("Trying again..." :: Text)
       newExample
-    Right mma ->
-      void
-        . liftIO
-        . GP.plotSync (SVG.cons "/app/build/output.svg")
-        $ totalChart mma
+    Right mma -> do
+      let svgPath = "/app/build/output.svg" :: FilePath
+      let pngPath = "/app/build/output.png" :: FilePath
+      svgRes <-
+        liftIO
+          . GP.plotSync (SVG.cons svgPath)
+          $ totalChart mma
+      when (svgRes /= ExitSuccess) $
+        error $ "Fatal SVG error " <> show svgRes
+      let tmpPath =
+            Reanimate.svgAsPngFile $
+              Reanimate.mkImage 16 9 svgPath
+      copyFile tmpPath pngPath
+      removeFile tmpPath
 
 withMmaSvg ::
   (MonadIO m, MonadMask m) =>
   Mma.Mma ->
-  (FilePath -> Handle -> m a) ->
+  (FilePath -> m a) ->
   m a
 withMmaSvg mma action =
   withSystemTempFile "gnuplot.svg" $
-    \path handle -> do
-      void
-        . liftIO
-        . GP.plotSync (SVG.cons path)
-        $ totalChart mma
-      action path handle
+    \svgPath handle -> do
+      hClose handle
+      svgRes <-
+        liftIO
+          . GP.plotSync (SVG.cons svgPath)
+          $ totalChart mma
+      when (svgRes /= ExitSuccess) $
+        error $ "Fatal SVG error " <> show svgRes
+      action svgPath
+
+withMmaPng ::
+  (MonadIO m, MonadMask m) =>
+  Mma.Mma ->
+  (FilePath -> m a) ->
+  m a
+withMmaPng mma action =
+  withMmaSvg mma $ \svgPath ->
+    withSystemTempFile "gnuplot.png" $
+      \pngPath handle -> do
+        hClose handle
+        let tmpPath =
+              Reanimate.svgAsPngFile $
+                Reanimate.mkImage 16 9 svgPath
+        copyFile tmpPath pngPath
+        removeFile tmpPath
+        action pngPath
 
 totalChart ::
   Mma.Mma ->

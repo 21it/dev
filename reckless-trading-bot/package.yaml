@@ -101,11 +101,12 @@ library:
   - async
   - stm
   - resource-pool
+  # web
+  - bitfinex-client
+  - telegram-bot-simple
   # other
   - witch
   - transformers
-  - bitfinex-client
-  - telegram-bot-simple
   - unliftio
   - containers
   - envparse

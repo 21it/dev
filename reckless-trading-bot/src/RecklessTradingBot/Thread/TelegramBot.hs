@@ -70,15 +70,15 @@ teleJob (UnliftIO run) prv = do
       when (new /= unTeleState prv)
         . void
         . liftClientM
-        . Chart.withMmaSvg mma
-        $ \svg ->
-          const . Api.sendPhoto $
+        . Chart.withMmaPng mma
+        $ \img ->
+          Api.sendPhoto $
             Api.SendPhotoRequest
               { Api.sendPhotoChatId =
                   SomeChatUsername "",
                 Api.sendPhotoPhoto =
                   Api.MakePhotoFile $
-                    Api.InputFile svg "image/svg+xml",
+                    Api.InputFile img "image/png",
                 Api.sendPhotoThumb = Nothing,
                 Api.sendPhotoCaption = Nothing,
                 Api.sendPhotoParseMode = Nothing,

@@ -96,6 +96,7 @@ library:
   - bytestring
   - base16-bytestring
   - gnuplot
+  - reanimate
   # numbers
   - siggy-chardust
   - combinat

@@ -18,6 +18,7 @@ stdenv.mkDerivation {
   buildInputs = [
     ide21
     gnuplot
+    librsvg
     postgresql
     nix-bundle
     secp256k1
