@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
-module RecklessTradingBot.Thread.TelegramBot
+module RecklessTradingBot.Thread.TeleBot
   ( apply,
   )
 where
@@ -66,6 +66,7 @@ teleJob ::
 teleJob (UnliftIO run) prv = do
   prv <# do
     new <- liftIO $ run getLastMma
+    chat <- liftIO $ teleEnvChat <$> run getTeleEnv
     whenJust new $ \mma ->
       when (new /= unTeleState prv)
         . void
@@ -75,7 +76,8 @@ teleJob (UnliftIO run) prv = do
           Api.sendPhoto $
             Api.SendPhotoRequest
               { Api.sendPhotoChatId =
-                  SomeChatUsername "",
+                  SomeChatUsername $
+                    unTeleChat chat,
                 Api.sendPhotoPhoto =
                   Api.MakePhotoFile $
                     Api.InputFile img "image/png",
@@ -117,6 +119,6 @@ apply = do
     liftIO
       . defaultTelegramClientEnv
       . coerce
-      $ unTeleEnv teleEnv
+      $ teleEnvKey teleEnv
   withUnliftIO $ \run ->
     startBot_ (teleBot run) teleClientEnv

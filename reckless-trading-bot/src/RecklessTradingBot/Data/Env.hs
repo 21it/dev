@@ -3,6 +3,8 @@
 
 module RecklessTradingBot.Data.Env
   ( TradeEnv (..),
+    TeleKey (..),
+    TeleChat (..),
     TeleEnv (..),
     Env (..),
     withEnv,
@@ -71,24 +73,59 @@ data TradeEnv = TradeEnv
   }
   deriving stock (Eq)
 
-newtype TeleEnv = TeleEnv
-  { unTeleEnv :: Text
+newtype TeleKey = TeleKey
+  { unTeleKey :: Text
   }
   deriving newtype
     ( Eq,
       Ord,
       Read,
-      FromJSON,
-      ToJSON,
-      NFData
+      NFData,
+      FromJSON
     )
   deriving stock
     ( Generic
     )
 
-instance Prelude.Show TeleEnv where
+instance Prelude.Show TeleKey where
   show =
     const "SECRET"
+
+newtype TeleChat = TeleChat
+  { unTeleChat :: Text
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      Read,
+      NFData,
+      FromJSON
+    )
+  deriving stock
+    ( Show,
+      Generic
+    )
+
+data TeleEnv = TeleEnv
+  { teleEnvKey :: TeleKey,
+    teleEnvChat :: TeleChat
+  }
+  deriving stock
+    ( Eq,
+      Ord,
+      Read,
+      Show,
+      Generic
+    )
+
+instance NFData TeleEnv
+
+instance FromJSON TeleEnv where
+  parseJSON =
+    A.genericParseJSON
+      A.defaultOptions
+        { A.fieldLabelModifier = A.camelTo2 '_' . drop 7
+        }
 
 data Env = Env
   { -- app

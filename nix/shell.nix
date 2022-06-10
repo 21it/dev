@@ -9,12 +9,13 @@ in
   minishell ? false,
   bitfinexApiKey ? "TODO",
   bitfinexPrvKey ? "TODO",
-  telegramBotKey ? "TODO"
+  telegramBotKey ? "TODO",
+  telegramChatId ? "TODO"
 }:
 with pkgs;
 
 stdenv.mkDerivation {
-  name = "shell21";
+  name = "21it";
   buildInputs = [
     ide21
     gnuplot
@@ -32,6 +33,7 @@ stdenv.mkDerivation {
   BITFINEX_API_KEY=bitfinexApiKey;
   BITFINEX_PRV_KEY=bitfinexPrvKey;
   TELEGRAM_BOT_KEY=telegramBotKey;
+  TELEGRAM_CHAT_ID=telegramChatId;
   shellHook =
     if minishell
     then ""

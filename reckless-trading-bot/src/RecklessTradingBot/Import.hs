@@ -5,7 +5,9 @@ module RecklessTradingBot.Import (module X) where
 import RecklessTradingBot.Class.Env as X
 import RecklessTradingBot.Class.Storage as X
 import RecklessTradingBot.Data.Env as X
-  ( TeleEnv (..),
+  ( TeleChat (..),
+    TeleEnv (..),
+    TeleKey (..),
     TradeEnv (..),
     withEnv,
   )

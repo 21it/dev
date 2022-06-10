@@ -1,5 +1,6 @@
 resolver: lts-19.8
 system-ghc: true
+allow-newer: true
 packages:
   - bitfinex-client
   - reckless-trading-bot
