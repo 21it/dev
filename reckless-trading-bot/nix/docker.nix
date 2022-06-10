@@ -5,8 +5,14 @@ let
 in
   pkgs.dockerTools.buildImage {
     name = "21it/reckless-trading-bot";
+    extraCommands = "mkdir -m 0777 tmp";
     contents = [
+      #
+      # TODO : put all deps into package itself
+      #
       pkgs.cacert
+      pkgs.gnuplot
+      pkgs.librsvg
       reckless-trading-bot
     ];
     config = {
