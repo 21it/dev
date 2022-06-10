@@ -82,8 +82,12 @@ teleJob (UnliftIO run) prv = do
                   Api.MakePhotoFile $
                     Api.InputFile img "image/png",
                 Api.sendPhotoThumb = Nothing,
-                Api.sendPhotoCaption = Nothing,
-                Api.sendPhotoParseMode = Nothing,
+                Api.sendPhotoCaption =
+                  Just $
+                    "<pre>"
+                      <> Chart.newMmaAsciiTable mma
+                      <> "</pre>",
+                Api.sendPhotoParseMode = Just HTML,
                 Api.sendPhotoCaptionEntities = Nothing,
                 Api.sendPhotoDisableNotification = Nothing,
                 Api.sendPhotoProtectContent = Nothing,

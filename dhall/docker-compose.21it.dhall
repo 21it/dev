@@ -38,6 +38,17 @@ in  { networks.global.external = True
                                       "\${BITFINEX_PRV_KEY:?BITFINEX_PRV_KEY}"
                                 }
                             )
+                      , tele =
+                          J.object
+                            ( toMap
+                                { key =
+                                    J.string
+                                      "\${TELEGRAM_BOT_KEY:?TELEGRAM_BOT_KEY}"
+                                , chat =
+                                    J.string
+                                      "\${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID}"
+                                }
+                            )
                       , pairs =
                           J.object
                             ( toMap

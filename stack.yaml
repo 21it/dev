@@ -8,6 +8,7 @@ extra-deps:
   - combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
   - compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
   - reanimate-1.1.6.0@sha256:53abeabd24eba7ad7fbf86938d9d21f34dc9783f9384e4b324e6a1ae211f112e,6241
+  - table-layout-0.9.1.0@sha256:172b8b3a06c992839a781b77e42bbce689ba87d92c260acb61d187f7e6aad7f2,7154
     # Overrive servant with the latest version to
     # have MonadMask instance for ClientM.
   - github: haskell-servant/servant
@@ -26,6 +27,9 @@ extra-deps:
     subdirs:
     - units
     # nix-sha256: 0r7vwwcda06qq87blbyvnkcap8a0ahlj7gj6xwxlh626ibiz0v0g
+  - github: 21it/telegram-bot-simple
+    commit: 531a358c49ea0e0316237b138d978f45b86bb145
+    # nix-sha256: 0c826dy7aw5m7cnf6s6svyzyp5zcxmfjr421s7jg45ppd5w113zl
   - github: coingaming/src
     commit: 359acd74b5c1f3900b7645fd3adb0521001a6d23
     subdirs:

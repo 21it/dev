@@ -124,6 +124,7 @@ library
     , siggy-chardust
     , singletons
     , singletons-base
+    , table-layout
     , template-haskell
     , temporary
     , text

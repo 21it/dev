@@ -5,7 +5,7 @@ module BitfinexClient.Chart
     newExample,
     withMmaSvg,
     withMmaPng,
-    newMmaHeader,
+    newMmaAsciiTable,
   )
 where
 
@@ -27,6 +27,7 @@ import qualified Graphics.Gnuplot.LineSpecification as LineSpec
 import qualified Graphics.Gnuplot.Plot.TwoDimensional as Plot2D
 import qualified Graphics.Gnuplot.Terminal.SVG as SVG
 import qualified Reanimate.Raster as Reanimate
+import qualified Text.Layout.Table as Table
 
 newtype MmaHeader = MmaHeader
   { unMmaHeader :: Text
@@ -56,6 +57,7 @@ newExample = do
       putStrLn ("Trying again..." :: Text)
       newExample
     Right mma -> do
+      putStrLn $ newMmaAsciiTable mma
       let svgPath = "/app/build/output.svg" :: FilePath
       let pngPath = "/app/build/output.png" :: FilePath
       svgRes <-
@@ -137,6 +139,55 @@ totalChart mma =
         )
   where
     start = Mma.mmaDataFrom mma
+
+newMmaAsciiTable :: Mma -> Text
+newMmaAsciiTable mma =
+  T.pack $
+    Table.tableString
+      [Table.def, Table.def]
+      Table.asciiS
+      Table.def
+      [ Table.rowG
+          [ "SYM" :: String,
+            inspectStrPlain $ Mma.mmaSymbol mma
+          ],
+        Table.rowG
+          [ "CMP",
+            displaySats
+              . from
+              $ candleClose entryCandle
+          ],
+        Table.rowG
+          [ "TP",
+            displaySats
+              . unQ'
+              . Mma.unTakeProfit
+              $ Mma.tradeEntryTakeProfit tradeEntry
+          ],
+        Table.rowG
+          [ "SL",
+            displaySats
+              . unQ'
+              . Mma.unStopLoss
+              $ Mma.tradeEntryStopLoss tradeEntry
+          ],
+        Table.rowG
+          [ "ROR",
+            showPercent
+              . unProfitRate
+              $ Mma.tradeEntryProfitRate tradeEntry
+          ],
+        Table.rowG
+          [ "R/R",
+            inspectStrPlain (denominator r2r)
+              <> "/"
+              <> inspectStrPlain (numerator r2r)
+          ]
+      ]
+  where
+    r2r = Mma.unRewardToRisk $ Mma.mmaRewardToRisk mma
+    tradeEntry = Mma.mmaEntry mma
+    entryCandle = Mma.tradeEntryCandle tradeEntry
 
 newMmaHeader :: Mma -> MmaHeader
 newMmaHeader mma =

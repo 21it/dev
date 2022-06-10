@@ -26,6 +26,13 @@ packages:
   original:
     hackage: reanimate-1.1.6.0@sha256:53abeabd24eba7ad7fbf86938d9d21f34dc9783f9384e4b324e6a1ae211f112e,6241
 - completed:
+    pantry-tree:
+      sha256: d3b20ca5e8342d24fa7cfb5e3d39853a14f572f0a95b7bc9d0fea82baa0a4c10
+      size: 2216
+    hackage: table-layout-0.9.1.0@sha256:172b8b3a06c992839a781b77e42bbce689ba87d92c260acb61d187f7e6aad7f2,7154
+  original:
+    hackage: table-layout-0.9.1.0@sha256:172b8b3a06c992839a781b77e42bbce689ba87d92c260acb61d187f7e6aad7f2,7154
+- completed:
     sha256: ee3eebb54d365ffa83f320b568fa36a8ab392a8ded1d559feda5a44894b7f6a0
     name: servant-client
     subdir: servant-client
@@ -73,6 +80,17 @@ packages:
   original:
     subdir: units
     url: https://github.com/21it/units/archive/8bcfbf67dbf6f72cb18a2d0aa7fbf63d401c0990.tar.gz
+- completed:
+    sha256: da9a5439da9fd7667ade970049cd6bbdeb22750fc1c9c35b9031cf29755ce3bd
+    name: telegram-bot-simple
+    size: 75179
+    url: https://github.com/21it/telegram-bot-simple/archive/531a358c49ea0e0316237b138d978f45b86bb145.tar.gz
+    pantry-tree:
+      sha256: 5d25d8082be24739070f712fe80332dc231bb214f1c25f03d7e36e54405ea02e
+      size: 3114
+    version: 0.5.2
+  original:
+    url: https://github.com/21it/telegram-bot-simple/archive/531a358c49ea0e0316237b138d978f45b86bb145.tar.gz
 - completed:
     sha256: f35093b3d4ca7d7988b4efb9d4aa2779f675a7c4ecbb9ee13f135663cea71e28
     name: generic-pretty-instances
