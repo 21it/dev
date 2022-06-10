@@ -121,6 +121,7 @@ totalChart mma =
             "opaque",
             "box"
           ]
+        . Opts.xFormat "%H:%M"
         $ Opts.boxwidthRelative 1 Opts.deflt
     )
     $ candleChart start (Mma.mmaCandles mma)

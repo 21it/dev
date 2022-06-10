@@ -222,7 +222,7 @@ newMma ctf sym cs0 atrs cs curves = do
                 }
         )
         <$> [10, 9 .. 5]
-  if length (mmaTrades maxMma) < 4
+  if length (mmaTrades maxMma) < 9
     then Nothing
     else do
       entry <-
