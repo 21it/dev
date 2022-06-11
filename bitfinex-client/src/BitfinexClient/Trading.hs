@@ -42,7 +42,7 @@ theBestMma ctf vol quote = do
   cs <-
     mapM
       ( \sym -> do
-          liftIO $ threadDelay 250000
+          liftIO $ threadDelay 500000
           (sym,)
             <$> Bfx.candlesHist
               ctf
