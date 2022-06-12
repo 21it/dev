@@ -17,7 +17,7 @@ apply = do
   forever $ do
     eMma0 <-
       runExceptT
-        . Bfx.theBestMma Bfx.Ctf1m [moneyQuoteBuy|1|]
+        . Bfx.theBestMma Bfx.Ctf1m [moneyQuoteBuy|3|]
         $ Bfx.CurrencyCode "BTC"
     eMma1 <-
       case eMma0 of
@@ -25,7 +25,7 @@ apply = do
           pure eMma0
         Left {} ->
           runExceptT
-            . Bfx.theBestMma Bfx.Ctf1m [moneyQuoteBuy|30000|]
+            . Bfx.theBestMma Bfx.Ctf1m [moneyQuoteBuy|100000|]
             $ Bfx.CurrencyCode "USD"
     case eMma1 of
       Right mma -> do
