@@ -45,7 +45,6 @@ library
       RecklessTradingBot.Thread.Main
       RecklessTradingBot.Thread.Mma
       RecklessTradingBot.Thread.Order
-      RecklessTradingBot.Thread.Price
       RecklessTradingBot.Thread.TeleBot
       RecklessTradingBot.Thread.TradeConf
       RecklessTradingBot.Util

@@ -29,10 +29,10 @@ apply = do
   $(logTM) DebugS "Spawned"
   forever $ do
     mma <- rcvNextMma
-    let sym = Bfx.mmaSymbol mma
-    withOperativeBfx $ do
-      cancelUnexpected =<< Order.getByStatusLimit sym [OrderNew]
-      placeOrder mma
+    withOperativeBfx $
+      Order.getByStatusLimit [OrderNew]
+        >>= cancelUnexpected
+        >> placeOrder mma
 
 cancelExpired :: (Env m) => [Entity Order] -> m ()
 cancelExpired entities = do
@@ -131,7 +131,7 @@ placeOrder :: (Env m) => Bfx.Mma -> m ()
 placeOrder mma = do
   res <-
     runExceptT $ do
-      cfg <- getTradeCfg
+      cfg <- getTradeCfg sym
       tradeEnt <- Trade.createUpdate mma
       let entryRate = tradeEntry $ entityVal tradeEnt
       let entryGain = tradeEnvMinBuyAmt cfg
@@ -141,11 +141,14 @@ placeOrder mma = do
       quoteBalance <-
         withBfxT
           Bfx.spendableExchangeBalance
-          ($ Bfx.currencyPairQuote $ Bfx.mmaSymbol mma)
+          ($ Bfx.currencyPairQuote sym)
       when (quoteBalance > entryLoss) $
         placeOrderT cfg tradeEnt
   whenLeft res $
     $(logTM) ErrorS . show
+  where
+    sym =
+      Bfx.mmaSymbol mma
 
 placeOrderT ::
   ( Env m

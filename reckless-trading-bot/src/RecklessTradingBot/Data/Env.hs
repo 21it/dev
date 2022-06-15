@@ -297,7 +297,10 @@ newTradeCfg' feeDetails (sym, cfg) =
       }
   )
   where
-    cck = undefined
+    --
+    -- TODO : fixme, unhardcode cck!!!
+    --
+    cck = Bfx.Fiat
     fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails
     amtNoFee = Bfx.currencyPairMinOrderAmt cfg
     amtWithFee =

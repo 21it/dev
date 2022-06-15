@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -144,11 +143,13 @@ updateStatusSql ss xs = do
 getByStatusLimit ::
   ( Storage m
   ) =>
-  Bfx.CurrencyPair ->
+  --
+  -- TODO : use NonEmpty !!!
+  --
   [OrderStatus] ->
   m [Entity Order]
-getByStatusLimit _ [] = pure []
-getByStatusLimit sym ss =
+getByStatusLimit [] = pure []
+getByStatusLimit ss =
   runSql $
     Psql.select $
       Psql.from $ \(order `Psql.InnerJoin` trade) -> do
@@ -157,19 +158,8 @@ getByStatusLimit sym ss =
               Psql.==. trade Psql.^. TradeId
           )
         Psql.where_
-          ( ( order Psql.^. OrderStatus
-                `Psql.in_` Psql.valList ss
-            )
-              Psql.&&. ( trade Psql.^. TradeBase
-                           Psql.==. Psql.val
-                             ( Bfx.currencyPairBase sym
-                             )
-                       )
-              Psql.&&. ( trade Psql.^. TradeQuote
-                           Psql.==. Psql.val
-                             ( Bfx.currencyPairQuote sym
-                             )
-                       )
+          ( order Psql.^. OrderStatus
+              `Psql.in_` Psql.valList ss
           )
         Psql.limit 10
         Psql.orderBy

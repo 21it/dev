@@ -19,22 +19,24 @@ create ::
   ( Storage m
   ) =>
   TradeEnv ->
+  Entity Trade ->
   Entity Order ->
-  Bfx.Order 'Bfx.Buy 'Bfx.Remote ->
   m (Entity CounterOrder)
-create cfg orderEnt bfxOrder = do
+create cfg tradeEnt orderEnt = do
   row <- liftIO $ newRow <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
+    trade = entityVal tradeEnt
+    order = entityVal orderEnt
     exitFee = tradeEnvQuoteFee cfg
-    (exitGain, exitLoss, exitRate) =
-      case BfxMath.newCounterOrder
-        (Bfx.orderAmount bfxOrder)
-        (Bfx.orderRate bfxOrder)
-        (orderFee $ entityVal orderEnt)
-        exitFee
-        $ tradeEnvMinProfitPerOrder cfg of
+    exitRate = tradeTakeProfit trade
+    exitLoss = orderGain order
+    exitGain =
+      case BfxMath.newCounterOrderSimple
+        exitLoss
+        exitRate
+        exitFee of
         Left e -> error $ show e
         Right x -> x
     newRow ct =
@@ -56,7 +58,7 @@ create cfg orderEnt bfxOrder = do
           counterOrderExtRef = Nothing,
           counterOrderPrice = exitRate,
           counterOrderGain = exitGain,
-          counterOrderLoss = exitLoss,
+          counterOrderLoss = coerce exitLoss,
           counterOrderFee = exitFee,
           counterOrderStatus = OrderNew,
           counterOrderInsertedAt = ct,
@@ -164,9 +166,8 @@ getByStatusLimit sym ss =
 getOrdersToCounterLimit ::
   ( Storage m
   ) =>
-  Bfx.CurrencyPair ->
-  m [Entity Order]
-getOrdersToCounterLimit sym =
+  m [(Entity Trade, Entity Order)]
+getOrdersToCounterLimit =
   runSql $
     P.select $
       P.from $
@@ -183,22 +184,12 @@ getOrdersToCounterLimit sym =
                   P.==. counter P.?. CounterOrderIntRef
               )
             P.where_
-              ( ( trade P.^. TradeBase
-                    P.==. P.val
-                      ( Bfx.currencyPairBase sym
-                      )
+              ( ( order P.^. OrderStatus
+                    P.==. P.val OrderExecuted
                 )
-                  P.&&. ( trade P.^. TradeQuote
-                            P.==. P.val
-                              ( Bfx.currencyPairQuote sym
-                              )
-                        )
-                  P.&&. ( order P.^. OrderStatus
-                            P.==. P.val OrderExecuted
-                        )
-                  P.&&. ( ( P.isNothing $
-                              counter P.?. CounterOrderId
-                          )
+                  P.&&. ( P.isNothing
+                            ( counter P.?. CounterOrderId
+                            )
                             P.||. P.not_
                               ( counter P.?. CounterOrderStatus
                                   `P.in_` P.valList
@@ -213,4 +204,4 @@ getOrdersToCounterLimit sym =
               [ P.asc $
                   order P.^. OrderUpdatedAt
               ]
-            pure order
+            pure (trade, order)

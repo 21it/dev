@@ -17,22 +17,18 @@ import RecklessTradingBot.Import
 apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
-  loop
-
-loop :: (Env m) => m ()
-loop = do
-  reportProfit
-  xs <- getPairs
-  withOperativeBfx $ do
-    res <-
-      runExceptT $ do
-        syms <- withExceptT ErrorBfx Bfx.symbolsDetails
-        fees <- withBfxT Bfx.feeSummary id
-        mapM_ (updateTradeConf syms fees) xs
-    whenLeft res $
-      $(logTM) ErrorS . show
-    sleep [seconds|86400|]
-  loop
+  forever $ do
+    reportProfit
+    withOperativeBfx $ do
+      res <-
+        runExceptT $ do
+          syms <- withExceptT ErrorBfx Bfx.symbolsDetails
+          fees <- withBfxT Bfx.feeSummary id
+          conf <- lift getTradeVar
+          updateTradeConf syms fees conf
+      whenLeft res $
+        $(logTM) ErrorS . show
+      sleep [seconds|86400|]
 
 reportProfit :: (Env m) => m ()
 reportProfit = do
@@ -54,18 +50,30 @@ updateTradeConf ::
   ) =>
   Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
   BfxFeeSummary.Response ->
-  MVar TradeEnv ->
+  MVar (Map Bfx.CurrencyPair TradeEnv) ->
   ExceptT Error m ()
-updateTradeConf syms fees varCfg = do
-  cfg <- lift $ readMVar varCfg
-  let sym = tradeEnvCurrencyPair cfg
-  let cck = tradeEnvCurrencyKind cfg
+updateTradeConf syms fees var = do
+  cfg <-
+    Map.fromList
+      <$> mapM (uncurry $ newConf fees) (Map.assocs syms)
+  void
+    . liftIO
+    $ swapMVar var cfg
+
+newConf ::
+  ( MonadIO m
+  ) =>
+  BfxFeeSummary.Response ->
+  Bfx.CurrencyPair ->
+  Bfx.CurrencyPairConf ->
+  ExceptT Error m (Bfx.CurrencyPair, TradeEnv)
+newConf fees sym cfg = do
+  --
+  -- TODO : unhardcode
+  --
+  let cck = Bfx.Fiat
   let fee = BfxFeeSummary.getFee @'Bfx.Maker cck fees
-  bfxCfg <-
-    tryJust
-      (ErrorRuntime $ "Missing " <> show sym)
-      $ Map.lookup sym syms
-  let amtNoFee = Bfx.currencyPairMinOrderAmt bfxCfg
+  let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
   when (amtNoFee <= [moneyBaseBuy|0|])
     . throwE
     . ErrorRuntime
@@ -74,19 +82,14 @@ updateTradeConf syms fees varCfg = do
     tryErrorT $
       BfxMath.tweakMoneyPip
         =<< BfxMath.addFee amtNoFee fee
-  void
-    . liftIO
-    . swapMVar varCfg
-    $ TradeEnv
-      { tradeEnvCurrencyPair = sym,
-        tradeEnvCurrencyKind = cck,
-        tradeEnvMinProfitPerOrder =
-          tradeEnvMinProfitPerOrder cfg,
-        tradeEnvMaxQuoteInvestment =
-          tradeEnvMaxQuoteInvestment cfg,
-        tradeEnvBaseFee = fee,
-        tradeEnvQuoteFee = coerce fee,
-        tradeEnvMinBuyAmt = amtWithFee,
-        tradeEnvMinSellAmt = coerce amtNoFee,
-        tradeEnvMode = tradeEnvMode cfg
-      }
+  pure
+    ( sym,
+      TradeEnv
+        { tradeEnvCurrencyPair = sym,
+          tradeEnvCurrencyKind = cck,
+          tradeEnvBaseFee = fee,
+          tradeEnvQuoteFee = coerce fee,
+          tradeEnvMinBuyAmt = amtWithFee,
+          tradeEnvMinSellAmt = coerce amtNoFee
+        }
+    )

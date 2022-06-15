@@ -6,6 +6,7 @@ module BitfinexClient.Math
     tweakMoneyPip,
     tweakMakerRate,
     newCounterOrder,
+    newCounterOrderSimple,
   )
 where
 
@@ -142,3 +143,24 @@ newCounterOrder base0 rate0 feeB feeQ prof0 = do
     exitRate :: QuotePerBase'
     exitRate =
       exitQuoteGain |/| exitBaseLoss
+
+newCounterOrderSimple ::
+  Money 'Base 'Buy ->
+  QuotePerBase 'Sell ->
+  FeeRate mrel 'Quote ->
+  Either Error (Money 'Quote 'Sell)
+newCounterOrderSimple base rate fee =
+  tryErrorE $ roundMoney' exitQuoteGain
+  where
+    exitFee :: Rational
+    exitFee =
+      from fee
+    exitRate :: QuotePerBase'
+    exitRate =
+      unQuotePerBase rate
+    exitBaseLoss :: MoneyBase'
+    exitBaseLoss =
+      unMoney base
+    exitQuoteGain :: MoneyQuote'
+    exitQuoteGain =
+      (exitBaseLoss |*| exitRate) |* (1 - exitFee)

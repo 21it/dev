@@ -30,15 +30,14 @@ apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
   forever . withOperativeBfx $ do
-    activeOrders <- Order.getByStatusLimit sym [OrderActive]
+    activeOrders <- Order.getByStatusLimit [OrderActive]
     ThreadOrder.cancelExpired activeOrders
     updateActiveOrders activeOrders
-    ordersToCounter <-
-      CounterOrder.getOrdersToCounterLimit sym
+    ordersToCounter <- CounterOrder.getOrdersToCounterLimit
     $(logTM) DebugS . logStr $
       "Got orders to counter "
         <> (show ordersToCounter :: Text)
-    mapM_ (counterExecutedOrder cfg) ordersToCounter
+    mapM_ (uncurry counterExecutedOrder) ordersToCounter
     updateCounterOrders
       =<< CounterOrder.getByStatusLimit sym [OrderActive]
     sleep [seconds|30|]
@@ -115,30 +114,28 @@ updateActiveT rows = do
 counterExecutedOrder ::
   ( Env m
   ) =>
-  TradeEnv ->
+  Entity Trade ->
   Entity Order ->
   m ()
-counterExecutedOrder cfg row = do
-  case orderExtRef $ entityVal row of
+counterExecutedOrder tradeEnt orderEnt = do
+  case orderExtRef $ entityVal orderEnt of
     Nothing -> do
       $(logTM) ErrorS $
-        "Missing bfx ref " <> show row
-      ThreadOrder.cancelUnexpected [row]
+        "Missing bfx ref " <> show orderEnt
+      ThreadOrder.cancelUnexpected [orderEnt]
     Just ref -> do
-      res <-
-        runExceptT . counterExecutedT cfg row $
-          from ref
+      res <- runExceptT . counterExecutedT orderEnt $ from ref
       whenLeft res $
         $(logTM) ErrorS . show
 
 counterExecutedT ::
   ( Env m
   ) =>
-  TradeEnv ->
   Entity Order ->
   Bfx.OrderId ->
   ExceptT Error m ()
-counterExecutedT cfg orderEnt bfxOrderId = do
+counterExecutedT orderEnt bfxOrderId = do
+  cfg <- getTradeCfg
   bfxSomeOrder <-
     withBfxT Bfx.getOrder ($ bfxOrderId)
   bfxOrder <-
