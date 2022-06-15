@@ -11,7 +11,6 @@ where
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.GetOrders as BfxGetOrders
 import qualified BitfinexClient.Data.SubmitOrder as Bfx
-import qualified BitfinexClient.Math as BfxMath
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import RecklessTradingBot.Import
@@ -39,7 +38,7 @@ apply = do
         <> (show ordersToCounter :: Text)
     mapM_ (uncurry counterExecutedOrder) ordersToCounter
     updateCounterOrders
-      =<< CounterOrder.getByStatusLimit sym [OrderActive]
+      =<< CounterOrder.getByStatusLimit [OrderActive]
     sleep [seconds|30|]
 
 updateActiveOrders ::
@@ -123,73 +122,66 @@ counterExecutedOrder tradeEnt orderEnt = do
       $(logTM) ErrorS $
         "Missing bfx ref " <> show orderEnt
       ThreadOrder.cancelUnexpected [orderEnt]
-    Just ref -> do
-      res <- runExceptT . counterExecutedT orderEnt $ from ref
+    Just {} -> do
+      res <-
+        runExceptT $
+          counterExecutedT tradeEnt orderEnt
       whenLeft res $
         $(logTM) ErrorS . show
 
 counterExecutedT ::
   ( Env m
   ) =>
+  Entity Trade ->
   Entity Order ->
-  Bfx.OrderId ->
   ExceptT Error m ()
-counterExecutedT orderEnt bfxOrderId = do
-  cfg <- getTradeCfg
-  bfxSomeOrder <-
-    withBfxT Bfx.getOrder ($ bfxOrderId)
-  bfxOrder <-
-    case bfxSomeOrder of
-      Bfx.SomeOrder Bfx.SBuy x ->
-        pure x
-      Bfx.SomeOrder Bfx.SSell _ ->
-        throwE $
-          ErrorBfx $
-            Bfx.ErrorOrderState bfxSomeOrder
+counterExecutedT tradeEnt orderEnt = do
+  sym <-
+    tryErrorT
+      . Bfx.currencyPairCon (tradeBase tradeVal)
+      $ tradeQuote tradeVal
+  cfg <-
+    getTradeEnv sym
   baseBalance <-
     withBfxT
       Bfx.spendableExchangeBalance
-      ($ Bfx.currencyPairBase $ tradeEnvCurrencyPair cfg)
-  (_, exitLoss, _) <-
-    case BfxMath.newCounterOrder
-      (Bfx.orderAmount bfxOrder)
-      (Bfx.orderRate bfxOrder)
-      (orderFee $ entityVal orderEnt)
-      (tradeEnvQuoteFee cfg)
-      $ tradeEnvMinProfitPerOrder cfg of
-      Left e -> throwE $ ErrorBfx e
-      Right x -> pure x
+      ($ Bfx.currencyPairBase sym)
   when (coerce baseBalance < exitLoss) $
     throwE $
       ErrorRuntime $
         "Insufficient balance "
           <> show baseBalance
           <> " to counter "
-          <> show bfxOrder
+          <> show orderEnt
   gid <-
     tryFromT $
       entityKey orderEnt
   --
-  -- Extra safety measures to prevent double-counter
+  -- NOTE : Extra safety measures to prevent double-counter
   -- which should never happen anyway.
   --
   void $
     withBfxT Bfx.cancelOrderByGroupId ($ gid)
   counter <-
     lift $
-      CounterOrder.create cfg orderEnt bfxOrder
+      CounterOrder.create cfg tradeEnt orderEnt
   bfxCounterCid <-
     tryFromT $ entityKey counter
+  currentRate <-
+    withBfxT
+      (const Bfx.marketAveragePrice)
+      (\f -> f exitLoss sym)
   bfxCounter <-
     withBfxT
-      Bfx.submitCounterOrderMaker
-      ( \cont ->
-          cont
-            bfxOrderId
-            (orderFee $ entityVal orderEnt)
-            (tradeEnvQuoteFee cfg)
-            (tradeEnvMinProfitPerOrder cfg)
-            $ Bfx.optsPostOnly
+      Bfx.submitOrderMaker
+      ( \submit ->
+          submit
+            exitLoss
+            sym
+            (max currentRate $ tradeTakeProfit tradeVal)
+            $ ( Bfx.optsPostOnlyStopLoss
+                  (tradeStopLoss tradeVal)
+              )
               { Bfx.clientId = Just bfxCounterCid,
                 Bfx.groupId = Just gid
               }
@@ -198,6 +190,13 @@ counterExecutedT orderEnt bfxOrderId = do
     CounterOrder.updateBfx
       counter
       bfxCounter
+  where
+    tradeVal :: Trade
+    tradeVal = entityVal tradeEnt
+    orderVal :: Order
+    orderVal = entityVal orderEnt
+    exitLoss :: Bfx.Money 'Bfx.Base 'Bfx.Sell
+    exitLoss = coerce $ orderGain orderVal
 
 updateCounterOrders ::
   ( Env m

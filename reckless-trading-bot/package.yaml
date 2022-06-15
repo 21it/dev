@@ -27,6 +27,7 @@ default-extensions:
 - MultiParamTypeClasses
 - LambdaCase
 - OverloadedStrings
+- OverloadedLists
 - GeneralizedNewtypeDeriving
 - DerivingStrategies
 - DerivingVia

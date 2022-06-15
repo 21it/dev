@@ -7,6 +7,7 @@ module RecklessTradingBot.Data.AppM
   )
 where
 
+import qualified Data.Map as Map
 import qualified RecklessTradingBot.Data.Env as EnvData
 import RecklessTradingBot.Import
 
@@ -51,6 +52,16 @@ instance (MonadUnliftIO m) => Env (AppM m) where
   getReportStartAmt = asks EnvData.envReportStartAmt
   getReportCurrency = asks EnvData.envReportCurrency
   getTeleEnv = asks EnvData.envTele
+  getTradeVar = asks EnvData.envTrade
+  getTradeEnv sym = do
+    var <- asks EnvData.envTrade
+    xs <- readMVar var
+    case Map.lookup sym xs of
+      Just x ->
+        pure x
+      Nothing ->
+        throwE . ErrorRuntime $
+          "Can not find TradeEnv for " <> show sym
   getExpiredOrders xs = do
     ct <- liftIO getCurrentTime
     ttl <- asks EnvData.envOrderTtl

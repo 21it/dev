@@ -25,7 +25,7 @@ class (Storage m, KatipContext m) => Env m where
     ExceptT Error m b
   getTeleEnv :: m E.TeleEnv
   getTradeVar :: m (MVar (Map Bfx.CurrencyPair E.TradeEnv))
-  getTradeCfg :: Bfx.CurrencyPair -> ExceptT Error m E.TradeEnv
+  getTradeEnv :: Bfx.CurrencyPair -> ExceptT Error m E.TradeEnv
   getExpiredOrders :: [Entity Order] -> m [Entity Order]
   putCurrMma :: Bfx.Mma -> m ()
   rcvNextMma :: m Bfx.Mma

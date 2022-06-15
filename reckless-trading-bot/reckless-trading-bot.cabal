@@ -57,6 +57,7 @@ library
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
+      OverloadedLists
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
@@ -130,6 +131,7 @@ executable reckless-trading-bot-exe
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
+      OverloadedLists
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
@@ -178,6 +180,7 @@ test-suite reckless-trading-bot-test
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
+      OverloadedLists
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia

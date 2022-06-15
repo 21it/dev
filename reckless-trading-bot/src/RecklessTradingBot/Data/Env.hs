@@ -102,8 +102,8 @@ instance FromJSON TeleEnv where
 data Env = Env
   { -- app
     envBfx :: Bfx.Env,
-    envCfg :: MVar (Map Bfx.CurrencyPair TradeEnv),
     envTele :: TeleEnv,
+    envTrade :: MVar (Map Bfx.CurrencyPair TradeEnv),
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
     envReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
@@ -231,13 +231,13 @@ withEnv this = do
       -- TODO : separate thread to update Bfx.symbolsDetails
       --
       cfg <-
-        newTradeCfg bfx
+        newTradeVar bfx
       this
         Env
           { -- app
             envBfx = bfx,
-            envCfg = cfg,
             envTele = rawEnvTele rc,
+            envTrade = cfg,
             envPriceTtl = rawEnvPriceTtl rc,
             envOrderTtl = rawEnvOrderTtl rc,
             envReportStartAmt = rawEnvReportStartAmt rc,
@@ -257,12 +257,12 @@ withEnv this = do
     rmSqlPool :: Pool a -> m ()
     rmSqlPool = liftIO . destroyAllResources
 
-newTradeCfg ::
+newTradeVar ::
   ( MonadIO m
   ) =>
   Bfx.Env ->
   m (MVar (Map Bfx.CurrencyPair TradeEnv))
-newTradeCfg bfx = do
+newTradeVar bfx = do
   ex <-
     runExceptT $
       (,)
@@ -273,13 +273,13 @@ newTradeCfg bfx = do
     Right (symDetails, feeDetails) ->
       newMVar
         . Map.fromList
-        $ newTradeCfg' feeDetails <$> Map.assocs symDetails
+        $ newTradeEnv feeDetails <$> Map.assocs symDetails
 
-newTradeCfg' ::
+newTradeEnv ::
   FeeSummary.Response ->
   (Bfx.CurrencyPair, Bfx.CurrencyPairConf) ->
   (Bfx.CurrencyPair, TradeEnv)
-newTradeCfg' feeDetails (sym, cfg) =
+newTradeEnv feeDetails (sym, cfg) =
   ( sym,
     TradeEnv
       { tradeEnvCurrencyPair =

@@ -121,11 +121,13 @@ updateBfx ent bfxCounter = do
 getByStatusLimit ::
   ( Storage m
   ) =>
-  Bfx.CurrencyPair ->
+  --
+  -- TODO : nonempty
+  --
   [OrderStatus] ->
   m [Entity CounterOrder]
-getByStatusLimit _ [] = pure []
-getByStatusLimit sym ss =
+getByStatusLimit [] = pure []
+getByStatusLimit ss =
   runSql $
     P.select $
       P.from $
@@ -142,19 +144,8 @@ getByStatusLimit sym ss =
                   P.==. counter P.^. CounterOrderIntRef
               )
             P.where_
-              ( ( trade P.^. TradeBase
-                    P.==. P.val
-                      ( Bfx.currencyPairBase sym
-                      )
-                )
-                  P.&&. ( trade P.^. TradeQuote
-                            P.==. P.val
-                              ( Bfx.currencyPairQuote sym
-                              )
-                        )
-                  P.&&. ( counter P.^. CounterOrderStatus
-                            `P.in_` P.valList ss
-                        )
+              ( counter P.^. CounterOrderStatus
+                  `P.in_` P.valList ss
               )
             P.limit 10
             P.orderBy

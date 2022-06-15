@@ -131,7 +131,7 @@ placeOrder :: (Env m) => Bfx.Mma -> m ()
 placeOrder mma = do
   res <-
     runExceptT $ do
-      cfg <- getTradeCfg sym
+      cfg <- getTradeEnv sym
       tradeEnt <- Trade.createUpdate mma
       let entryRate = tradeEntry $ entityVal tradeEnt
       let entryGain = tradeEnvMinBuyAmt cfg
