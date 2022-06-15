@@ -29,34 +29,19 @@ import qualified RecklessTradingBot.Thread.Order as ThreadOrder
 apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
-  xs <- mapM (spawnLink . loop) =<< getPairs
-  liftIO . void $ waitAnyCancel xs
-
-loop :: (Env m) => MVar TradeEnv -> m ()
-loop varCfg = do
-  cfg <- liftIO $ readMVar varCfg
-  let sym = tradeEnvCurrencyPair cfg
-  withOperativeBfx $ do
+  forever . withOperativeBfx $ do
     activeOrders <- Order.getByStatusLimit sym [OrderActive]
     ThreadOrder.cancelExpired activeOrders
     updateActiveOrders activeOrders
-    when
-      ( (tradeEnvMode cfg)
-          `elem` ([Speculate, SellOnly] :: [TradeMode])
-      )
-      $ do
-        ordersToCounter <-
-          CounterOrder.getOrdersToCounterLimit sym
-        $(logTM) DebugS . logStr $
-          "Got orders to counter "
-            <> (show ordersToCounter :: Text)
-        mapM_
-          (counterExecutedOrder cfg)
-          ordersToCounter
+    ordersToCounter <-
+      CounterOrder.getOrdersToCounterLimit sym
+    $(logTM) DebugS . logStr $
+      "Got orders to counter "
+        <> (show ordersToCounter :: Text)
+    mapM_ (counterExecutedOrder cfg) ordersToCounter
     updateCounterOrders
       =<< CounterOrder.getByStatusLimit sym [OrderActive]
     sleep [seconds|30|]
-  loop varCfg
 
 updateActiveOrders ::
   ( Env m

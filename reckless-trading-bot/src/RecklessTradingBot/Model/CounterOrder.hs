@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Model.CounterOrder
@@ -130,23 +129,23 @@ getByStatusLimit sym ss =
       P.from $
         \( counter
              `P.InnerJoin` order
-             `P.InnerJoin` price
+             `P.InnerJoin` trade
            ) -> do
             P.on
-              ( price P.^. PriceId
-                  P.==. order P.^. OrderPriceRef
+              ( trade P.^. TradeId
+                  P.==. order P.^. OrderIntRef
               )
             P.on
               ( order P.^. OrderId
                   P.==. counter P.^. CounterOrderIntRef
               )
             P.where_
-              ( ( price P.^. PriceBase
+              ( ( trade P.^. TradeBase
                     P.==. P.val
                       ( Bfx.currencyPairBase sym
                       )
                 )
-                  P.&&. ( price P.^. PriceQuote
+                  P.&&. ( trade P.^. TradeQuote
                             P.==. P.val
                               ( Bfx.currencyPairQuote sym
                               )
@@ -173,23 +172,23 @@ getOrdersToCounterLimit sym =
       P.from $
         \( counter
              `P.RightOuterJoin` order
-             `P.InnerJoin` price
+             `P.InnerJoin` trade
            ) -> do
             P.on
-              ( price P.^. PriceId
-                  P.==. order P.^. OrderPriceRef
+              ( trade P.^. TradeId
+                  P.==. order P.^. OrderIntRef
               )
             P.on
               ( P.just (order P.^. OrderId)
                   P.==. counter P.?. CounterOrderIntRef
               )
             P.where_
-              ( ( price P.^. PriceBase
+              ( ( trade P.^. TradeBase
                     P.==. P.val
                       ( Bfx.currencyPairBase sym
                       )
                 )
-                  P.&&. ( price P.^. PriceQuote
+                  P.&&. ( trade P.^. TradeQuote
                             P.==. P.val
                               ( Bfx.currencyPairQuote sym
                               )

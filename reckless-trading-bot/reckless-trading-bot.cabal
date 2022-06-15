@@ -37,7 +37,7 @@ library
       RecklessTradingBot.Import.Psql
       RecklessTradingBot.Model.CounterOrder
       RecklessTradingBot.Model.Order
-      RecklessTradingBot.Model.Price
+      RecklessTradingBot.Model.Trade
       RecklessTradingBot.Orphan
       RecklessTradingBot.Storage
       RecklessTradingBot.Storage.Migration

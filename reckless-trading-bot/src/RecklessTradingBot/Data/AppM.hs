@@ -7,10 +7,8 @@ module RecklessTradingBot.Data.AppM
   )
 where
 
-import qualified BitfinexClient as Bfx
 import qualified RecklessTradingBot.Data.Env as EnvData
 import RecklessTradingBot.Import
-import qualified RecklessTradingBot.Model.Price as Price
 
 newtype AppM m a = AppM
   { unAppM :: ReaderT EnvData.Env m a
@@ -52,7 +50,6 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     withExceptT ErrorBfx . args $ method bfx
   getReportStartAmt = asks EnvData.envReportStartAmt
   getReportCurrency = asks EnvData.envReportCurrency
-  getPairs = asks EnvData.envPairs
   getTeleEnv = asks EnvData.envTele
   getExpiredOrders xs = do
     ct <- liftIO getCurrentTime
@@ -66,31 +63,6 @@ instance (MonadUnliftIO m) => Env (AppM m) where
                 (orderInsertedAt $ entityVal x)
         )
         xs
-  putCurrPrice x = do
-    ch <- asks EnvData.envPriceChan
-    liftIO . atomically $ writeTChan ch x
-  rcvNextPrice sym = do
-    ch0 <- asks EnvData.envPriceChan
-    liftIO $ do
-      --
-      -- 'dupTChan' and 'readTChan' should not
-      -- be used under the same 'atomically'
-      -- because it will cause deadlock
-      --
-      ch1 <- atomically $ dupTChan ch0
-      waitForPrice ch1
-    where
-      waitForPrice chan = do
-        ent <- atomically $ readTChan chan
-        let price = entityVal ent
-        if ( priceBase price
-               == Bfx.currencyPairBase sym
-           )
-          && ( priceQuote price
-                 == Bfx.currencyPairQuote sym
-             )
-          then pure ent
-          else waitForPrice chan
   putCurrMma x = do
     ch <- asks EnvData.envMmaChan
     var <- asks EnvData.envLastMma
@@ -111,22 +83,3 @@ instance (MonadUnliftIO m) => Env (AppM m) where
   getLastMma = do
     var <- asks EnvData.envLastMma
     liftIO . atomically $ tryReadTMVar var
-  sleepPriceTtl sym = do
-    wantedTtl <- asks EnvData.envPriceTtl
-    mPrice <- Price.getLatest sym
-    case mPrice of
-      Nothing -> pure ()
-      Just price -> do
-        ct <- liftIO getCurrentTime
-        case tryFrom
-          . diffUTCTime ct
-          . priceUpdatedAt
-          $ entityVal price of
-          Left e -> do
-            $(logTM) ErrorS $ show e
-            sleep wantedTtl
-          Right realTtl
-            | wantedTtl > realTtl ->
-              sleep $ subSeconds wantedTtl realTtl
-          Right {} ->
-            pure ()

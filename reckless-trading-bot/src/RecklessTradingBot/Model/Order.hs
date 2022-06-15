@@ -22,15 +22,15 @@ create ::
   ( Storage m
   ) =>
   TradeEnv ->
-  Entity Price ->
+  Entity Trade ->
   m (Entity Order)
-create cfg (Entity priceId price) = do
+create cfg (Entity tradeId trade) = do
   row <- liftIO $ newOrder <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
     enterPrice =
-      priceBuy price
+      tradeEntry trade
     enterGain =
       tradeEnvMinBuyAmt cfg
     enterLoss =
@@ -54,7 +54,7 @@ create cfg (Entity priceId price) = do
           --   orderStatus
           --   orderUpdatedAt
           --
-          orderPriceRef = priceId,
+          orderIntRef = tradeId,
           orderExtRef = Nothing,
           orderPrice = enterPrice,
           orderGain = enterGain,
@@ -151,21 +151,21 @@ getByStatusLimit _ [] = pure []
 getByStatusLimit sym ss =
   runSql $
     Psql.select $
-      Psql.from $ \(order `Psql.InnerJoin` price) -> do
+      Psql.from $ \(order `Psql.InnerJoin` trade) -> do
         Psql.on
-          ( order Psql.^. OrderPriceRef
-              Psql.==. price Psql.^. PriceId
+          ( order Psql.^. OrderIntRef
+              Psql.==. trade Psql.^. TradeId
           )
         Psql.where_
           ( ( order Psql.^. OrderStatus
                 `Psql.in_` Psql.valList ss
             )
-              Psql.&&. ( price Psql.^. PriceBase
+              Psql.&&. ( trade Psql.^. TradeBase
                            Psql.==. Psql.val
                              ( Bfx.currencyPairBase sym
                              )
                        )
-              Psql.&&. ( price Psql.^. PriceQuote
+              Psql.&&. ( trade Psql.^. TradeQuote
                            Psql.==. Psql.val
                              ( Bfx.currencyPairQuote sym
                              )
@@ -187,10 +187,10 @@ getTotalInvestment sym = do
   totalInvestment <-
     runSql $
       Psql.select $
-        Psql.from $ \(order `Psql.InnerJoin` price) -> do
+        Psql.from $ \(order `Psql.InnerJoin` trade) -> do
           Psql.on
-            ( order Psql.^. OrderPriceRef
-                Psql.==. price Psql.^. PriceId
+            ( order Psql.^. OrderIntRef
+                Psql.==. trade Psql.^. TradeId
             )
           Psql.where_
             ( ( order Psql.^. OrderStatus
@@ -199,12 +199,12 @@ getTotalInvestment sym = do
                       OrderExecuted
                     ]
               )
-                Psql.&&. ( price Psql.^. PriceBase
+                Psql.&&. ( trade Psql.^. TradeBase
                              Psql.==. Psql.val
                                ( Bfx.currencyPairBase sym
                                )
                          )
-                Psql.&&. ( price Psql.^. PriceQuote
+                Psql.&&. ( trade Psql.^. TradeQuote
                              Psql.==. Psql.val
                                ( Bfx.currencyPairQuote sym
                                )

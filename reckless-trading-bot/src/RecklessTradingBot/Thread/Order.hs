@@ -15,7 +15,7 @@ import qualified BitfinexClient.Data.SubmitOrder as Bfx
 import qualified Data.Set as Set
 import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Model.Order as Order
-import qualified RecklessTradingBot.Model.Price as Price
+import qualified RecklessTradingBot.Model.Trade as Trade
 
 -- | This thread **must** be the only one
 -- which is doing insert/update access to Order
@@ -27,40 +27,12 @@ import qualified RecklessTradingBot.Model.Price as Price
 apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
-  xs <- mapM (spawnLink . loop) =<< getPairs
-  liftIO . void $ waitAnyCancel xs
-
-loop :: (Env m) => MVar TradeEnv -> m ()
-loop varCfg = do
-  cfg <- liftIO $ readMVar varCfg
-  let sym = tradeEnvCurrencyPair cfg
-  priceEnt <- rcvNextPrice sym
-  withOperativeBfx $ do
-    cancelUnexpected
-      =<< Order.getByStatusLimit sym [OrderNew]
-    when
-      ( (tradeEnvMode cfg)
-          `elem` ([Speculate, BuyOnly] :: [TradeMode])
-      )
-      $ do
-        totalInvestment <- Order.getTotalInvestment sym
-        if totalInvestment < tradeEnvMaxQuoteInvestment cfg
-          then do
-            let lim = 5 :: Int
-            priceSeq <- Price.getLatestLimit (from lim) sym
-            when
-              ( length priceSeq == lim
-                  && goodPriceSeq True priceSeq
-              )
-              $ placeOrder cfg priceEnt
-          else
-            $(logTM) DebugS $
-              "Total investment "
-                <> show totalInvestment
-                <> " exceeded limit for "
-                <> show sym
-                <> ", ignoring new price."
-  loop varCfg
+  forever $ do
+    mma <- rcvNextMma
+    let sym = Bfx.mmaSymbol mma
+    withOperativeBfx $ do
+      cancelUnexpected =<< Order.getByStatusLimit sym [OrderNew]
+      placeOrder mma
 
 cancelExpired :: (Env m) => [Entity Order] -> m ()
 cancelExpired entities = do
@@ -155,45 +127,36 @@ cancelUnexpectedT entities = do
     ids =
       entityKey <$> entities
 
-placeOrder ::
-  ( Env m
-  ) =>
-  TradeEnv ->
-  Entity Price ->
-  m ()
-placeOrder cfg priceEnt = do
+placeOrder :: (Env m) => Bfx.Mma -> m ()
+placeOrder mma = do
   res <-
     runExceptT $ do
+      cfg <- getTradeCfg
+      tradeEnt <- Trade.createUpdate mma
+      let entryRate = tradeEntry $ entityVal tradeEnt
+      let entryGain = tradeEnvMinBuyAmt cfg
+      entryLoss <-
+        tryErrorT . Bfx.roundMoney' $
+          Bfx.unQuotePerBase entryRate |*| Bfx.unMoney entryGain
       quoteBalance <-
         withBfxT
           Bfx.spendableExchangeBalance
-          ($ Bfx.currencyPairQuote $ tradeEnvCurrencyPair cfg)
-      when (quoteBalance > enterLoss) $
-        placeOrderT cfg priceEnt
+          ($ Bfx.currencyPairQuote $ Bfx.mmaSymbol mma)
+      when (quoteBalance > entryLoss) $
+        placeOrderT cfg tradeEnt
   whenLeft res $
     $(logTM) ErrorS . show
-  where
-    enterPrice =
-      priceBuy $ entityVal priceEnt
-    enterGain =
-      tradeEnvMinBuyAmt cfg
-    enterLoss =
-      case Bfx.roundMoney' $
-        Bfx.unQuotePerBase enterPrice
-          |*| Bfx.unMoney enterGain of
-        Left e -> error $ show e
-        Right x -> x
 
 placeOrderT ::
   ( Env m
   ) =>
   TradeEnv ->
-  Entity Price ->
+  Entity Trade ->
   ExceptT Error m ()
-placeOrderT cfg priceEnt = do
+placeOrderT cfg tradeEnt = do
   orderEnt@(Entity orderId order) <-
     lift $
-      Order.create cfg priceEnt
+      Order.create cfg tradeEnt
   $(logTM) DebugS . logStr $
     "Placing a new order " <> (show orderEnt :: Text)
   cid <- tryFromT orderId
@@ -201,11 +164,11 @@ placeOrderT cfg priceEnt = do
   bfxOrder <-
     withBfxT
       Bfx.submitOrderMaker
-      ( \cont -> do
+      ( \cont ->
           cont
             (orderGain order)
             (tradeEnvCurrencyPair cfg)
-            (priceBuy $ entityVal priceEnt)
+            (tradeEntry $ entityVal tradeEnt)
             Bfx.optsPostOnly
               { Bfx.clientId = Just cid,
                 Bfx.groupId = Just gid
@@ -213,14 +176,3 @@ placeOrderT cfg priceEnt = do
       )
   lift $
     Order.updateBfx orderId bfxOrder
-
--- | The price sequence is good if it decreased monotonously.
-goodPriceSeq :: Bool -> [Entity Price] -> Bool
-goodPriceSeq False _ =
-  False
-goodPriceSeq True (x0 : x1 : xs) =
-  let p0 = priceBuy $ entityVal x0
-      p1 = priceBuy $ entityVal x1
-   in goodPriceSeq (p0 > p1) $ x1 : xs
-goodPriceSeq isGood _ =
-  isGood
