@@ -37,7 +37,7 @@ library
       RecklessTradingBot.Import.Psql
       RecklessTradingBot.Model.CounterOrder
       RecklessTradingBot.Model.Order
-      RecklessTradingBot.Model.Price
+      RecklessTradingBot.Model.Trade
       RecklessTradingBot.Orphan
       RecklessTradingBot.Storage
       RecklessTradingBot.Storage.Migration
@@ -45,7 +45,6 @@ library
       RecklessTradingBot.Thread.Main
       RecklessTradingBot.Thread.Mma
       RecklessTradingBot.Thread.Order
-      RecklessTradingBot.Thread.Price
       RecklessTradingBot.Thread.TeleBot
       RecklessTradingBot.Thread.TradeConf
       RecklessTradingBot.Util
@@ -58,6 +57,7 @@ library
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
+      OverloadedLists
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
@@ -131,6 +131,7 @@ executable reckless-trading-bot-exe
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
+      OverloadedLists
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia
@@ -179,6 +180,7 @@ test-suite reckless-trading-bot-test
       MultiParamTypeClasses
       LambdaCase
       OverloadedStrings
+      OverloadedLists
       GeneralizedNewtypeDeriving
       DerivingStrategies
       DerivingVia

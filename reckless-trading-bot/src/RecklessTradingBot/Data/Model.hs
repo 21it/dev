@@ -33,17 +33,18 @@ share
   [mkPersist sqlSettings, mkMigrate "migrateAuto"]
   [persistLowerCase|
 
-    Price
+    Trade
       base (Bfx.CurrencyCode 'Bfx.Base)
       quote (Bfx.CurrencyCode 'Bfx.Quote)
-      buy (Bfx.QuotePerBase 'Bfx.Buy)
-      sell (Bfx.QuotePerBase 'Bfx.Sell)
+      entry (Bfx.QuotePerBase 'Bfx.Buy)
+      takeProfit (Bfx.QuotePerBase 'Bfx.Sell)
+      stopLoss (Bfx.QuotePerBase 'Bfx.Sell)
       insertedAt UTCTime
       updatedAt UTCTime
       deriving Eq Show
 
     Order
-      priceRef PriceId
+      intRef TradeId
       extRef (OrderExternalId 'Bfx.Buy) Maybe
       price (Bfx.QuotePerBase 'Bfx.Buy)
       gain (Bfx.Money 'Bfx.Base 'Bfx.Buy)

@@ -7,7 +7,7 @@ where
 
 import qualified BitfinexClient as Bfx
 import RecklessTradingBot.Class.Storage
-import qualified RecklessTradingBot.Data.Env as EnvData
+import qualified RecklessTradingBot.Data.Env as E
 import RecklessTradingBot.Data.Model
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
@@ -17,19 +17,18 @@ class (Storage m, KatipContext m) => Env m where
     (Bfx.Env -> a) ->
     (a -> ExceptT Bfx.Error m b) ->
     m (Either Error b)
-  withBfx method = runExceptT . withBfxT method
+  withBfx method =
+    runExceptT . withBfxT method
   withBfxT ::
     (Bfx.Env -> a) ->
     (a -> ExceptT Bfx.Error m b) ->
     ExceptT Error m b
-  getPairs :: m [MVar EnvData.TradeEnv]
-  getTeleEnv :: m EnvData.TeleEnv
+  getTeleEnv :: m E.TeleEnv
+  getTradeVar :: m (MVar (Map Bfx.CurrencyPair E.TradeEnv))
+  getTradeEnv :: Bfx.CurrencyPair -> ExceptT Error m E.TradeEnv
   getExpiredOrders :: [Entity Order] -> m [Entity Order]
-  putCurrPrice :: Entity Price -> m ()
-  rcvNextPrice :: Bfx.CurrencyPair -> m (Entity Price)
   putCurrMma :: Bfx.Mma -> m ()
   rcvNextMma :: m Bfx.Mma
   getLastMma :: m (Maybe Bfx.Mma)
-  sleepPriceTtl :: Bfx.CurrencyPair -> m ()
   getReportStartAmt :: m (Bfx.Money 'Bfx.Quote 'Bfx.Sell)
   getReportCurrency :: m (Bfx.CurrencyCode 'Bfx.Quote)

@@ -30,46 +30,18 @@ import Env
     parse,
     var,
   )
-import RecklessTradingBot.Data.Model
 import RecklessTradingBot.Data.Time
 import RecklessTradingBot.Data.Type
 import RecklessTradingBot.Import.External
 import qualified Prelude
 
-data RawTradeEnv = RawTradeEnv
-  { rawTradeEnvCurrencyKind ::
-      Bfx.CurrencyKind,
-    rawTradeEnvMinProfitPerOrder ::
-      Bfx.ProfitRate,
-    rawTradeEnvMaxQuoteInvestment ::
-      Bfx.Money 'Bfx.Quote 'Bfx.Buy,
-    rawTradeEnvMode ::
-      TradeMode
-  }
-  deriving stock
-    ( Eq,
-      Ord,
-      Show,
-      Generic
-    )
-
-instance FromJSON RawTradeEnv where
-  parseJSON =
-    A.genericParseJSON
-      A.defaultOptions
-        { A.fieldLabelModifier = A.camelTo2 '_' . drop 11
-        }
-
 data TradeEnv = TradeEnv
   { tradeEnvCurrencyPair :: Bfx.CurrencyPair,
     tradeEnvCurrencyKind :: Bfx.CurrencyKind,
-    tradeEnvMinProfitPerOrder :: Bfx.ProfitRate,
-    tradeEnvMaxQuoteInvestment :: Bfx.Money 'Bfx.Quote 'Bfx.Buy,
     tradeEnvBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
     tradeEnvQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
     tradeEnvMinBuyAmt :: Bfx.Money 'Bfx.Base 'Bfx.Buy,
-    tradeEnvMinSellAmt :: Bfx.Money 'Bfx.Base 'Bfx.Sell,
-    tradeEnvMode :: TradeMode
+    tradeEnvMinSellAmt :: Bfx.Money 'Bfx.Base 'Bfx.Sell
   }
   deriving stock (Eq)
 
@@ -131,12 +103,11 @@ data Env = Env
   { -- app
     envBfx :: Bfx.Env,
     envTele :: TeleEnv,
-    envPairs :: [MVar TradeEnv],
+    envTrade :: MVar (Map Bfx.CurrencyPair TradeEnv),
     envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
     envReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
     envReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
-    envPriceChan :: TChan (Entity Price),
     envMmaChan :: TChan Bfx.Mma,
     envLastMma :: TMVar Bfx.Mma,
     -- storage
@@ -151,7 +122,6 @@ data RawEnv = RawEnv
   { -- app
     rawEnvBfx :: Bfx.RawEnv,
     rawEnvTele :: TeleEnv,
-    rawEnvPairs :: Map Bfx.CurrencyPair RawTradeEnv,
     rawEnvPriceTtl :: Seconds,
     rawEnvOrderTtl :: Seconds,
     rawEnvReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
@@ -251,9 +221,6 @@ withEnv this = do
   bracket mkLogEnv rmLogEnv $ \le ->
     bracket mkSqlPool rmSqlPool $ \pool -> do
       bfx <- Bfx.newEnv $ rawEnvBfx rc
-      priceChan <-
-        liftIO $
-          atomically newBroadcastTChan
       mmaChan <-
         liftIO $
           atomically newBroadcastTChan
@@ -264,19 +231,17 @@ withEnv this = do
       -- TODO : separate thread to update Bfx.symbolsDetails
       --
       cfg <-
-        newTradeConfList bfx $
-          rawEnvPairs rc
+        newTradeVar bfx
       this
         Env
           { -- app
             envBfx = bfx,
             envTele = rawEnvTele rc,
-            envPairs = cfg,
+            envTrade = cfg,
             envPriceTtl = rawEnvPriceTtl rc,
             envOrderTtl = rawEnvOrderTtl rc,
             envReportStartAmt = rawEnvReportStartAmt rc,
             envReportCurrency = rawEnvReportCurrency rc,
-            envPriceChan = priceChan,
             envMmaChan = mmaChan,
             envLastMma = mmaVar,
             -- storage
@@ -292,13 +257,12 @@ withEnv this = do
     rmSqlPool :: Pool a -> m ()
     rmSqlPool = liftIO . destroyAllResources
 
-newTradeConfList ::
+newTradeVar ::
   ( MonadIO m
   ) =>
   Bfx.Env ->
-  Map Bfx.CurrencyPair RawTradeEnv ->
-  m [MVar TradeEnv]
-newTradeConfList bfx syms = do
+  m (MVar (Map Bfx.CurrencyPair TradeEnv))
+newTradeVar bfx = do
   ex <-
     runExceptT $
       (,)
@@ -307,47 +271,40 @@ newTradeConfList bfx syms = do
   case ex of
     Left e -> error $ show e
     Right (symDetails, feeDetails) ->
-      mapM (newTradeConf symDetails feeDetails) $
-        Map.assocs syms
+      newMVar
+        . Map.fromList
+        $ newTradeEnv feeDetails <$> Map.assocs symDetails
 
-newTradeConf ::
-  ( MonadIO m
-  ) =>
-  Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
+newTradeEnv ::
   FeeSummary.Response ->
-  (Bfx.CurrencyPair, RawTradeEnv) ->
-  m (MVar TradeEnv)
-newTradeConf symDetails feeDetails (sym, raw) =
-  case Map.lookup sym symDetails of
-    Nothing -> error $ "Missing " <> show sym
-    Just cfg -> do
-      let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
-      let amtWithFee =
-            case Bfx.tweakMoneyPip
-              =<< Bfx.addFee amtNoFee fee of
-              Left e -> error $ show e
-              Right x -> x
-      liftIO . newMVar $
-        TradeEnv
-          { tradeEnvCurrencyPair =
-              sym,
-            tradeEnvCurrencyKind =
-              cck,
-            tradeEnvMinProfitPerOrder =
-              rawTradeEnvMinProfitPerOrder raw,
-            tradeEnvMaxQuoteInvestment =
-              rawTradeEnvMaxQuoteInvestment raw,
-            tradeEnvBaseFee =
-              fee,
-            tradeEnvQuoteFee =
-              coerce fee,
-            tradeEnvMinBuyAmt =
-              amtWithFee,
-            tradeEnvMinSellAmt =
-              coerce amtNoFee,
-            tradeEnvMode =
-              rawTradeEnvMode raw
-          }
+  (Bfx.CurrencyPair, Bfx.CurrencyPairConf) ->
+  (Bfx.CurrencyPair, TradeEnv)
+newTradeEnv feeDetails (sym, cfg) =
+  ( sym,
+    TradeEnv
+      { tradeEnvCurrencyPair =
+          sym,
+        tradeEnvCurrencyKind =
+          cck,
+        tradeEnvBaseFee =
+          fee,
+        tradeEnvQuoteFee =
+          coerce fee,
+        tradeEnvMinBuyAmt =
+          amtWithFee,
+        tradeEnvMinSellAmt =
+          coerce amtNoFee
+      }
+  )
   where
-    cck = rawTradeEnvCurrencyKind raw
+    --
+    -- TODO : fixme, unhardcode cck!!!
+    --
+    cck = Bfx.Fiat
     fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails
+    amtNoFee = Bfx.currencyPairMinOrderAmt cfg
+    amtWithFee =
+      case Bfx.tweakMoneyPip
+        =<< Bfx.addFee amtNoFee fee of
+        Left e -> error $ show e
+        Right x -> x
