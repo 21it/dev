@@ -3,6 +3,7 @@
 
 module RecklessTradingBot.Data.Env
   ( TradeEnv (..),
+    newTradeEnv,
     TeleKey (..),
     TeleChat (..),
     TeleEnv (..),
@@ -264,47 +265,56 @@ newTradeVar ::
   m (MVar (Map Bfx.CurrencyPair TradeEnv))
 newTradeVar bfx = do
   ex <-
-    runExceptT $
-      (,)
-        <$> Bfx.symbolsDetails
-        <*> Bfx.feeSummary bfx
+    runExceptT $ do
+      fee <- Bfx.feeSummary bfx
+      sym <- Bfx.symbolsDetails
+      except $ newTradeEnv fee sym
   case ex of
-    Left e -> error $ show e
-    Right (symDetails, feeDetails) ->
-      newMVar
-        . Map.fromList
-        $ newTradeEnv feeDetails <$> Map.assocs symDetails
+    Left e -> error $ "Fatal TradeEnv failure " <> show e
+    Right x -> newMVar x
 
 newTradeEnv ::
   FeeSummary.Response ->
-  (Bfx.CurrencyPair, Bfx.CurrencyPairConf) ->
-  (Bfx.CurrencyPair, TradeEnv)
-newTradeEnv feeDetails (sym, cfg) =
-  ( sym,
-    TradeEnv
-      { tradeEnvCurrencyPair =
-          sym,
-        tradeEnvCurrencyKind =
-          cck,
-        tradeEnvBaseFee =
-          fee,
-        tradeEnvQuoteFee =
-          coerce fee,
-        tradeEnvMinBuyAmt =
-          amtWithFee,
-        tradeEnvMinSellAmt =
-          coerce amtNoFee
-      }
-  )
-  where
-    --
-    -- TODO : fixme, unhardcode cck!!!
-    --
-    cck = Bfx.Fiat
-    fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails
-    amtNoFee = Bfx.currencyPairMinOrderAmt cfg
-    amtWithFee =
-      case Bfx.tweakMoneyPip
-        =<< Bfx.addFee amtNoFee fee of
-        Left e -> error $ show e
-        Right x -> x
+  Map Bfx.CurrencyPair Bfx.CurrencyPairConf ->
+  Either Bfx.Error (Map Bfx.CurrencyPair TradeEnv)
+newTradeEnv feeDetails symDetails = do
+  xs <-
+    mapM (uncurry $ newTradeEnvEntry feeDetails) $
+      Map.assocs symDetails
+  pure $
+    Map.fromList xs
+
+newTradeEnvEntry ::
+  FeeSummary.Response ->
+  Bfx.CurrencyPair ->
+  Bfx.CurrencyPairConf ->
+  Either Bfx.Error (Bfx.CurrencyPair, TradeEnv)
+newTradeEnvEntry feeDetails sym cfg = do
+  --
+  -- TODO : fixme, unhardcode cck!!!
+  --
+  let cck = Bfx.Stable
+  let fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails
+  let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
+  when (amtNoFee <= [moneyBaseBuy|0|])
+    . Left
+    . Bfx.ErrorMath
+    $ "Wrong min order for sym = "
+      <> show sym
+      <> " and cfg = "
+      <> show cfg
+  amtWithFee <-
+    first (Bfx.ErrorTryFrom . SomeException) $
+      Bfx.tweakMoneyPip
+        =<< Bfx.addFee amtNoFee fee
+  pure
+    ( sym,
+      TradeEnv
+        { tradeEnvCurrencyPair = sym,
+          tradeEnvCurrencyKind = cck,
+          tradeEnvBaseFee = fee,
+          tradeEnvQuoteFee = coerce fee,
+          tradeEnvMinBuyAmt = amtWithFee,
+          tradeEnvMinSellAmt = coerce amtNoFee
+        }
+    )

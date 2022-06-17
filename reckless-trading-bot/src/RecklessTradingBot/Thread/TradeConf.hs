@@ -71,7 +71,7 @@ newConf fees sym cfg = do
   --
   -- TODO : unhardcode
   --
-  let cck = Bfx.Fiat
+  let cck = Bfx.Stable
   let fee = BfxFeeSummary.getFee @'Bfx.Maker cck fees
   let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
   when (amtNoFee <= [moneyBaseBuy|0|])
