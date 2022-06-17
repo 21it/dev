@@ -49,7 +49,7 @@ share
       price (Bfx.QuotePerBase 'Bfx.Buy)
       gain (Bfx.Money 'Bfx.Base 'Bfx.Buy)
       loss (Bfx.Money 'Bfx.Quote 'Bfx.Buy)
-      fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Base)
+      fee (Bfx.FeeRate 'Bfx.Taker 'Bfx.Base)
       status OrderStatus
       insertedAt UTCTime
       updatedAt UTCTime
@@ -61,7 +61,7 @@ share
       price (Bfx.QuotePerBase 'Bfx.Sell)
       gain (Bfx.Money 'Bfx.Quote 'Bfx.Sell)
       loss (Bfx.Money 'Bfx.Base 'Bfx.Sell)
-      fee (Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote)
+      fee (Bfx.FeeRate 'Bfx.Taker 'Bfx.Quote)
       status OrderStatus
       insertedAt UTCTime
       updatedAt UTCTime

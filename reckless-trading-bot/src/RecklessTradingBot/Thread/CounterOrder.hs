@@ -31,6 +31,11 @@ apply = do
   $(logTM) DebugS "Spawned"
   forever . withOperativeBfx $ do
     activeOrders <- Order.getByStatusLimit [OrderActive]
+    --
+    -- TODO : better rules to identity market movements
+    -- to prevent unwanted trades to happen and funds
+    -- being locked in a trades which will never happen.
+    --
     cancelExpiredOrders activeOrders
     updateActiveOrders activeOrders
     ordersToCounter <- CounterOrder.getOrdersToCounterLimit
@@ -40,7 +45,7 @@ apply = do
     mapM_ (uncurry counterExecutedOrder) ordersToCounter
     updateCounterOrders
       =<< CounterOrder.getByStatusLimit [OrderActive]
-    sleep [seconds|30|]
+    sleep [seconds|5|]
 
 cancelExpiredOrders :: (Env m) => [Entity Order] -> m ()
 cancelExpiredOrders entities = do

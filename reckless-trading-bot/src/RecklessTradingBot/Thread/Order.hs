@@ -116,13 +116,13 @@ placeOrderT cfg tradeEnt = do
   gid <- tryFromT orderId
   bfxOrder <-
     withBfxT
-      Bfx.submitOrderMaker
+      Bfx.submitOrder
       ( \cont ->
           cont
             (orderGain order)
             (tradeEnvCurrencyPair cfg)
             (tradeEntry $ entityVal tradeEnt)
-            Bfx.optsPostOnly
+            Bfx.optsDef
               { Bfx.clientId = Just cid,
                 Bfx.groupId = Just gid
               }

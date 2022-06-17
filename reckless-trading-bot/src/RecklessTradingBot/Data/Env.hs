@@ -39,8 +39,8 @@ import qualified Prelude
 data TradeEnv = TradeEnv
   { tradeEnvCurrencyPair :: Bfx.CurrencyPair,
     tradeEnvCurrencyKind :: Bfx.CurrencyKind,
-    tradeEnvBaseFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Base,
-    tradeEnvQuoteFee :: Bfx.FeeRate 'Bfx.Maker 'Bfx.Quote,
+    tradeEnvBaseFee :: Bfx.FeeRate 'Bfx.Taker 'Bfx.Base,
+    tradeEnvQuoteFee :: Bfx.FeeRate 'Bfx.Taker 'Bfx.Quote,
     tradeEnvMinBuyAmt :: Bfx.Money 'Bfx.Base 'Bfx.Buy,
     tradeEnvMinSellAmt :: Bfx.Money 'Bfx.Base 'Bfx.Sell
   }
@@ -294,7 +294,7 @@ newTradeEnvEntry feeDetails sym cfg = do
   -- TODO : fixme, unhardcode cck!!!
   --
   let cck = Bfx.Stable
-  let fee = FeeSummary.getFee @'Bfx.Maker cck feeDetails
+  let fee = FeeSummary.getFee @'Bfx.Taker cck feeDetails
   let amtNoFee = Bfx.currencyPairMinOrderAmt cfg
   when (amtNoFee <= [moneyBaseBuy|0|])
     . Left
