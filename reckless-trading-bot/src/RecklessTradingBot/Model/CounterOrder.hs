@@ -121,12 +121,8 @@ updateBfx ent bfxCounter = do
 getByStatusLimit ::
   ( Storage m
   ) =>
-  --
-  -- TODO : nonempty
-  --
-  [OrderStatus] ->
+  NonEmpty OrderStatus ->
   m [Entity CounterOrder]
-getByStatusLimit [] = pure []
 getByStatusLimit ss =
   runSql $
     P.select $
@@ -145,7 +141,7 @@ getByStatusLimit ss =
               )
             P.where_
               ( counter P.^. CounterOrderStatus
-                  `P.in_` P.valList ss
+                  `P.in_` P.valList (toList ss)
               )
             P.limit 10
             P.orderBy

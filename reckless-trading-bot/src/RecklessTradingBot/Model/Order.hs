@@ -143,12 +143,8 @@ updateStatusSql ss xs = do
 getByStatusLimit ::
   ( Storage m
   ) =>
-  --
-  -- TODO : use NonEmpty !!!
-  --
-  [OrderStatus] ->
+  NonEmpty OrderStatus ->
   m [Entity Order]
-getByStatusLimit [] = pure []
 getByStatusLimit ss =
   runSql $
     Psql.select $
@@ -159,7 +155,7 @@ getByStatusLimit ss =
           )
         Psql.where_
           ( order Psql.^. OrderStatus
-              `Psql.in_` Psql.valList ss
+              `Psql.in_` Psql.valList (toList ss)
           )
         Psql.limit 10
         Psql.orderBy
