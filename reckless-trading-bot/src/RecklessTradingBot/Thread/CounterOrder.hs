@@ -9,6 +9,7 @@ module RecklessTradingBot.Thread.CounterOrder
 where
 
 import qualified BitfinexClient as Bfx
+import qualified BitfinexClient.Data.CancelOrderMulti as BfxCancel
 import qualified BitfinexClient.Data.GetOrders as BfxGetOrders
 import qualified BitfinexClient.Data.SubmitOrder as Bfx
 import qualified Data.Map as Map
@@ -30,7 +31,7 @@ apply = do
   $(logTM) DebugS "Spawned"
   forever . withOperativeBfx $ do
     activeOrders <- Order.getByStatusLimit [OrderActive]
-    ThreadOrder.cancelExpired activeOrders
+    cancelExpiredOrders activeOrders
     updateActiveOrders activeOrders
     ordersToCounter <- CounterOrder.getOrdersToCounterLimit
     $(logTM) DebugS . logStr $
@@ -40,6 +41,59 @@ apply = do
     updateCounterOrders
       =<< CounterOrder.getByStatusLimit [OrderActive]
     sleep [seconds|30|]
+
+cancelExpiredOrders :: (Env m) => [Entity Order] -> m ()
+cancelExpiredOrders entities = do
+  expiredOrders <-
+    getExpiredOrders entities
+  res <-
+    runExceptT $
+      cancelExpiredOrdersT expiredOrders
+  whenLeft res $
+    $(logTM) ErrorS . show
+
+cancelExpiredOrdersT ::
+  ( Env m
+  ) =>
+  [Entity Order] ->
+  ExceptT Error m ()
+cancelExpiredOrdersT [] = pure ()
+cancelExpiredOrdersT entities = do
+  $(logTM) DebugS $ show entities
+  ids <-
+    mapM
+      ( \x ->
+          tryJust
+            ( ErrorRuntime $
+                "Missing orderExtRef in "
+                  <> show x
+            )
+            . (from <$>)
+            . orderExtRef
+            $ entityVal x
+      )
+      entities
+  cids <-
+    mapM
+      ( \(Entity id0 x) -> do
+          id1 <- tryFromT id0
+          pure (id1, orderInsertedAt x)
+      )
+      entities
+  gids <-
+    mapM tryFromT $ entityKey <$> entities
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderId $ Set.fromList ids)
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderClientId $ Set.fromList cids)
+  void $
+    withBfxT
+      Bfx.cancelOrderMulti
+      ($ BfxCancel.ByOrderGroupId $ Set.fromList gids)
 
 updateActiveOrders ::
   ( Env m
