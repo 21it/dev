@@ -46,7 +46,7 @@ library
       RecklessTradingBot.Thread.Mma
       RecklessTradingBot.Thread.Order
       RecklessTradingBot.Thread.TeleBot
-      RecklessTradingBot.Thread.TradeConf
+      RecklessTradingBot.Thread.TradeEnv
       RecklessTradingBot.Util
   other-modules:
       Paths_reckless_trading_bot

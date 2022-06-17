@@ -9,6 +9,7 @@ import RecklessTradingBot.Data.Env as X
     TeleEnv (..),
     TeleKey (..),
     TradeEnv (..),
+    newTradeEnv,
     withEnv,
   )
 import RecklessTradingBot.Data.Model as X hiding
