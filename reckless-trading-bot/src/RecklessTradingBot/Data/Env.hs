@@ -105,7 +105,6 @@ data Env = Env
     envBfx :: Bfx.Env,
     envTele :: TeleEnv,
     envTrade :: MVar (Map Bfx.CurrencyPair TradeEnv),
-    envPriceTtl :: Seconds,
     envOrderTtl :: Seconds,
     envReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
     envReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
@@ -123,7 +122,6 @@ data RawEnv = RawEnv
   { -- app
     rawEnvBfx :: Bfx.RawEnv,
     rawEnvTele :: TeleEnv,
-    rawEnvPriceTtl :: Seconds,
     rawEnvOrderTtl :: Seconds,
     rawEnvReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
     rawEnvReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
@@ -239,7 +237,6 @@ withEnv this = do
             envBfx = bfx,
             envTele = rawEnvTele rc,
             envTrade = cfg,
-            envPriceTtl = rawEnvPriceTtl rc,
             envOrderTtl = rawEnvOrderTtl rc,
             envReportStartAmt = rawEnvReportStartAmt rc,
             envReportCurrency = rawEnvReportCurrency rc,

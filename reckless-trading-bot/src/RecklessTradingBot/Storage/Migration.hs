@@ -20,18 +20,18 @@ migrateBefore = []
 --
 migrateAfter :: Migration
 migrateAfter =
-  [ 0 ~> 1 := [priceIndexes]
+  [ 0 ~> 1 := [tradeIndexes]
   ]
   where
-    priceIndexesSql :: Text
-    priceIndexesSql =
+    tradeIndexesSql :: Text
+    tradeIndexesSql =
       "CREATE INDEX IF NOT EXISTS "
-        <> "price_base_quote_idx "
-        <> "ON price (base, quote);"
-    priceIndexes =
-      RawOperation "Create Price indexes" $
+        <> "trade_base_quote_idx "
+        <> "ON trade (base, quote);"
+    tradeIndexes =
+      RawOperation "Create trade indexes" $
         lift . pure $
-          [MigrateSql priceIndexesSql []]
+          [MigrateSql tradeIndexesSql []]
 
 migrateAll :: (Storage m, KatipContext m) => m ()
 migrateAll = do
