@@ -497,15 +497,18 @@ netWorth env ccq = do
               baseMoney :: Money 'Base 'Sell <-
                 tryErrorT . roundMoney $
                   unMoney' @'Quote localAcc
-              price <-
-                marketAveragePrice baseMoney sym
-              pure $
-                totalAcc
-                  |+| ( ( unMoney baseMoney
-                            |*| unQuotePerBase price
-                        )
-                          |* (1 - unFeeRate fee)
-                      )
+              if baseMoney == [moneyBaseSell|0|]
+                then pure totalAcc
+                else do
+                  price <-
+                    marketAveragePrice baseMoney sym
+                  pure $
+                    totalAcc
+                      |+| ( ( unMoney baseMoney
+                                |*| unQuotePerBase price
+                            )
+                              |* (1 - unFeeRate fee)
+                          )
       )
       (unMoney [moneyQuoteSell|0|])
       . filter

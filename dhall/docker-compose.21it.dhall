@@ -49,36 +49,8 @@ in  { networks.global.external = True
                                       "\${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID}"
                                 }
                             )
-                      , pairs =
-                          J.object
-                            ( toMap
-                                { ADABTC =
-                                    J.object
-                                      ( toMap
-                                          { currency_kind = J.string "Crypto"
-                                          , max_quote_investment =
-                                              J.string "0.0145"
-                                          , min_profit_per_order =
-                                              J.string "0.01"
-                                          , mode = J.string "Speculate"
-                                          }
-                                      )
-                                , XMRBTC =
-                                    J.object
-                                      ( toMap
-                                          { currency_kind = J.string "Crypto"
-                                          , max_quote_investment =
-                                              J.string "0.0145"
-                                          , min_profit_per_order =
-                                              J.string "0.01"
-                                          , mode = J.string "Speculate"
-                                          }
-                                      )
-                                }
-                            )
-                      , price_ttl = J.natural 300
                       , order_ttl = J.natural 3600
-                      , report_start_amt = J.string "0.029"
+                      , report_start_amt = J.string "0.00830573"
                       , report_currency = J.string "BTC"
                       , libpq_conn_str =
                           J.string

@@ -15,24 +15,25 @@ apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
   forever $ do
-    eMma0 <-
+    --eMma0 <-
+    eMma1 <-
       runExceptT
         . Bfx.theBestMma
           (Bfx.ProfitRate 0.005)
           Bfx.Ctf1m
-          [moneyQuoteBuy|3|]
+          [moneyQuoteBuy|10|]
         $ Bfx.CurrencyCode "BTC"
-    eMma1 <-
-      case eMma0 of
-        Right {} ->
-          pure eMma0
-        Left {} ->
-          runExceptT
-            . Bfx.theBestMma
-              (Bfx.ProfitRate 0.005)
-              Bfx.Ctf1m
-              [moneyQuoteBuy|100000|]
-            $ Bfx.CurrencyCode "USD"
+    --eMma1 <-
+    --  case eMma0 of
+    --    Right {} ->
+    --      pure eMma0
+    --    Left {} ->
+    --      runExceptT
+    --        . Bfx.theBestMma
+    --          (Bfx.ProfitRate 0.005)
+    --          Bfx.Ctf1m
+    --          [moneyQuoteBuy|200000|]
+    --        $ Bfx.CurrencyCode "USD"
     case eMma1 of
       Right mma -> do
         $(logTM) DebugS . logStr $

@@ -8,12 +8,11 @@ where
 
 import RecklessTradingBot.Import
 import qualified RecklessTradingBot.Storage.Migration as Migration
---import qualified RecklessTradingBot.Thread.CounterOrder as CounterOrder
+import qualified RecklessTradingBot.Thread.CounterOrder as CounterOrder
 import qualified RecklessTradingBot.Thread.Mma as Mma
---import qualified RecklessTradingBot.Thread.Order as Order
+import qualified RecklessTradingBot.Thread.Order as Order
 import qualified RecklessTradingBot.Thread.TeleBot as TeleBot
-
---import qualified RecklessTradingBot.Thread.TradeEnv as TradeEnv
+import qualified RecklessTradingBot.Thread.TradeEnv as TradeEnv
 
 apply :: Env m => m ()
 apply = do
@@ -22,10 +21,10 @@ apply = do
     mapM
       spawnLink
       [ Mma.apply,
-        TeleBot.apply
-        --TradeEnv.apply,
-        --Order.apply,
-        --CounterOrder.apply
+        TeleBot.apply,
+        TradeEnv.apply,
+        Order.apply,
+        CounterOrder.apply
       ]
   liftIO
     . void
