@@ -17,11 +17,12 @@ import qualified Data.Map as Map
 theBestMma ::
   ( MonadIO m
   ) =>
+  ProfitRate ->
   CandleTimeFrame ->
   Money 'Quote 'Buy ->
   CurrencyCode 'Quote ->
   ExceptT Error m Mma
-theBestMma ctf vol quote = do
+theBestMma minProf ctf vol quote = do
   tickers <-
     Bfx.tickers
   let goodTickers =
@@ -67,7 +68,7 @@ theBestMma ctf vol quote = do
           . nonEmpty
           . catMaybes
           . Par.withStrategy (Par.parTraversable Par.rdeepseq)
-          $ uncurry (Mma.mma ctf) <$> toList ncs
+          $ uncurry (Mma.mma minProf ctf) <$> toList ncs
       let sym =
             Mma.mmaSymbol mma
       cfg <-
@@ -92,5 +93,5 @@ theBestMma ctf vol quote = do
           ( ErrorTrading quote $
               "Can not verify Mma for " <> show sym
           )
-        . Mma.mma ctf sym
+        . Mma.mma minProf ctf sym
         $ NE.appendr history [entry {candleClose = avg}]
