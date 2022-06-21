@@ -3,6 +3,7 @@
 
 module BitfinexClient.Math
   ( addFee,
+    deductFee,
     tweakMoneyPip,
     tweakMakerRate,
     newCounterOrder,
@@ -27,6 +28,19 @@ addFee ::
 addFee amt fee =
   roundMoney' @crel $
     unMoney amt |/ (1 - unFeeRate fee)
+
+deductFee ::
+  forall crel act mrel.
+  ( SingI crel
+  ) =>
+  Money crel act ->
+  FeeRate mrel crel ->
+  Either
+    (TryFromException Rational (Money crel act))
+    (Money crel act)
+deductFee amt fee =
+  roundMoney' @crel $
+    unMoney amt |* (1 - unFeeRate fee)
 
 tweakMoneyPip ::
   forall act.

@@ -12,6 +12,7 @@ import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Data.CancelOrderMulti as BfxCancel
 import qualified BitfinexClient.Data.GetOrders as BfxGetOrders
 import qualified BitfinexClient.Data.SubmitOrder as Bfx
+import qualified BitfinexClient.Math as Bfx
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import RecklessTradingBot.Import
@@ -30,6 +31,8 @@ apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
   forever . withOperativeBfx $ do
+    updateCounterOrders
+      =<< CounterOrder.getByStatusLimit [OrderActive]
     activeOrders <- Order.getByStatusLimit [OrderActive]
     --
     -- TODO : better rules to identity market movements
@@ -43,8 +46,6 @@ apply = do
       "Got orders to counter "
         <> (show ordersToCounter :: Text)
     mapM_ (uncurry counterExecutedOrder) ordersToCounter
-    updateCounterOrders
-      =<< CounterOrder.getByStatusLimit [OrderActive]
     sleep [seconds|5|]
 
 cancelExpiredOrders :: (Env m) => [Entity Order] -> m ()
@@ -195,6 +196,10 @@ counterExecutedT ::
   Entity Order ->
   ExceptT Error m ()
 counterExecutedT tradeEnt orderEnt = do
+  exitLoss <-
+    tryErrorT
+      . Bfx.deductFee (coerce $ orderGain orderVal)
+      $ orderFee orderVal
   sym <-
     tryErrorT
       . Bfx.currencyPairCon (tradeBase tradeVal)
@@ -254,8 +259,6 @@ counterExecutedT tradeEnt orderEnt = do
     tradeVal = entityVal tradeEnt
     orderVal :: Order
     orderVal = entityVal orderEnt
-    exitLoss :: Bfx.Money 'Bfx.Base 'Bfx.Sell
-    exitLoss = coerce $ orderGain orderVal
 
 updateCounterOrders ::
   ( Env m

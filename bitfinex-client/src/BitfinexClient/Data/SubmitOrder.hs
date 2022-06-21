@@ -63,9 +63,9 @@ instance
   ToJSON (Request act)
   where
   toJSON req =
-    eradicateNull $
-      A.object
-        [ "gid"
+    eradicateNull
+      . A.object
+      $ [ "gid"
             A..= groupId opts,
           "cid"
             A..= clientId opts,
@@ -79,6 +79,13 @@ instance
             A..= toTextParam (rate req),
           "flags"
             A..= unOrderFlagSet (flags opts)
+            --
+            -- TODO : use TIF for automated cancellation!
+            --
         ]
+        <> maybe
+          mempty
+          (\x -> ["price_oco_stop" A..= toTextParam x])
+          (stopLoss opts)
     where
       opts = options req
