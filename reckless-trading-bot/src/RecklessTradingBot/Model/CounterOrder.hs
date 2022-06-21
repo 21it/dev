@@ -74,8 +74,12 @@ updateBfx ::
 updateBfx ent bfxCounter = do
   ct <- liftIO getCurrentTime
   runSql $ do
-    when (counterStatus == OrderExecuted) $
-      Order.updateStatusSql
+    when
+      ( counterStatus
+          `elem` ( [OrderExecuted, OrderCancelled] :: [OrderStatus]
+                 )
+      )
+      $ Order.updateStatusSql
         OrderCountered
         [ counterOrderIntRef $
             entityVal ent
@@ -181,7 +185,8 @@ getOrdersToCounterLimit =
                               ( counter P.?. CounterOrderStatus
                                   `P.in_` P.valList
                                     [ Just OrderActive,
-                                      Just OrderExecuted
+                                      Just OrderExecuted,
+                                      Just OrderCancelled
                                     ]
                               )
                         )
