@@ -95,6 +95,7 @@ library
     , base >=4.15 && <5
     , bitfinex-client
     , bytestring
+    , clock
     , containers
     , envparse
     , errors
@@ -109,6 +110,7 @@ library
     , resource-pool
     , singletons
     , stm
+    , stopwatch
     , telegram-bot-simple
     , template-haskell
     , time
@@ -161,7 +163,8 @@ executable reckless-trading-bot-exe
       TypeFamilies
       TypeOperators
       UndecidableInstances
-  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -fprint-potential-instances -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -fprint-potential-instances -O2 -optc-O3 -funfolding-use-threshold=16 -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=gold
+  ld-options: -fuse-ld=gold
   build-depends:
       base >=4.15 && <5
     , reckless-trading-bot
@@ -210,7 +213,8 @@ test-suite reckless-trading-bot-test
       TypeFamilies
       TypeOperators
       UndecidableInstances
-  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -fprint-potential-instances -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Weverything -Werror -Wno-prepositive-qualified-module -Wno-missing-safe-haskell-mode -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -fenable-th-splice-warnings -fprint-potential-instances -O2 -optc-O3 -funfolding-use-threshold=16 -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=gold
+  ld-options: -fuse-ld=gold
   build-depends:
       base >=4.15 && <5
     , hspec

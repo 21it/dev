@@ -51,6 +51,7 @@ newExample = do
         (ProfitRate 0.005)
         Ctf1m
         [moneyQuoteBuy|30000|]
+        mempty
       $ CurrencyCode "USD"
   case eMma of
     Left e -> do

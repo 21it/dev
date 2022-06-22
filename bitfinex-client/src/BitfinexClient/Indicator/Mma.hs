@@ -149,7 +149,7 @@ mma ::
   Maybe Mma
 mma minProf ctf sym cs =
   (maximum <$>) . nonEmpty $
-    [1 .. 8]
+    [3 .. 9]
       >>= combineMaPeriods minProf ctf sym cs atr
   where
     atr =
@@ -330,7 +330,7 @@ tryFindStopLoss prevLow0 atr0 =
         prevLow |-| volatility
   where
     volatility =
-      Atr.unAtr atr0
+      1.3 *| Atr.unAtr atr0
     prevLow =
       unQuotePerBase . candleLow $
         unPrevSwingLow prevLow0

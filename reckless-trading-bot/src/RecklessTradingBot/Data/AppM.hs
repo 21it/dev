@@ -51,6 +51,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
     withExceptT ErrorBfx . args $ method bfx
   getReportStartAmt = asks EnvData.envReportStartAmt
   getReportCurrency = asks EnvData.envReportCurrency
+  getBaseBlacklist = asks EnvData.envBaseBlacklist
   getTeleEnv = asks EnvData.envTele
   getTradeVar = asks EnvData.envTrade
   getTradeEnv sym = do

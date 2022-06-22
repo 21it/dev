@@ -19,6 +19,18 @@ extra-source-files:
 # common to point users to the README.md file.
 description:         Please see the README on GitHub at <https://github.com/21it/reckless-trading-bot#readme>
 
+_optimized: &optimized
+  ghc-options:
+  - -O2
+  - -optc-O3
+  - -funfolding-use-threshold=16
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+  - -optl-fuse-ld=gold
+  ld-options:
+  - -fuse-ld=gold
+
 dependencies:
 - base >= 4.15 && < 5
 
@@ -84,6 +96,8 @@ library:
   - universum
   # time
   - time
+  - clock
+  - stopwatch
   - unbounded-delays
   # storage
   - persistent
@@ -122,22 +136,17 @@ executables:
     main: Main.hs
     source-dirs:
     - app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    <<: *optimized
     dependencies:
     - reckless-trading-bot
+
 
 tests:
   reckless-trading-bot-test:
     main: Spec.hs
     source-dirs:
     - test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    <<: *optimized
     dependencies:
     - reckless-trading-bot
     - hspec

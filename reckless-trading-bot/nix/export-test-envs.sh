@@ -13,6 +13,7 @@ export RECKLESS_TRADING_BOT_ENV="
   \"order_ttl\":3600,
   \"report_start_amt\":\"0.00830573\",
   \"report_currency\":\"BTC\",
+  \"base_blacklist\":[\"LEO\"],
   \"libpq_conn_str\":\"postgresql://$USER@localhost/reckless-trading-bot\",
   \"log_env\":\"21it\",
   \"log_format\":\"Bracket\",

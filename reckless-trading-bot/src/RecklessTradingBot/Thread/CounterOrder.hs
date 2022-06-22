@@ -196,10 +196,13 @@ counterExecutedT ::
   Entity Order ->
   ExceptT Error m ()
 counterExecutedT tradeEnt orderEnt = do
-  exitLoss <-
+  exitLoss0 <-
     tryErrorT
       . Bfx.deductFee (coerce $ orderGain orderVal)
       $ orderFee orderVal
+  exitLoss <-
+    tryErrorT $
+      Bfx.tweakMoneyPip exitLoss0
   sym <-
     tryErrorT
       . Bfx.currencyPairCon (tradeBase tradeVal)

@@ -108,6 +108,7 @@ data Env = Env
     envOrderTtl :: Seconds,
     envReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
     envReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
+    envBaseBlacklist :: Set (Bfx.CurrencyCode 'Bfx.Base),
     envMmaChan :: TChan Bfx.Mma,
     envLastMma :: TMVar Bfx.Mma,
     -- storage
@@ -125,6 +126,7 @@ data RawEnv = RawEnv
     rawEnvOrderTtl :: Seconds,
     rawEnvReportStartAmt :: Bfx.Money 'Bfx.Quote 'Bfx.Sell,
     rawEnvReportCurrency :: Bfx.CurrencyCode 'Bfx.Quote,
+    rawEnvBaseBlacklist :: Set (Bfx.CurrencyCode 'Bfx.Base),
     -- storage
     rawEnvLibpqConnStr :: LibpqConnStr,
     -- logging
@@ -240,6 +242,7 @@ withEnv this = do
             envOrderTtl = rawEnvOrderTtl rc,
             envReportStartAmt = rawEnvReportStartAmt rc,
             envReportCurrency = rawEnvReportCurrency rc,
+            envBaseBlacklist = rawEnvBaseBlacklist rc,
             envMmaChan = mmaChan,
             envLastMma = mmaVar,
             -- storage

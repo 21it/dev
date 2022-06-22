@@ -52,6 +52,7 @@ in  { networks.global.external = True
                       , order_ttl = J.natural 3600
                       , report_start_amt = J.string "0.00830573"
                       , report_currency = J.string "BTC"
+                      , base_blacklist = J.array [ J.string "LEO" ]
                       , libpq_conn_str =
                           J.string
                             "postgresql://user:user@postgres/reckless-trading-bot"

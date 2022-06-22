@@ -13,6 +13,7 @@ import qualified BitfinexClient.Indicator.Mma as Mma
 import qualified Control.Parallel.Strategies as Par
 import qualified Data.List.NonEmpty.Extra as NE
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 theBestMma ::
   ( MonadIO m
@@ -20,9 +21,10 @@ theBestMma ::
   ProfitRate ->
   CandleTimeFrame ->
   Money 'Quote 'Buy ->
+  Set (CurrencyCode 'Base) ->
   CurrencyCode 'Quote ->
   ExceptT Error m Mma
-theBestMma minProf ctf vol quote = do
+theBestMma minProf ctf vol blacklist quote = do
   tickers <-
     Bfx.tickers
   let goodTickers =
@@ -37,6 +39,11 @@ theBestMma minProf ctf vol quote = do
                        (tickerSymbol x)
                        == quote
                    )
+                && not
+                  ( currencyPairBase
+                      (tickerSymbol x)
+                      `Set.member` blacklist
+                  )
           )
           tickers
   syms <-

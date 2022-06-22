@@ -32,3 +32,4 @@ class (Storage m, KatipContext m) => Env m where
   getLastMma :: m (Maybe Bfx.Mma)
   getReportStartAmt :: m (Bfx.Money 'Bfx.Quote 'Bfx.Sell)
   getReportCurrency :: m (Bfx.CurrencyCode 'Bfx.Quote)
+  getBaseBlacklist :: m (Set (Bfx.CurrencyCode 'Bfx.Base))

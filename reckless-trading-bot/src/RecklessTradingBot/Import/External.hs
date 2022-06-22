@@ -35,6 +35,9 @@ import Control.Monad.Trans.Except as X
     throwE,
     withExceptT,
   )
+import Control.StopWatch as X
+  ( stopWatch,
+  )
 import Data.Aeson as X (FromJSON (..), ToJSON (..))
 import Data.Coerce as X (coerce)
 import Data.Either.Extra as X (fromEither)

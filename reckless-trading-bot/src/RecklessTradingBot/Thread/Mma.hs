@@ -10,31 +10,27 @@ where
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Trading as Bfx
 import RecklessTradingBot.Import
+import qualified System.Clock as Clock
 
 apply :: (Env m) => m ()
 apply = do
   $(logTM) DebugS "Spawned"
+  blacklist <- getBaseBlacklist
   forever $ do
-    --eMma0 <-
-    eMma1 <-
-      runExceptT
+    (eMma, tc) <-
+      stopWatch
+        . runExceptT
         . Bfx.theBestMma
           (Bfx.ProfitRate 0.005)
           Bfx.Ctf1m
-          [moneyQuoteBuy|10|]
+          [moneyQuoteBuy|1|]
+          blacklist
         $ Bfx.CurrencyCode "BTC"
-    --eMma1 <-
-    --  case eMma0 of
-    --    Right {} ->
-    --      pure eMma0
-    --    Left {} ->
-    --      runExceptT
-    --        . Bfx.theBestMma
-    --          (Bfx.ProfitRate 0.005)
-    --          Bfx.Ctf1m
-    --          [moneyQuoteBuy|200000|]
-    --        $ Bfx.CurrencyCode "USD"
-    case eMma1 of
+    let sec = Clock.sec tc
+    let lvl = if sec > 60 then ErrorS else InfoS
+    $(logTM) lvl . logStr $
+      "Mma scanning took " <> inspect sec <> " seconds"
+    case eMma of
       Right mma -> do
         $(logTM) DebugS . logStr $
           "Found good Mma for " <> inspect (Bfx.mmaSymbol mma)
