@@ -86,6 +86,9 @@ theBestMma minProf ctf vol blacklist quote = do
                 "Can not find symbol datails for " <> show sym
             )
           $ Map.lookup sym syms
+      --
+      -- TODO : verify by backtesting
+      --
       avg <-
         Bfx.marketAveragePrice (currencyPairMinOrderAmt cfg) sym
       let candles =

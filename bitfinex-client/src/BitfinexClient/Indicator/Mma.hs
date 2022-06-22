@@ -123,7 +123,8 @@ data Mma = Mma
     mmaRewardToRisk :: RewardToRisk,
     mmaEntry :: TradeEntry,
     mmaDataFrom :: UTCTime,
-    mmaCtf :: CandleTimeFrame
+    mmaCtf :: CandleTimeFrame,
+    mmaAt :: UTCTime
   }
   deriving stock
     ( Eq,
@@ -222,7 +223,11 @@ newMma minProf ctf sym cs0 atrs cs curves = do
                   mmaRewardToRisk = r2r,
                   mmaEntry = snd dummyEntry,
                   mmaDataFrom = minimum $ fst <$> mas,
-                  mmaCtf = ctf
+                  mmaCtf = ctf,
+                  mmaAt =
+                    candleAt
+                      . tradeEntryCandle
+                      $ snd dummyEntry
                 }
         )
         <$> [10, 9 .. 5]
@@ -233,7 +238,11 @@ newMma minProf ctf sym cs0 atrs cs curves = do
         newEntry $ mmaRewardToRisk maxMma
       pure
         maxMma
-          { mmaEntry = snd entry
+          { mmaEntry = snd entry,
+            mmaAt =
+              candleAt
+                . tradeEntryCandle
+                $ snd entry
           }
   where
     shortestCurve =

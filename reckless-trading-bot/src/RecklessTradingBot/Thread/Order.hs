@@ -28,10 +28,15 @@ apply = do
   $(logTM) DebugS "Spawned"
   forever $ do
     mma <- rcvNextMma
-    withOperativeBfx $
-      Order.getByStatusLimit [OrderNew]
-        >>= cancelUnexpected
-        >> placeOrder mma
+    withOperativeBfx $ do
+      Order.getByStatusLimit [OrderNew] >>= cancelUnexpected
+      --
+      -- TODO : check if bfx fixes the bug where
+      -- OCO flag still locks additional liquidity.
+      -- If it's fixed - then this condition is not needed.
+      --
+      ongoing <- Order.getNonCountered $ Bfx.mmaSymbol mma
+      when (null ongoing) $ placeOrder mma
 
 cancelUnexpected :: (Env m) => [Entity Order] -> m ()
 cancelUnexpected [] = pure ()

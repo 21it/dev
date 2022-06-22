@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module RecklessTradingBot.Model.Order
@@ -6,8 +5,8 @@ module RecklessTradingBot.Model.Order
     updateBfx,
     updateStatus,
     updateStatusSql,
+    getNonCountered,
     getByStatusLimit,
-    getTotalInvestment,
   )
 where
 
@@ -140,6 +139,40 @@ updateStatusSql ss xs = do
     Psql.where_ $
       row Psql.^. OrderId `Psql.in_` Psql.valList xs
 
+getNonCountered ::
+  ( Storage m
+  ) =>
+  Bfx.CurrencyPair ->
+  m [Entity Order]
+getNonCountered sym =
+  runSql $
+    Psql.select $
+      Psql.from $ \(order `Psql.InnerJoin` trade) -> do
+        Psql.on
+          ( order Psql.^. OrderIntRef
+              Psql.==. trade Psql.^. TradeId
+          )
+        Psql.where_
+          ( ( order Psql.^. OrderStatus
+                `Psql.in_` Psql.valList
+                  [ OrderNew,
+                    OrderActive,
+                    OrderExecuted
+                  ]
+            )
+              Psql.&&. ( trade Psql.^. TradeBase
+                           Psql.==. Psql.val
+                             ( Bfx.currencyPairBase sym
+                             )
+                       )
+              Psql.&&. ( trade Psql.^. TradeQuote
+                           Psql.==. Psql.val
+                             ( Bfx.currencyPairQuote sym
+                             )
+                       )
+          )
+        pure order
+
 getByStatusLimit ::
   ( Storage m
   ) =>
@@ -163,40 +196,3 @@ getByStatusLimit ss =
               order Psql.^. OrderUpdatedAt
           ]
         pure order
-
-getTotalInvestment ::
-  ( Storage m
-  ) =>
-  Bfx.CurrencyPair ->
-  m (Bfx.Money 'Bfx.Quote 'Bfx.Buy)
-getTotalInvestment sym = do
-  totalInvestment <-
-    runSql $
-      Psql.select $
-        Psql.from $ \(order `Psql.InnerJoin` trade) -> do
-          Psql.on
-            ( order Psql.^. OrderIntRef
-                Psql.==. trade Psql.^. TradeId
-            )
-          Psql.where_
-            ( ( order Psql.^. OrderStatus
-                  `Psql.in_` Psql.valList
-                    [ OrderActive,
-                      OrderExecuted
-                    ]
-              )
-                Psql.&&. ( trade Psql.^. TradeBase
-                             Psql.==. Psql.val
-                               ( Bfx.currencyPairBase sym
-                               )
-                         )
-                Psql.&&. ( trade Psql.^. TradeQuote
-                             Psql.==. Psql.val
-                               ( Bfx.currencyPairQuote sym
-                               )
-                         )
-            )
-          pure . Psql.sum_ $
-            order Psql.^. OrderLoss
-  pure . fromMaybe [moneyQuoteBuy|0|] $
-    Psql.unValue =<< safeHead totalInvestment

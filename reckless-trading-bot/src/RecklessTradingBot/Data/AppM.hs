@@ -7,6 +7,7 @@ module RecklessTradingBot.Data.AppM
   )
 where
 
+import qualified BitfinexClient as Bfx
 import qualified Data.Map as Map
 import qualified RecklessTradingBot.Data.Env as EnvData
 import RecklessTradingBot.Import
@@ -78,10 +79,22 @@ instance (MonadUnliftIO m) => Env (AppM m) where
   putCurrMma x = do
     ch <- asks EnvData.envMmaChan
     var <- asks EnvData.envLastMma
-    liftIO . atomically $ do
-      writeTChan ch x
-      void $ tryTakeTMVar var
-      putTMVar var x
+    let broadcastMma = do
+          void $ tryTakeTMVar var
+          writeTChan ch x
+          putTMVar var x
+    liftIO
+      . atomically
+      . maybeM
+        broadcastMma
+        ( \prev ->
+            when
+              ( (Bfx.mmaSymbol prev /= Bfx.mmaSymbol x)
+                  || (Bfx.mmaAt prev /= Bfx.mmaAt x)
+              )
+              broadcastMma
+        )
+      $ tryReadTMVar var
   rcvNextMma = do
     ch0 <- asks EnvData.envMmaChan
     --

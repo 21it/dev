@@ -30,6 +30,7 @@ import Control.Concurrent.STM.TMVar as X
   )
 import Control.Concurrent.Thread.Delay as X (delay)
 import Control.Error.Safe as X (tryJust)
+import Control.Monad.Extra as X (maybeM)
 import Control.Monad.Trans.Except as X
   ( except,
     throwE,

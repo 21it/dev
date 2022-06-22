@@ -21,15 +21,15 @@ apply = do
       stopWatch
         . runExceptT
         . Bfx.theBestMma
-          (Bfx.ProfitRate 0.005)
+          (Bfx.ProfitRate 0.0041)
           Bfx.Ctf1m
-          [moneyQuoteBuy|1|]
+          [moneyQuoteBuy|10|]
           blacklist
         $ Bfx.CurrencyCode "BTC"
     let sec = Clock.sec tc
-    let lvl = if sec > 60 then ErrorS else InfoS
+    let lvl = if sec > 240 then ErrorS else DebugS
     $(logTM) lvl . logStr $
-      "Mma scanning took " <> inspect sec <> " seconds"
+      "Mma calculation time = " <> inspect sec <> " seconds"
     case eMma of
       Right mma -> do
         $(logTM) DebugS . logStr $
