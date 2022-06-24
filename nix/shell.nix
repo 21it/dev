@@ -18,12 +18,18 @@ stdenv.mkDerivation {
   name = "21it";
   buildInputs = [
     ide21
-    gnuplot
-    librsvg
     postgresql
     nix-bundle
+    # crypto
     secp256k1
     pkg-config
+    # charts
+    gnuplot
+    librsvg
+    # neural
+    blas
+    lapack
+    protobuf
   ];
   TERM="xterm-256color";
   LC_ALL="C.UTF-8";

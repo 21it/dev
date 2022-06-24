@@ -33,6 +33,13 @@ packages:
   original:
     hackage: table-layout-0.9.1.0@sha256:172b8b3a06c992839a781b77e42bbce689ba87d92c260acb61d187f7e6aad7f2,7154
 - completed:
+    pantry-tree:
+      sha256: 06746077732f4d49d3277821303292314d51df9a63efecd47217fc0946233026
+      size: 529
+    hackage: symbols-0.3.0.0@sha256:5d051bccbd4bcb33fa8ce076bd3cd2bacc90973682f7340976758947eaa128a9,964
+  original:
+    hackage: symbols-0.3.0.0@sha256:5d051bccbd4bcb33fa8ce076bd3cd2bacc90973682f7340976758947eaa128a9,964
+- completed:
     sha256: ee3eebb54d365ffa83f320b568fa36a8ab392a8ded1d559feda5a44894b7f6a0
     name: servant-client
     subdir: servant-client
@@ -104,6 +111,17 @@ packages:
   original:
     subdir: generic-pretty-instances
     url: https://github.com/coingaming/src/archive/359acd74b5c1f3900b7645fd3adb0521001a6d23.tar.gz
+- completed:
+    sha256: 957f3e341e056bff837ec29a739f2609c905d1bd06df0b60f756dc0ef20a8ea4
+    name: grenade
+    size: 4381379
+    url: https://github.com/21it/grenade/archive/4e70edeb3d90a4e95d5781bc061d7547c9fb1c95.tar.gz
+    pantry-tree:
+      sha256: a1ca134ef49725b857921d6598fb0ae448c9f1141cb28b2d167096494ffb4fc8
+      size: 15672
+    version: 0.1.1
+  original:
+    url: https://github.com/21it/grenade/archive/4e70edeb3d90a4e95d5781bc061d7547c9fb1c95.tar.gz
 snapshots:
 - completed:
     sha256: f1c4aca9b9b81afbb9db55571acb0690cdc01ac97a178234de281f9dc075e95e

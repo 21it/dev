@@ -9,6 +9,7 @@ extra-deps:
   - compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
   - reanimate-1.1.6.0@sha256:53abeabd24eba7ad7fbf86938d9d21f34dc9783f9384e4b324e6a1ae211f112e,6241
   - table-layout-0.9.1.0@sha256:172b8b3a06c992839a781b77e42bbce689ba87d92c260acb61d187f7e6aad7f2,7154
+  - symbols-0.3.0.0@sha256:5d051bccbd4bcb33fa8ce076bd3cd2bacc90973682f7340976758947eaa128a9,964
     # Overrive servant with the latest version to
     # have MonadMask instance for ClientM.
   - github: haskell-servant/servant
@@ -35,3 +36,6 @@ extra-deps:
     subdirs:
     - generic-pretty-instances
     # nix-sha256: 0z2jdrzrxll3xfc86w4wygmvsg6jbgm0k2yy7jxi3qm7y2amqvfr
+  - github: 21it/grenade
+    commit: 4e70edeb3d90a4e95d5781bc061d7547c9fb1c95
+    # nix-sha256: 1hcyv6r2ryygmh8w1338l6a87irdb9wpbbh5559smlk8yxcdzbsm
