@@ -228,7 +228,7 @@ newMma minProf ctf sym cs0 atrs cs curves = do
                 }
         )
         <$> [10, 9 .. 5]
-  if length (mmaTrades maxMma) < 8
+  if length (mmaTrades maxMma) < 7
     then Nothing
     else do
       entry <-
