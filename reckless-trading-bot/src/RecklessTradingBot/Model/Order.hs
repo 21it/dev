@@ -142,9 +142,8 @@ updateStatusSql ss xs = do
 getNonCountered ::
   ( Storage m
   ) =>
-  Bfx.CurrencyPair ->
-  m [Entity Order]
-getNonCountered sym =
+  m [(Entity Order, Entity Trade)]
+getNonCountered =
   runSql $
     Psql.select $
       Psql.from $ \(order `Psql.InnerJoin` trade) -> do
@@ -153,25 +152,14 @@ getNonCountered sym =
               Psql.==. trade Psql.^. TradeId
           )
         Psql.where_
-          ( ( order Psql.^. OrderStatus
-                `Psql.in_` Psql.valList
-                  [ OrderNew,
-                    OrderActive,
-                    OrderExecuted
-                  ]
-            )
-              Psql.&&. ( trade Psql.^. TradeBase
-                           Psql.==. Psql.val
-                             ( Bfx.currencyPairBase sym
-                             )
-                       )
-              Psql.&&. ( trade Psql.^. TradeQuote
-                           Psql.==. Psql.val
-                             ( Bfx.currencyPairQuote sym
-                             )
-                       )
+          ( order Psql.^. OrderStatus
+              `Psql.in_` Psql.valList
+                [ OrderNew,
+                  OrderActive,
+                  OrderExecuted
+                ]
           )
-        pure order
+        pure (order, trade)
 
 getByStatusLimit ::
   ( Storage m

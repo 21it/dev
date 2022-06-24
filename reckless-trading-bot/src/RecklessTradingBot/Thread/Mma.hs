@@ -10,6 +10,7 @@ where
 import qualified BitfinexClient as Bfx
 import qualified BitfinexClient.Trading as Bfx
 import RecklessTradingBot.Import
+import qualified RecklessTradingBot.Model.Order as Order
 import qualified System.Clock as Clock
 
 apply :: (Env m) => m ()
@@ -17,6 +18,13 @@ apply = do
   $(logTM) DebugS "Spawned"
   blacklist <- getBaseBlacklist
   forever $ do
+    --
+    -- TODO : Check if bfx fixes the bug where
+    -- OCO flag still locks additional liquidity.
+    -- If it's fixed - then this additional
+    -- blacklist from ongoing trades is not needed.
+    --
+    ongoing <- Order.getNonCountered
     (eMma, tc) <-
       stopWatch
         . runExceptT
@@ -24,7 +32,14 @@ apply = do
           (Bfx.ProfitRate 0.0041)
           Bfx.Ctf1m
           [moneyQuoteBuy|0.5|]
-          blacklist
+          ( fromList
+              ( tradeBase
+                  . entityVal
+                  . snd
+                  <$> ongoing
+              )
+              <> blacklist
+          )
         $ Bfx.CurrencyCode "BTC"
     let sec = Clock.sec tc
     let lvl = if sec > 240 then ErrorS else InfoS

@@ -11,7 +11,6 @@ import qualified BitfinexClient as Bfx
 import qualified Data.Map as Map
 import qualified RecklessTradingBot.Data.Env as EnvData
 import RecklessTradingBot.Import
-import qualified RecklessTradingBot.Model.Order as Order
 
 newtype AppM m a = AppM
   { unAppM :: ReaderT EnvData.Env m a
@@ -84,14 +83,7 @@ instance (MonadUnliftIO m) => Env (AppM m) where
           void $ tryTakeTMVar var
           writeTChan ch x
           putTMVar var x
-    --
-    -- TODO : check if bfx fixes the bug where
-    -- OCO flag still locks additional liquidity.
-    -- If it's fixed - then this condition is not needed.
-    --
-    ongoing <- Order.getNonCountered $ Bfx.mmaSymbol x
-    when (null ongoing)
-      . liftIO
+    liftIO
       . atomically
       . maybeM
         broadcastMma
