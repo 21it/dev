@@ -150,7 +150,7 @@ mma ::
   Maybe Mma
 mma minProf ctf sym cs =
   (maximum <$>) . nonEmpty $
-    [3 .. 9]
+    [6 .. 9]
       >>= combineMaPeriods minProf ctf sym cs atr
   where
     atr =
@@ -175,10 +175,7 @@ combineMaPeriods minProf ctf sym cs atrs qty =
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
     . ((\p -> (p, ma p cs)) <$>)
-    $ [2, 3, 4]
-      <> [5, 10, 15, 20]
-      <> [30, 50, 60]
-      <> [90, 180, 270, 360]
+    $ [2, 4 .. 16] <> [19, 22 .. 31]
 
 newMma ::
   ProfitRate ->
@@ -231,7 +228,7 @@ newMma minProf ctf sym cs0 atrs cs curves = do
                 }
         )
         <$> [10, 9 .. 5]
-  if length (mmaTrades maxMma) < 10
+  if length (mmaTrades maxMma) < 8
     then Nothing
     else do
       entry <-
@@ -339,7 +336,7 @@ tryFindStopLoss prevLow0 atr0 =
         prevLow |-| volatility
   where
     volatility =
-      1.3 *| Atr.unAtr atr0
+      1.8 *| Atr.unAtr atr0
     prevLow =
       unQuotePerBase . candleLow $
         unPrevSwingLow prevLow0

@@ -20,21 +20,20 @@ create ::
   ) =>
   TradeEnv ->
   Entity Trade ->
-  Entity Order ->
+  OrderId ->
+  Bfx.Money 'Bfx.Base 'Bfx.Sell ->
   m (Entity CounterOrder)
-create cfg tradeEnt orderEnt = do
+create cfg tradeEnt orderKey exitLoss = do
   row <- liftIO $ newRow <$> getCurrentTime
   rowId <- runSql $ P.insert row
   pure $ Entity rowId row
   where
     trade = entityVal tradeEnt
-    order = entityVal orderEnt
     exitFee = tradeEnvQuoteFee cfg
     exitRate = tradeTakeProfit trade
-    exitLoss = orderGain order
     exitGain =
       case BfxMath.newCounterOrderSimple
-        exitLoss
+        (coerce exitLoss)
         exitRate
         exitFee of
         Left e -> error $ show e
@@ -54,11 +53,11 @@ create cfg tradeEnt orderEnt = do
           --   counterOrderStatus
           --   counterOrderUpdatedAt
           --
-          counterOrderIntRef = entityKey orderEnt,
+          counterOrderIntRef = orderKey,
           counterOrderExtRef = Nothing,
           counterOrderPrice = exitRate,
           counterOrderGain = exitGain,
-          counterOrderLoss = coerce exitLoss,
+          counterOrderLoss = exitLoss,
           counterOrderFee = exitFee,
           counterOrderStatus = OrderNew,
           counterOrderInsertedAt = ct,

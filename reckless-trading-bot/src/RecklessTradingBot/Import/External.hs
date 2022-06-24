@@ -32,7 +32,8 @@ import Control.Concurrent.Thread.Delay as X (delay)
 import Control.Error.Safe as X (tryJust)
 import Control.Monad.Extra as X (maybeM)
 import Control.Monad.Trans.Except as X
-  ( except,
+  ( catchE,
+    except,
     throwE,
     withExceptT,
   )
@@ -55,6 +56,7 @@ import Data.Metrology.Poly as X
     (|/),
     (|/|),
     (|<=|),
+    (|<|),
   )
 import Data.Pool as X (Pool, destroyAllResources)
 import Data.Ratio as X ((%))

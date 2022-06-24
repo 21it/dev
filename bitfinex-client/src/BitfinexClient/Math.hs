@@ -159,7 +159,7 @@ newCounterOrder base0 rate0 feeB feeQ prof0 = do
       exitQuoteGain |/| exitBaseLoss
 
 newCounterOrderSimple ::
-  Money 'Base 'Buy ->
+  Money 'Base 'Sell ->
   QuotePerBase 'Sell ->
   FeeRate mrel 'Quote ->
   Either Error (Money 'Quote 'Sell)

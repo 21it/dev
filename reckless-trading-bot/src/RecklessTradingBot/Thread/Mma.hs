@@ -23,11 +23,11 @@ apply = do
         . Bfx.theBestMma
           (Bfx.ProfitRate 0.0041)
           Bfx.Ctf1m
-          [moneyQuoteBuy|10|]
+          [moneyQuoteBuy|0.5|]
           blacklist
         $ Bfx.CurrencyCode "BTC"
     let sec = Clock.sec tc
-    let lvl = if sec > 240 then ErrorS else DebugS
+    let lvl = if sec > 240 then ErrorS else InfoS
     $(logTM) lvl . logStr $
       "Mma calculation time = " <> inspect sec <> " seconds"
     case eMma of

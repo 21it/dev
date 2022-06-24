@@ -200,9 +200,6 @@ counterExecutedT tradeEnt orderEnt = do
     tryErrorT
       . Bfx.deductFee (coerce $ orderGain orderVal)
       $ orderFee orderVal
-  exitLoss <-
-    tryErrorT $
-      Bfx.tweakMoneyPip exitLoss0
   sym <-
     tryErrorT
       . Bfx.currencyPairCon (tradeBase tradeVal)
@@ -213,13 +210,22 @@ counterExecutedT tradeEnt orderEnt = do
     withBfxT
       Bfx.spendableExchangeBalance
       ($ Bfx.currencyPairBase sym)
-  when (coerce baseBalance < exitLoss) $
+  when (coerce baseBalance < exitLoss0) $
     throwE $
       ErrorRuntime $
         "Insufficient balance "
           <> show baseBalance
           <> " to counter "
           <> show orderEnt
+  --
+  -- NOTE : This is needed to prevent unspendable dust
+  -- appear in Bfx wallets.
+  --
+  let exitLoss1 =
+        if (Bfx.unMoney baseBalance |-| Bfx.unMoney exitLoss0)
+          |<| Bfx.unMoney (tradeEnvMinSellAmt cfg)
+          then baseBalance
+          else exitLoss0
   gid <-
     tryFromT $
       entityKey orderEnt
@@ -231,28 +237,39 @@ counterExecutedT tradeEnt orderEnt = do
     withBfxT Bfx.cancelOrderByGroupId ($ gid)
   counter <-
     lift $
-      CounterOrder.create cfg tradeEnt orderEnt
+      CounterOrder.create
+        cfg
+        tradeEnt
+        (entityKey orderEnt)
+        exitLoss1
   bfxCounterCid <-
     tryFromT $ entityKey counter
-  currentRate <-
-    withBfxT
-      (const Bfx.marketAveragePrice)
-      (\f -> f exitLoss sym)
+  let submitCounterOrder amt = do
+        currentRate <-
+          withBfxT
+            (const Bfx.marketAveragePrice)
+            (\f -> f amt sym)
+        withBfxT
+          Bfx.submitOrderMaker
+          ( \submit ->
+              submit
+                amt
+                sym
+                (max currentRate $ tradeTakeProfit tradeVal)
+                $ ( Bfx.optsPostOnlyStopLoss
+                      (tradeStopLoss tradeVal)
+                  )
+                  { Bfx.clientId = Just bfxCounterCid,
+                    Bfx.groupId = Just gid
+                  }
+          )
   bfxCounter <-
-    withBfxT
-      Bfx.submitOrderMaker
-      ( \submit ->
-          submit
-            exitLoss
-            sym
-            (max currentRate $ tradeTakeProfit tradeVal)
-            $ ( Bfx.optsPostOnlyStopLoss
-                  (tradeStopLoss tradeVal)
-              )
-              { Bfx.clientId = Just bfxCounterCid,
-                Bfx.groupId = Just gid
-              }
-      )
+    catchE
+      (submitCounterOrder exitLoss1)
+      . const
+      $ do
+        exitLoss2 <- tryErrorT $ Bfx.tweakMoneyPip exitLoss1
+        submitCounterOrder exitLoss2
   lift $
     CounterOrder.updateBfx
       counter
