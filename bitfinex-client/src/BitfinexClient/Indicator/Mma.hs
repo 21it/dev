@@ -175,7 +175,7 @@ combineMaPeriods minProf ctf sym cs atrs qty =
     . (nonEmpty <$>)
     . Math.choose (unCrvQty qty)
     . ((\p -> (p, ma p cs)) <$>)
-    $ [2, 4 .. 16] <> [19, 22 .. 31]
+    $ [2 .. 17]
 
 newMma ::
   ProfitRate ->
