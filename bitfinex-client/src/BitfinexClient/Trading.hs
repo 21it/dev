@@ -18,13 +18,14 @@ import qualified Data.Set as Set
 theBestMma ::
   ( MonadIO m
   ) =>
-  ProfitRate ->
+  ProfitRateB 'Min ->
+  ProfitRateB 'Max ->
   CandleTimeFrame ->
   Money 'Quote 'Buy ->
   Set (CurrencyCode 'Base) ->
   CurrencyCode 'Quote ->
   ExceptT Error m Mma
-theBestMma minProf ctf vol blacklist quote = do
+theBestMma minProf maxProf ctf vol blacklist quote = do
   tickers <-
     Bfx.tickers
   let goodTickers =
@@ -75,7 +76,7 @@ theBestMma minProf ctf vol blacklist quote = do
           . nonEmpty
           . catMaybes
           . Par.withStrategy (Par.parTraversable Par.rdeepseq)
-          $ uncurry (Mma.mma minProf ctf) <$> toList ncs
+          $ uncurry (Mma.mma minProf maxProf ctf) <$> toList ncs
       let sym =
             Mma.mmaSymbol mma
       cfg <-
@@ -103,5 +104,5 @@ theBestMma minProf ctf vol blacklist quote = do
           ( ErrorTrading quote $
               "Can not verify Mma for " <> show sym
           )
-        . Mma.mma minProf ctf sym
+        . Mma.mma minProf maxProf ctf sym
         $ NE.appendr history [entry {candleClose = avg}]

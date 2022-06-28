@@ -21,6 +21,7 @@ module BitfinexClient.Data.Type
     FeeRate (..),
     RebateRate (..),
     ProfitRate (..),
+    ProfitRateB (..),
     CurrencyCode (..),
     newCurrencyCode,
     CurrencyPair,
@@ -373,6 +374,21 @@ instance FromJSON ProfitRate where
       case tryReadViaRatio @Rational raw of
         Left x -> fail $ show x
         Right x -> pure x
+
+newtype ProfitRateB (b :: Boundary) = ProfitRateB
+  { unProfitRateB :: ProfitRate
+  }
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      NFData,
+      FromJSON
+    )
+  deriving stock
+    ( Generic,
+      TH.Lift
+    )
 
 newtype CurrencyCode (crel :: CurrencyRelation) = CurrencyCode
   { unCurrencyCode :: Text

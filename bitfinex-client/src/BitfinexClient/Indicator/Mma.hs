@@ -143,30 +143,32 @@ instance Ord Mma where
       (length $ mmaTrades rhs, mmaRewardToRisk rhs)
 
 mma ::
-  ProfitRate ->
+  ProfitRateB 'Min ->
+  ProfitRateB 'Max ->
   CandleTimeFrame ->
   CurrencyPair ->
   NonEmpty Candle ->
   Maybe Mma
-mma minProf ctf sym cs =
+mma minProf maxProf ctf sym cs =
   (maximum <$>) . nonEmpty $
     [6 .. 9]
-      >>= combineMaPeriods minProf ctf sym cs atr
+      >>= combineMaPeriods minProf maxProf ctf sym cs atr
   where
     atr =
       Atr.atr cs
 
 combineMaPeriods ::
-  ProfitRate ->
+  ProfitRateB 'Min ->
+  ProfitRateB 'Max ->
   CandleTimeFrame ->
   CurrencyPair ->
   NonEmpty Candle ->
   Map UTCTime Atr ->
   CrvQty ->
   [Mma]
-combineMaPeriods minProf ctf sym cs atrs qty =
+combineMaPeriods minProf maxProf ctf sym cs atrs qty =
   mapMaybe
-    ( newMma minProf ctf sym cs atrs
+    ( newMma minProf maxProf ctf sym cs atrs
         . V.indexed
         . V.fromList
         $ toList cs
@@ -178,7 +180,8 @@ combineMaPeriods minProf ctf sym cs atrs qty =
     $ [2 .. 17]
 
 newMma ::
-  ProfitRate ->
+  ProfitRateB 'Min ->
+  ProfitRateB 'Max ->
   CandleTimeFrame ->
   CurrencyPair ->
   NonEmpty Candle ->
@@ -186,12 +189,13 @@ newMma ::
   Vector (Int, Candle) ->
   NonEmpty (MaPeriod, Map UTCTime Ma) ->
   Maybe Mma
-newMma minProf ctf sym cs0 atrs cs curves = do
+newMma minProf maxProf ctf sym cs0 atrs cs curves = do
   (csPrev, cLast) <- V.unsnoc cs
   (_, cPrev) <- V.unsnoc csPrev
   let newEntry r2r =
         tryFindEntries
           minProf
+          maxProf
           r2r
           cs
           [cPrev, cLast]
@@ -208,7 +212,14 @@ newMma minProf ctf sym cs0 atrs cs curves = do
             let r2r = RewardToRisk $ rate % 5
             trades <-
               V.mapM (tryFindExit csPrev) $
-                tryFindEntries minProf r2r cs csPrev atrs curves
+                tryFindEntries
+                  minProf
+                  maxProf
+                  r2r
+                  cs
+                  csPrev
+                  atrs
+                  curves
             mas <-
               nonEmpty $ Map.assocs shortestCurve
             pure
@@ -251,14 +262,15 @@ newMma minProf ctf sym cs0 atrs cs curves = do
           curves
 
 tryFindEntries ::
-  ProfitRate ->
+  ProfitRateB 'Min ->
+  ProfitRateB 'Max ->
   RewardToRisk ->
   Vector (Int, Candle) ->
   Vector (Int, Candle) ->
   Map UTCTime Atr ->
   NonEmpty (MaPeriod, Map UTCTime Ma) ->
   Vector (Int, TradeEntry)
-tryFindEntries minProf r2r csHist cs atrs curves =
+tryFindEntries minProf maxProf r2r csHist cs atrs curves =
   ( \((_, c0), (idx1, c1)) ->
       let at0 = candleAt c0
           mas0 = newMas at0
@@ -279,7 +291,8 @@ tryFindEntries minProf r2r csHist cs atrs curves =
                           |-| unQuotePerBase (candleClose c1)
                       )
                         |/| unQuotePerBase (candleClose c1)
-              if profRate < minProf
+              if profRate < unProfitRateB minProf
+                || profRate > unProfitRateB maxProf
                 then mempty
                 else
                   pure . V.singleton $

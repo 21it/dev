@@ -29,7 +29,8 @@ apply = do
       stopWatch
         . runExceptT
         . Bfx.theBestMma
-          (Bfx.ProfitRate 0.0041)
+          (Bfx.ProfitRateB @'Bfx.Min $ Bfx.ProfitRate 0.0041)
+          (Bfx.ProfitRateB @'Bfx.Max $ Bfx.ProfitRate 0.01)
           Bfx.Ctf1m
           [moneyQuoteBuy|0.5|]
           ( fromList

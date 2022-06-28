@@ -48,7 +48,8 @@ newExample = do
   eMma <-
     runExceptT
       . Trading.theBestMma
-        (ProfitRate 0.005)
+        (ProfitRateB @'Min $ ProfitRate 0.005)
+        (ProfitRateB @'Max $ ProfitRate 0.01)
         Ctf1m
         [moneyQuoteBuy|30000|]
         mempty

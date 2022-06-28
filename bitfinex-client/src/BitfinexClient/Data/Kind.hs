@@ -87,6 +87,17 @@ $( singletons
              Enum,
              Bounded
            )
+
+       data Boundary
+         = Min
+         | Max
+         deriving stock
+           ( Eq,
+             Ord,
+             Show,
+             Enum,
+             Bounded
+           )
        |]
  )
 
@@ -102,6 +113,8 @@ deriving stock instance Generic Location
 
 deriving stock instance Generic ExchangeAction
 
+deriving stock instance Generic Boundary
+
 instance ToJSON Method
 
 instance ToJSON CurrencyKind
@@ -114,6 +127,8 @@ instance ToJSON Location
 
 instance ToJSON ExchangeAction
 
+instance ToJSON Boundary
+
 instance FromJSON Method
 
 instance FromJSON CurrencyKind
@@ -125,3 +140,5 @@ instance FromJSON MarketRelation
 instance FromJSON Location
 
 instance FromJSON ExchangeAction
+
+instance FromJSON Boundary
