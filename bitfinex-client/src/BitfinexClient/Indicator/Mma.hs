@@ -238,7 +238,7 @@ newMma minProf maxProf ctf sym cs0 atrs cs curves = do
                       $ snd dummyEntry
                 }
         )
-        <$> [10, 9 .. 5]
+        <$> [15, 14 .. 10]
   if length (mmaTrades maxMma) < 7
     then Nothing
     else do
